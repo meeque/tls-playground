@@ -1,2 +1,0 @@
-V	190215165439Z		01	unknown	/C=DE/ST=Bavaria/O=SAP/OU=Team Jester/CN=localhost
-V	190215165716Z		02	unknown	/C=DE/ST=Bavaria/O=SAP/OU=Team Jester/CN=Michi
