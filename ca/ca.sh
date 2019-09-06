@@ -13,12 +13,13 @@ function reset {
       cd "${ca_name}"
 
       find . -type d -and -not -name '.' | xargs rm -r
-      find . -type f -and -not -name 'serial' -and -not -name 'ca-req.config' | xargs rm
+      find . -type f -and -not -name 'ca-req.config' | xargs rm
 
       mkdir 'newcerts'
       mkdir 'private'
       chmod go-rwx 'private'
       touch db.txt
+      echo -n D78B3C0000000001 > serial
 
       set -x
       openssl req -new -config ca-req.config -newkey rsa:4096 -passout env:TLS_PLAYGROUND_PASS -keyout private/ca-key.pem -out ca-csr.pem
