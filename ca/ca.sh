@@ -35,17 +35,35 @@ function reset {
 function sign {
   local ca_name="$1"
   local csr_file="$2"
+  local cert_link="$3"
 
   if [[ "${ca_name}" ]]
   then
     if [[ "${csr_file}" ]]
     then
       local csr_file_path="$( pwd -P )/${csr_file}"
-      echo "Signing CSR from file '${csr_file_path}'..."
+      if [[ "${cert_link}" ]]
+      then
+        local cert_link_path="$( pwd -P )/${cert_link}"
+      fi
+
       (
         cd "${ca_base_dir}"
-        set -x
-        openssl ca -config ca.conf -name ca1 -batch -passin env:TLS_PLAYGROUND_PASS -in "${csr_file_path}"
+        local new_serial=$(<"${ca_name}/serial")
+        local new_cert_file_path="$( pwd -P )/${ca_name}/newcerts/${new_serial}.pem"
+        echo "Signing CSR ${new_serial} from file '${csr_file_path}'..."
+
+        (
+          set -x
+          openssl ca -config ca.conf -name ca1 -batch -passin env:TLS_PLAYGROUND_PASS -in "${csr_file_path}"
+        )
+
+        echo "Newly signed certificate is now available at '${new_cert_file_path}'."
+        if [[ "${cert_link}" ]]
+        then
+          ln -sf "${new_cert_file_path}" "${cert_link_path}"
+          echo "Also linked signed certificate to '${cert_link_path}'."
+        fi
       )
     else
       echo "No CSR file name specified. Specify the CSR file to sign!"
