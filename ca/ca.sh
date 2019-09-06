@@ -96,6 +96,7 @@ function request {
       echo "${config_file_basepath}" ' >>> ' "${config_name}"
 
       mkdir -p "${config_file_basepath}/private"
+      chmod og-rwx "${config_file_basepath}/private"
       rm "${reqest_file_path}" || true
       rm "${key_file_path}" || true
       rm "${cert_link_path}" || true
