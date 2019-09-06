@@ -3,4 +3,10 @@
 *.bak
 *.old
 
-/ca/*/*
+*.pem
+
+/ca/*/db.txt
+/ca/*/db.txt.*
+/ca/*/serial
+/ca/*/serial.*
+/ca/*/newcerts/
