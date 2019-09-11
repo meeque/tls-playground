@@ -22,12 +22,16 @@ public class TlsPlaygroundClientApplication implements ApplicationRunner {
 
 	@Override
 	public void run(ApplicationArguments args) throws Exception {
+
+		final HttpClient client = HttpClients.createDefault();
+
 		final List<String> nonOptionArgs = args.getNonOptionArgs();
-		if (nonOptionArgs.size() == 1) {
-			final String requestUrl = nonOptionArgs.get(0);
+		if (nonOptionArgs.isEmpty()) {
+			System.out.println("No request target given. Doing nothing. Try specifiying one as an argument!");
+			return;
+		}
 
-			final HttpClient client = HttpClients.createDefault();
-
+		for (final String requestUrl : nonOptionArgs) {
 			final HttpResponse response = client.execute(new HttpGet(requestUrl));
 			final InputStream responseEntityContentStream = response.getEntity().getContent();
 			IOUtils.copy(responseEntityContentStream, System.out);
