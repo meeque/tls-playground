@@ -21,4 +21,10 @@ public class TlsProperties {
 	@Valid
 	@NotNull
 	private List<File> trustedCerts;
+
+	@Valid
+	private File clientCert;
+
+	@Valid
+	private File clientKey;
 }

@@ -3,13 +3,18 @@ package com.sap.cx.jester.tlsplayground.client.tls;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.security.KeyFactory;
 import java.security.KeyStore;
+import java.security.PrivateKey;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.security.spec.KeySpec;
+import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Collection;
 
 import javax.net.ssl.KeyManager;
+import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
@@ -59,7 +64,38 @@ public class DefaultSslContextFactory implements SslContextFactory {
 	}
 
 	private KeyManager[] createKeyManagers() throws Exception {
-		return null;
+		if (tlsProps.getClientCert() == null && tlsProps.getClientKey() == null) {
+			return null;
+		}
+		if (tlsProps.getClientCert() == null || tlsProps.getClientKey() == null) {
+			throw new IllegalStateException("Both of tls.client-cert and tls.client-key must be specified, if either is specified!");
+		}
+
+		final CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
+		final InputStream certStream = new FileInputStream(tlsProps.getClientCert());
+		final Collection<X509Certificate> certs = (Collection)certFactory.generateCertificates(certStream);
+		final X509Certificate cert = certs.stream().findFirst().orElseThrow();
+		final String certDN = cert.getSubjectX500Principal().getName();
+
+		final KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+		final KeySpec keySpec;
+		try (final InputStream keyStream = new FileInputStream(tlsProps.getClientKey())) {
+			keySpec = new PKCS8EncodedKeySpec(keyStream.readAllBytes());
+		}
+		final PrivateKey key = keyFactory.generatePrivate(keySpec);
+
+		final KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+		keyStore.load(null);
+		keyStore.setCertificateEntry(certDN, cert);
+		keyStore.setKeyEntry(
+				certDN,
+				key,
+				new char[0],
+				certs.toArray(new Certificate[certs.size()]));
+
+		final KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+		keyManagerFactory.init(keyStore, new char[0]);
+		return keyManagerFactory.getKeyManagers();
 	}
 
 }
