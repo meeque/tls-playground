@@ -4,6 +4,8 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import javax.net.ssl.SSLContext;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -16,7 +18,6 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 
-import com.sap.cx.jester.tlsplayground.client.tls.SslContextFactory;
 import com.sap.cx.jester.tlsplayground.client.tls.TlsProperties;
 
 @SpringBootApplication
@@ -24,7 +25,7 @@ import com.sap.cx.jester.tlsplayground.client.tls.TlsProperties;
 public class TlsPlaygroundClientApplication implements ApplicationRunner {
 
 	@Autowired
-	private SslContextFactory sslContextFactory;
+	private SSLContext sslContext;
 
 	public static void main(String[] args) {
 		SpringApplication.run(TlsPlaygroundClientApplication.class, args);
@@ -36,7 +37,7 @@ public class TlsPlaygroundClientApplication implements ApplicationRunner {
 		final HttpClient client = HttpClients
 				.custom()
 				.setConnectionTimeToLive(30, TimeUnit.SECONDS)
-				.setSSLContext(sslContextFactory.createSslContext())
+				.setSSLContext(sslContext)
 				.build();
 
 		final List<String> nonOptionArgs = args.getNonOptionArgs();

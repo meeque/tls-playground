@@ -30,35 +30,31 @@ public class LoadCertFilesKeyManagerFactoryConfig {
 	
 	@Bean
 	@ConditionalOnProperty(prefix="tls", name={"client-cert", "client-key"})
-	public KeyManagerFactory keyManagerFactory() {
-		try {
-			final CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
-			final InputStream certStream = new FileInputStream(tlsProps.getClientCert());
-			final Collection<X509Certificate> certs = (Collection)certFactory.generateCertificates(certStream);
-			final X509Certificate cert = certs.stream().findFirst().orElseThrow();
-			final String certDN = cert.getSubjectX500Principal().getName();
-	
-			final KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-			final KeySpec keySpec;
-			try (final InputStream keyStream = new FileInputStream(tlsProps.getClientKey())) {
-				keySpec = new PKCS8EncodedKeySpec(keyStream.readAllBytes());
-			}
-			final PrivateKey key = keyFactory.generatePrivate(keySpec);
-	
-			final KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
-			keyStore.load(null);
-			keyStore.setCertificateEntry(certDN, cert);
-			keyStore.setKeyEntry(
-					certDN,
-					key,
-					new char[0],
-					certs.toArray(new Certificate[certs.size()]));
-	
-			final KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-			keyManagerFactory.init(keyStore, new char[0]);
-			return keyManagerFactory;
-		} catch (Exception e) {
-			throw new RuntimeException("Failed to create a new KeyManagerFactory.", e);
+	public KeyManagerFactory keyManagerFactory() throws Exception {
+		final CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
+		final InputStream certStream = new FileInputStream(tlsProps.getClientCert());
+		final Collection<X509Certificate> certs = (Collection)certFactory.generateCertificates(certStream);
+		final X509Certificate cert = certs.stream().findFirst().orElseThrow();
+		final String certDN = cert.getSubjectX500Principal().getName();
+
+		final KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+		final KeySpec keySpec;
+		try (final InputStream keyStream = new FileInputStream(tlsProps.getClientKey())) {
+			keySpec = new PKCS8EncodedKeySpec(keyStream.readAllBytes());
 		}
+		final PrivateKey key = keyFactory.generatePrivate(keySpec);
+
+		final KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+		keyStore.load(null);
+		keyStore.setCertificateEntry(certDN, cert);
+		keyStore.setKeyEntry(
+				certDN,
+				key,
+				new char[0],
+				certs.toArray(new Certificate[certs.size()]));
+
+		final KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+		keyManagerFactory.init(keyStore, new char[0]);
+		return keyManagerFactory;
 	};
 }

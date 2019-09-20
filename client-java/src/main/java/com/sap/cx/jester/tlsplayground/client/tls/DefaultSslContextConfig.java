@@ -18,14 +18,16 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 
 import lombok.RequiredArgsConstructor;
 
-@Component
+@Configuration
 @RequiredArgsConstructor
-public class DefaultSslContextFactory implements SslContextFactory {
+public class DefaultSslContextConfig {
 
 	@Autowired
 	private final TlsProperties tlsProps;
@@ -38,8 +40,8 @@ public class DefaultSslContextFactory implements SslContextFactory {
 	@Nullable
 	private final KeyManagerFactory keyManagerFactory;
 
-	@Override
-	public SSLContext createSslContext() throws Exception {
+	@Bean
+	public SSLContext sslContext() throws Exception {
 		final SSLContext context = SSLContext.getInstance(tlsProps.getVersion());
 		context.init(
 				(keyManagerFactory != null) ? keyManagerFactory.getKeyManagers() : null,

@@ -26,27 +26,23 @@ public class LoadCertFilesTrustManagerFactoryConfig {
 
 	@Bean
 	@ConditionalOnProperty(prefix="tls", name="trusted-certs")
-	public TrustManagerFactory trustManagerFactory() {
-		try {
-			final CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
-			final KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
-			trustStore.load(null);
-	
-			for (final File certsFile : tlsProps.getTrustedCerts()) {
-				final InputStream certsStream = new FileInputStream(certsFile);
-				final Collection<X509Certificate> certs = (Collection)certFactory.generateCertificates(certsStream);
-				
-				for (final X509Certificate cert : certs) {
-					trustStore.setCertificateEntry(cert.getSubjectX500Principal().getName(), cert);
-				}
+	public TrustManagerFactory trustManagerFactory() throws Exception {
+		final CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
+		final KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
+		trustStore.load(null);
+
+		for (final File certsFile : tlsProps.getTrustedCerts()) {
+			final InputStream certsStream = new FileInputStream(certsFile);
+			final Collection<X509Certificate> certs = (Collection)certFactory.generateCertificates(certsStream);
+			
+			for (final X509Certificate cert : certs) {
+				trustStore.setCertificateEntry(cert.getSubjectX500Principal().getName(), cert);
 			}
-	
-			final TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-			trustManagerFactory.init(trustStore);
-			return trustManagerFactory;
-		} catch (Exception e) {
-			throw new RuntimeException("Failed to create a new TrustManagerFactory.", e);
 		}
+
+		final TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+		trustManagerFactory.init(trustStore);
+		return trustManagerFactory;
 	}
 
 }
