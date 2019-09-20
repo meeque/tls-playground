@@ -14,10 +14,13 @@ import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 
 import com.sap.cx.jester.tlsplayground.client.tls.SslContextFactory;
+import com.sap.cx.jester.tlsplayground.client.tls.TlsProperties;
 
 @SpringBootApplication
+@EnableConfigurationProperties(TlsProperties.class)
 public class TlsPlaygroundClientApplication implements ApplicationRunner {
 
 	@Autowired
