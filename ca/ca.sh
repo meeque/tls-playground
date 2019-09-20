@@ -56,7 +56,7 @@ function sign {
 
         (
           set -x
-          openssl ca -config ca.conf -name ca1 -batch -passin env:TLS_PLAYGROUND_PASS -in "${csr_file_path}"
+          openssl ca -config ca.conf -name "${ca_name}" -batch -passin env:TLS_PLAYGROUND_PASS -in "${csr_file_path}"
         )
 
         echo "Newly signed certificate is now available at '${new_cert_file_path}'."
