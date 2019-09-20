@@ -4,6 +4,7 @@
 *.old
 
 *.pem
+*.der
 
 /ca/*/db.txt
 /ca/*/db.txt.*
