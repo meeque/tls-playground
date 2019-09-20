@@ -4,10 +4,16 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.security.KeyStore;
+import java.security.cert.CertPathBuilder;
 import java.security.cert.CertificateFactory;
+import java.security.cert.PKIXBuilderParameters;
+import java.security.cert.PKIXRevocationChecker;
+import java.security.cert.X509CertSelector;
 import java.security.cert.X509Certificate;
 import java.util.Collection;
+import java.util.EnumSet;
 
+import javax.net.ssl.CertPathTrustManagerParameters;
 import javax.net.ssl.TrustManagerFactory;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +33,29 @@ public class LoadCertFilesTrustManagerFactoryConfig {
 	@Bean
 	@ConditionalOnProperty(prefix="tls", name="trusted-certs")
 	public TrustManagerFactory trustManagerFactory() throws Exception {
+
+		final TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+
+		if (tlsProps.isCheckRevocation()) {
+			final CertPathBuilder certificatePathBuilder = CertPathBuilder.getInstance("PKIX");
+			final PKIXRevocationChecker revocationChecker = (PKIXRevocationChecker)certificatePathBuilder.getRevocationChecker();
+			revocationChecker.setOptions(
+					EnumSet.of(PKIXRevocationChecker.Option.NO_FALLBACK)
+					);
+			final PKIXBuilderParameters pkixParams = new PKIXBuilderParameters(
+					buildTrustStore(),
+					new X509CertSelector()
+					);
+			pkixParams.addCertPathChecker(revocationChecker);
+			trustManagerFactory.init(new CertPathTrustManagerParameters(pkixParams));
+		} else {
+			trustManagerFactory.init(buildTrustStore());
+		}
+
+		return trustManagerFactory;
+	}
+
+	private KeyStore buildTrustStore() throws Exception {
 		final CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
 		final KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
 		trustStore.load(null);
@@ -39,10 +68,7 @@ public class LoadCertFilesTrustManagerFactoryConfig {
 				trustStore.setCertificateEntry(cert.getSubjectX500Principal().getName(), cert);
 			}
 		}
-
-		final TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-		trustManagerFactory.init(trustStore);
-		return trustManagerFactory;
+		return trustStore;
 	}
 
 }

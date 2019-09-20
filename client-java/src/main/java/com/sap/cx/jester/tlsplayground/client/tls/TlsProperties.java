@@ -22,9 +22,9 @@ public class TlsProperties {
 	@NotNull
 	private List<File> trustedCerts;
 
-	@Valid
+	private boolean checkRevocation;
+
 	private File clientCert;
 
-	@Valid
 	private File clientKey;
 }
