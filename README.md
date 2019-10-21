@@ -12,7 +12,11 @@ Wrapper scripts and configuration samples for running an (incomplete) [Certifica
 
 ### Server: nginx
 
-A sample [nginx server](nginx/) using various TLS certificate configurations in distinct virtual hosts.
+A sample [nginx server](server-nginx/) using various TLS certificate configurations in distinct virtual hosts.
+
+### Client: Generic
+
+[Generic client support](client-generic/) for using TLS client certificates with web browsers or `curl`.
 
 ### Client: Java
 
