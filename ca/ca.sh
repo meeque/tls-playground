@@ -119,6 +119,26 @@ function request {
 
 
 
+function pkcs8 {
+  local key_file="$1"
+
+  if [[ "${key_file}" ]]
+  then
+    local key_name="$( echo "${key_file}" | sed -e 's/[.]pem$//' )"
+    local pkcs8_file="${key_name}-pkcs8.der"
+
+    (
+      set -x
+      openssl pkcs8 -topk8 -in "${key_file}" -passin env:TLS_PLAYGROUND_PASS -outform DER -out "${pkcs8_file}" -nocrypt
+    )
+  else
+    echo "No key file name specified. Specify the key file to convert to PKCS8!"
+    exit 1
+  fi
+}
+
+
+
 export TLS_PLAYGROUND_PASS="${TLS_PLAYGROUND_PASS:=1234}"
 
 ca_base_dir="$( cd "$(dirname "$0")" ; pwd -P )"
@@ -129,7 +149,7 @@ command="$1"
 shift
 
 case "$command" in
-  'reset' | 'sign' | 'request' )
+  'reset' | 'sign' | 'request' | 'pkcs8' )
     "$command" "$@"
     ;;
   * )
