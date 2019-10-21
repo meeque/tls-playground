@@ -139,6 +139,29 @@ function pkcs8 {
 
 
 
+function pkcs12 {
+  local cert_file="$1"
+
+  if [[ "${cert_file}" ]]
+  then
+    local cert_file_path="$(dirname ${cert_file})"
+    local cert_name="$(basename ${cert_file})"
+    local cert_name="$( echo "${cert_name}" | sed -e 's/[.]pem$//' | sed -e 's/-cert$//' )"
+    local key_file="${cert_file_path}/private/${cert_name}-key.pem"
+    local pkcs12_file="${cert_file_path}/private/${cert_name}.pfx"
+
+    (
+      set -x
+      openssl pkcs12 -export -in "${cert_file}" -inkey "${key_file}" -passin env:TLS_PLAYGROUND_PASS -out "${pkcs12_file}" -aes256 -passout env:TLS_PLAYGROUND_PASS
+    )
+  else
+    echo "No certificate file name specified. Specify the certificate file to convert to PKCS12!"
+    exit 1
+  fi
+}
+
+
+
 export TLS_PLAYGROUND_PASS="${TLS_PLAYGROUND_PASS:=1234}"
 
 ca_base_dir="$( cd "$(dirname "$0")" ; pwd -P )"
@@ -149,7 +172,7 @@ command="$1"
 shift
 
 case "$command" in
-  'reset' | 'sign' | 'request' | 'pkcs8' )
+  'reset' | 'sign' | 'request' | 'pkcs8' | 'pkcs12' )
     "$command" "$@"
     ;;
   * )
