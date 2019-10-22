@@ -63,3 +63,39 @@ These will go to `private/my-key.pem` and `my-csr.pem` respectively.
 The certificate will be symlinked to `my-cert.pem`, located next to the `my.config` file.
 
 If any of the above-mentioned files already exist, they will by overwritten.
+
+
+
+## Useful OpenSSL Commands
+
+When you deal with CSRs and certificates, you can also use `openssl` directly. Here is some useful `openssl` commands for introspecting such files.
+
+
+
+### Introspecting CSRs
+
+To display CSR contents in text form:
+
+    openssl req -in client-generic/tls/client1-csr.pem -noout -text
+
+To verify a CSR:
+
+    openssl req -in client-generic/tls/client1-csr.pem -noout -verify
+
+
+
+### Introspecting Certificates
+
+To display certificate contents in text form:
+
+    openssl x509 -in path/to/foo-cert.pem -noout -text
+
+To print certificate fingerprints using various hash functions:
+
+    openssl x509 -in path/to/foo-cert.pem -noout -fingerprint -md5
+    openssl x509 -in path/to/foo-cert.pem -noout -fingerprint -sha1
+    openssl x509 -in path/to/foo-cert.pem -noout -fingerprint -sha256
+
+To verify a certificate against a custom CA certificate:
+
+    openssl verify -CAfile path/to/ca-cert.pem path/to/foo-cert.pem
