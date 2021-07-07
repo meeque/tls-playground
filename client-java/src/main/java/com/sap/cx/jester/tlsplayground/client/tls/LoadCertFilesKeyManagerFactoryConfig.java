@@ -11,9 +11,11 @@ import java.security.cert.X509Certificate;
 import java.security.spec.KeySpec;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Collection;
+import java.util.NoSuchElementException;
 
 import javax.net.ssl.KeyManagerFactory;
 
+import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -34,13 +36,13 @@ public class LoadCertFilesKeyManagerFactoryConfig {
 		final CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
 		final InputStream certStream = new FileInputStream(tlsProps.getClientCert());
 		final Collection<X509Certificate> certs = (Collection)certFactory.generateCertificates(certStream);
-		final X509Certificate cert = certs.stream().findFirst().orElseThrow();
+		final X509Certificate cert = certs.stream().findFirst().orElseThrow(() -> new NoSuchElementException());
 		final String certDN = cert.getSubjectX500Principal().getName();
 
 		final KeyFactory keyFactory = KeyFactory.getInstance("RSA");
 		final KeySpec keySpec;
 		try (final InputStream keyStream = new FileInputStream(tlsProps.getClientKey())) {
-			keySpec = new PKCS8EncodedKeySpec(keyStream.readAllBytes());
+			keySpec = new PKCS8EncodedKeySpec(IOUtils.toByteArray(keyStream));
 		}
 		final PrivateKey key = keyFactory.generatePrivate(keySpec);
 

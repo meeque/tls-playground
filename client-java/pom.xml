@@ -15,10 +15,6 @@
     <name>TLS Playground Client</name>
     <description>A Java TLS-Client for Playground usage</description>
 
-    <properties>
-        <java.version>11</java.version>
-    </properties>
-
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
