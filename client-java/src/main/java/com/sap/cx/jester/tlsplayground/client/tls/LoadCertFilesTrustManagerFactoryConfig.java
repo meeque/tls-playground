@@ -31,8 +31,15 @@ public class LoadCertFilesTrustManagerFactoryConfig {
 	private final TlsProperties tlsProps;
 
 	@Bean
-	@ConditionalOnProperty(prefix="tls", name="trusted-certs")
 	public TrustManagerFactory trustManagerFactory() throws Exception {
+
+		// TODO support using both JDK trust store and custom list of trusted certificates
+		final KeyStore trustStore;
+		if (tlsProps.getTrustedCerts() != null && !tlsProps.getTrustedCerts().isEmpty()) {
+			trustStore = buildTrustStore();
+		} else {
+			trustStore = buildDefaultJdkTrustStore();
+		}
 
 		final TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
 
@@ -43,13 +50,13 @@ public class LoadCertFilesTrustManagerFactoryConfig {
 					EnumSet.of(PKIXRevocationChecker.Option.NO_FALLBACK)
 					);
 			final PKIXBuilderParameters pkixParams = new PKIXBuilderParameters(
-					buildTrustStore(),
+					trustStore,
 					new X509CertSelector()
 					);
 			pkixParams.addCertPathChecker(revocationChecker);
 			trustManagerFactory.init(new CertPathTrustManagerParameters(pkixParams));
 		} else {
-			trustManagerFactory.init(buildTrustStore());
+			trustManagerFactory.init(trustStore);
 		}
 
 		return trustManagerFactory;
@@ -71,4 +78,13 @@ public class LoadCertFilesTrustManagerFactoryConfig {
 		return trustStore;
 	}
 
+	private KeyStore buildDefaultJdkTrustStore() throws Exception {
+		final char separator = File.separatorChar;
+		final String trustStoreFileName = System.getProperty("java.home") + separator + "lib" + separator + "security" + separator + "cacerts";
+		final InputStream trustStoreInputStream = new FileInputStream(trustStoreFileName);
+
+		final KeyStore trustStore = KeyStore.getInstance("JKS");
+		trustStore.load(trustStoreInputStream, "changeit".toCharArray());
+		return trustStore;
+	}
 }

@@ -27,8 +27,6 @@ By default, Java TLS clients using a standard `SSLContext` do not seem to perfor
 
 This Java client supports configuration option `--tls.check-revocation=true` to explicitly enable certificate revocation checking using OCSP.
 
-**XXX** Currently, `--tls.check-revocation=true` will only work when used in conjunction with configuration option `--tls.trusted-certs` which takes a list of files that contain trusted CA certificates in DER format. You will have to manage those files yourself, e.g. by exporting them from your OS key manager, web-browser, or Java trust store.
-
 Usage examples:
 ```
 # HTTPS request to a server with a revoked certificate.
@@ -37,9 +35,9 @@ Usage examples:
 java -jar 'target/tls-playground-client-0.0.1-SNAPSHOT.jar' 'https://revoked.badssl.com/'
 
 # HTTP request to a server with a revoked certificate.
-# Using a custom list of trusted CA certificates (with a single entry) and a Java `SSLContext` with PKIX revocation checks.
+# Using a Java `SSLContext` with PKIX revocation checks.
 # This is expected to fail and print a Java Exception that indicates that the certificate has been revoked.
-java -jar 'target/tls-playground-client-0.0.1-SNAPSHOT.jar' --tls.trusted-certs='DigiCert Global Root CA.der' --tls.check-revocation='true' 'https://revoked.badssl.com/'
+java -jar 'target/tls-playground-client-0.0.1-SNAPSHOT.jar' --tls.check-revocation='true' 'https://revoked.badssl.com/'
 ```
 
 
