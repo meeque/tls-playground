@@ -1,6 +1,7 @@
 package com.sap.cx.jester.tlsplayground.client;
 
 import javax.net.ssl.SSLHandshakeException;
+import javax.net.ssl.SSLPeerUnverifiedException;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -20,6 +21,36 @@ public class TlsPlaygroundClientApplicationTests {
 	@Test
 	public void testPkixSslContextWithGoodServerCertificate() {
 		runWithArgs("--tls.check-revocation=true", "https://badssl.com");
+	}
+
+	@Test
+	public void testDefaultSslContextWithExpiredServerCertificate() {
+		runWithArgs(SSLHandshakeException.class, "https://expired.badssl.com/");
+	}
+
+	@Test
+	public void testPkixSslContextWithExpiredServerCertificate() {
+		runWithArgs(SSLHandshakeException.class, "--tls.check-revocation=true", "https://expired.badssl.com/");
+	}
+
+	@Test
+	public void testDefaultSslContextWithWrongHostServerCertificate() {
+		runWithArgs(SSLPeerUnverifiedException.class, "https://wrong.host.badssl.com/");
+	}
+
+	@Test
+	public void testPkixSslContextWithWrongHostServerCertificate() {
+		runWithArgs(SSLPeerUnverifiedException.class, "--tls.check-revocation=true", "https://wrong.host.badssl.com/");
+	}
+
+	@Test
+	public void testDefaultSslContextWithUntrustedServerCertificate() {
+		runWithArgs(SSLHandshakeException.class, "https://untrusted-root.badssl.com/");
+	}
+
+	@Test
+	public void testPkixSslContextWithUntrustedServerCertificate() {
+		runWithArgs(SSLHandshakeException.class, "--tls.check-revocation=true", "https://untrusted-root.badssl.com/");
 	}
 
 	@Test
