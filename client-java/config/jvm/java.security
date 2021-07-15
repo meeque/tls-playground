@@ -1,0 +1,6 @@
+# the following is needed to enable OCSP when system property 
+# com.sun.net.ssl.checkRevocation is set to true
+# see:
+# https://docs.oracle.com/javase/8/docs/technotes/guides/security/jsse/JSSERefGuide.html#InstallationAndCustomization
+# https://docs.oracle.com/javase/8/docs/technotes/guides/security/jsse/ocsp.html
+ocsp.enable=true
