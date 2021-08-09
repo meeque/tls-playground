@@ -1,10 +1,13 @@
 package com.sap.cx.jester.tlsplayground.client;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLPeerUnverifiedException;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.springframework.boot.SpringApplication;
 
 public class TlsPlaygroundClientApplicationTests {
@@ -72,17 +75,17 @@ public class TlsPlaygroundClientApplicationTests {
 			runWithArgs(args);
 		} catch (final Exception e) {
 			final Throwable cause = e.getCause();
-			Assert.assertTrue(
-					"Expected SpringApplication to throw an IllegalStateException, but got " + e.getClass().getName() + " instead.",
-					e instanceof IllegalStateException);
-			Assert.assertNotNull(
-					"Expected SpringApplication to throw an Exception with a cause, but got no cause.",
-					cause);
-			Assert.assertTrue(
-					"Expected SpringApplication to throw an Exception caused by " + expectedExceptionCause.getName() + ", but got " + cause.getClass().getName() + " instead.",
-					expectedExceptionCause.isInstance(cause));
+			assertTrue(
+					e instanceof IllegalStateException,
+					"Expected SpringApplication to throw an IllegalStateException, but got " + e.getClass().getName() + " instead.");
+			assertNotNull(
+					cause,
+					"Expected SpringApplication to throw an Exception with a cause, but got no cause.");
+			assertTrue(
+					expectedExceptionCause.isInstance(cause),
+					"Expected SpringApplication to throw an Exception caused by " + expectedExceptionCause.getName() + ", but got " + cause.getClass().getName() + " instead.");
 			return;
 		}
-		Assert.fail("Expected exception to be thrown, but got none.");
+		fail("Expected exception to be thrown, but got none.");
 	}
 }
