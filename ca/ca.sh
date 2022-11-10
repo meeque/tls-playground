@@ -168,7 +168,7 @@ function clean {
 
   find . -type f -and '(' -name '*.pem' -or -name '*.der' -or -name '*.pfx' -or -name 'serial' -or -name 'db.txt' ')' | xargs rm
   find . -type l -and '(' -name '*.pem' -or -name '*.der' -or -name '*.pfx' ')' | xargs rm
-  find . -type d -and '(' -name 'private' -or -name 'newcerts' ')' | xargs rmdir
+  find . -type d -and -empty -and '(' -name 'private' -or -name 'newcerts' ')' | xargs rmdir
 }
 
 
