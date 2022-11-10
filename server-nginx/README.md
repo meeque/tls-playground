@@ -13,10 +13,12 @@ Both nginx virtual hosts come with a working out-of-the-box TLS configuration. H
 
     ca/ca.sh request ca1 server-nginx/servers/server1/tls/server.config
     ca/ca.sh request ca1 server-nginx/servers/server2/tls/server.config
+    
+    cat ca/ca1/ca-cert.pem ca/ca2/ca-cert.pem > server-nginx/servers/server2/tls/trusted-clients-cas.pem
 
-This will use the TLS certificate configuration that comes with TLS playground nginx server, and use `ca1` to generate appropriate keys and certificates. Whenever these certificates expire, just rerun the above commands.
+This will use the TLS certificate configuration that comes with TLS playground nginx server, and use `ca1` to generate appropriate keys and certificates. It will also create file `trusted-clients-cas.pem`, which contains the root certificates of both `ca1` and `ca2`.  Whenever these certificates expire, just rerun the above commands.
 
-Once that is in place, you can run the nginx server like so:
+Once all this is in place, you can run the nginx server like so:
 
     nginx -p ./server-nginx/ -c nginx.conf
 
