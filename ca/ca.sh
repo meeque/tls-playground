@@ -166,7 +166,8 @@ function clean {
   cd "${ca_base_dir}"
   cd ..
 
-  find . -type f -and '(' -name '*.pem' -or -name '*.der' -or -name '*.pfx' -or -name 'serial' -or -name 'db.txt' ')' | xargs rm
+  find . -type f -and '(' -name '*.pem' -or -name '*.der' -or -name '*.pfx' ')' | xargs rm
+  find ca -type f -and '(' -name 'serial' -or -name 'serial.*' -or -name 'db.txt' -or -name 'db.txt.*' ')' | xargs rm
   find . -type l -and '(' -name '*.pem' -or -name '*.der' -or -name '*.pfx' ')' | xargs rm
   find . -type d -and -empty -and '(' -name 'private' -or -name 'newcerts' ')' | xargs rmdir
 }
