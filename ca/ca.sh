@@ -162,6 +162,17 @@ function pkcs12 {
 
 
 
+function clean {
+  cd "${ca_base_dir}"
+  cd ..
+
+  find . -type f -and '(' -name '*.pem' -or -name '*.der' -or -name '*.pfx' -or -name 'serial' -or -name 'db.txt' ')' | xargs rm
+  find . -type l -and '(' -name '*.pem' -or -name '*.der' -or -name '*.pfx' ')' | xargs rm
+  find . -type d -and '(' -name 'private' -or -name 'newcerts' ')' | xargs rmdir
+}
+
+
+
 export TLS_PLAYGROUND_PASS="${TLS_PLAYGROUND_PASS:=1234}"
 
 ca_base_dir="$( cd "$(dirname "$0")" ; pwd -P )"
@@ -172,10 +183,11 @@ command="$1"
 shift
 
 case "$command" in
-  'reset' | 'sign' | 'request' | 'pkcs8' | 'pkcs12' )
+  'reset' | 'sign' | 'request' | 'pkcs8' | 'pkcs12' | 'clean' )
     "$command" "$@"
     ;;
   * )
     echo "Unsupported command '$command'."
+    exit 1
     ;;
 esac
