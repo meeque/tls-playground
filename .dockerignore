@@ -7,6 +7,8 @@
 *.der
 *.pfx
 
+/Dockerfile
+
 /ca/*/db.txt
 /ca/*/db.txt.*
 /ca/*/serial

@@ -21,3 +21,16 @@ A sample [nginx server](server-nginx/) using various TLS certificate configurati
 ### Client: Java
 
 A simple [TLS-enabled HTTP client in Java](client-java/) supporting different TLS setups, including client certificates.
+
+
+
+## Building and Running with Docker
+
+Use the following to create a Docker image of the TLS playground and all its prerequisites:
+
+```
+$ docker image pull debian:testing-slim
+$ docker build --tag user/tls-playground:latest .
+$ docker image push user/tls-playground:latest .
+```
+
