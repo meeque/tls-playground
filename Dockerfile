@@ -7,7 +7,7 @@ RUN apt-get update \
     && \
     apt-get upgrade --assume-yes \
     && \
-    apt-get install --assume-yes \
+    apt-get install --assume-yes --option 'APT::Install-Recommends=false' \
     ca-certificates \
     openssl \
     certbot \
