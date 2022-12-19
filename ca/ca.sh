@@ -12,8 +12,8 @@ function reset {
       cd "${ca_base_dir}"
       cd "${ca_name}"
 
-      find . -type d -and -not -name '.' | xargs rm -r
-      find . -type f -and -not -name 'ca-req.config' | xargs rm
+      find . -type d -and -not -name '.' | xargs rm -r 2>/dev/null || true
+      find . -type f -and -not -name 'ca-req.config' | xargs rm 2>/dev/null || true
 
       mkdir 'newcerts'
       mkdir 'private'
@@ -98,9 +98,9 @@ function request {
 
       mkdir -p "${config_file_basepath}/private"
       chmod og-rwx "${config_file_basepath}/private"
-      rm "${reqest_file_path}" || true
-      rm "${key_file_path}" || true
-      rm "${cert_link_path}" || true
+      rm "${reqest_file_path}" 2>/dev/null || true
+      rm "${key_file_path}" 2>/dev/null || true
+      rm "${cert_link_path}" 2>/dev/null || true
       (
         set -x
         openssl req -new -config "${config_file_path}" -newkey rsa:2048 -passout env:TLS_PLAYGROUND_PASS -keyout "${key_file_path}" -out "${reqest_file_path}"
@@ -166,10 +166,10 @@ function clean {
   cd "${ca_base_dir}"
   cd ..
 
-  find . -type f -and '(' -name '*.pem' -or -name '*.der' -or -name '*.pfx' ')' | xargs rm
-  find ca -type f -and '(' -name 'serial' -or -name 'serial.*' -or -name 'db.txt' -or -name 'db.txt.*' ')' | xargs rm
-  find . -type l -and '(' -name '*.pem' -or -name '*.der' -or -name '*.pfx' ')' | xargs rm
-  find . -type d -and -empty -and '(' -name 'private' -or -name 'newcerts' ')' | xargs rmdir
+  find . -type f -and '(' -name '*.pem' -or -name '*.der' -or -name '*.pfx' ')' | xargs rm 2>/dev/null || true
+  find ca -type f -and '(' -name 'serial' -or -name 'serial.*' -or -name 'db.txt' -or -name 'db.txt.*' ')' | xargs rm 2>/dev/null || true
+  find . -type l -and '(' -name '*.pem' -or -name '*.der' -or -name '*.pfx' ')' | xargs rm 2>/dev/null || true
+  find . -type d -and -empty -and '(' -name 'private' -or -name 'newcerts' ')' | xargs rmdir 2>/dev/null || true
 }
 
 
