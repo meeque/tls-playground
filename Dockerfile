@@ -16,6 +16,10 @@ RUN apt-get update \
     maven \
     curl \
     gettext-base \
+    coreutils \
+    lsof \
+    procps \
+    psmisc \
     && \
     rm -rf /var/lib/apt/lists/*
 
@@ -29,7 +33,13 @@ COPY . "/opt/tls-playground/"
 
 WORKDIR "/opt/tls-playground"
 
+# TODO remove TLS_PLAYGROUND_PASS once fully replaced by TP_PASS
 ENV TLS_PLAYGROUND_PASS="1234"
+ENV TP_PASS="1234"
+ENV TP_SERVER_DOMAIN="localhost"
+ENV TP_SERVER_LISTEN_ADDRESS="127.0.0.1"
+ENV TP_SERVER_HTTP_PORT=8080
+ENV TP_SERVER_HTTPS_PORT=8443
 
 ENTRYPOINT ["/usr/bin/bash"]
 
