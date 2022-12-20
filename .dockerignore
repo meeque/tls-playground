@@ -9,11 +9,13 @@
 
 /Dockerfile
 
-/ca/*/db.txt
-/ca/*/db.txt.*
-/ca/*/serial
-/ca/*/serial.*
-/ca/*/newcerts/
+/ca/**/db.txt
+/ca/**/db.txt.*
+/ca/**/serial
+/ca/**/serial.*
+/ca/**/newcerts/
+
+/server-nginx/**/*.conf
+/server-nginx/**/*.config
 
 target/
-
