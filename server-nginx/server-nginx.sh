@@ -10,6 +10,8 @@ port_regexp=''
 
 function check-env {
   local status=0
+  [[ "${TP_SERVER_DOMAIN}" =~ ^([-a-zA-Z0-9]+[.])*[-a-zA-Z0-9]+$ ]] \
+      || { status=1; echo "[TP] Variable TP_SERVER_DOMAIN with value '${TP_SERVER_DOMAIN}' does not look like a DNS domain name!"; }
   [[ "${TP_HTTP_LISTEN_ADDRESS}" =~ ^([*]|[0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3})$ ]] \
       || { status=1; echo "[TP] Variable TP_HTTP_LISTEN_ADDRESS with value '${TP_HTTP_LISTEN_ADDRESS}' does not look like an IP address!"; }
   [[ "${TP_HTTP_LISTEN_PORT}" =~ ^[0-9]{1,5}$ ]] \
@@ -49,6 +51,7 @@ function clean {
 
 
 export TP_PASS="${TLS_PLAYGROUND_PASS:=1234}"
+export TP_SERVER_DOMAIN="${TP_SERVER_DOMAIN:=localhost}"
 export TP_HTTP_LISTEN_ADDRESS="${TP_HTTP_LISTEN_ADDRESS:=127.0.0.1}"
 export TP_HTTP_LISTEN_PORT="${TP_HTTP_LISTEN_PORT:=8080}"
 export TP_HTTPS_LISTEN_ADDRESS="${TP_HTTPS_LISTEN_ADDRESS:=127.0.0.1}"
