@@ -15,6 +15,7 @@ RUN apt-get update \
     openjdk-17-jdk-headless \
     maven \
     curl \
+    gettext-base \
     && \
     rm -rf /var/lib/apt/lists/*
 
