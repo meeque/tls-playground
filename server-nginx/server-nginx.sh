@@ -4,6 +4,7 @@ set -e -o pipefail
 
 
 function configure {
+  cd "${server_nginx_base_dir}"
 
   for config_file_template in $( find . -type f -and -name '*.tmpl' )
   do
@@ -18,7 +19,7 @@ function configure {
 
 
 function clean {
-  cd "${ca_base_dir}"
+  cd "${server_nginx_base_dir}"
   find . -type f -and '(' -name '*.conf' -or -name '*.config' ')' | xargs rm -f  2>/dev/null || true
 }
 
