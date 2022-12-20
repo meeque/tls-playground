@@ -2,6 +2,7 @@
 
 This TLS Playground component provides an nginx web-server setup that makes use of the [TLS Playground CA](../ca/). The nginx setup consists of multiple virtual hosts that demonstrate certain aspects of a TLS server:
 
+* `server0` focuses on a simple single-domain scenario, but can be upgraded to use Let's Encrypt certificates obtained with ACME
 * `server1` focuses on server-side TLS in a multi-domain scenario
 * `server2` focuses on TLS with both server and client certificates
 
@@ -9,8 +10,9 @@ This TLS Playground component provides an nginx web-server setup that makes use 
 
 ## Setup and Run
 
-Both nginx virtual hosts come with a working out-of-the-box TLS configuration. However, this project does not ship with hardcoded server certificates. Thus you will first need to bootstrap the [TLS Playground CA](../ca/), then create appropriate server certificates. After CA bootstrapping, run the following commands in the root directory of the TLS Playground:
+All nginx virtual hosts come with a working out-of-the-box TLS configuration. However, this project does not ship with hardcoded server certificates. Thus you will first need to bootstrap the [TLS Playground CA](../ca/), then create appropriate server certificates. After CA bootstrapping, run the following commands in the root directory of the TLS Playground:
 
+    ca/ca.sh request ca1 server-nginx/servers/server0/tls/server.config
     ca/ca.sh request ca1 server-nginx/servers/server1/tls/server.config
     ca/ca.sh request ca1 server-nginx/servers/server2/tls/server.config
     
@@ -28,13 +30,13 @@ Again, this command must be issued from the root directory of the TLS Playground
 
 ## Using the Playground Servers
 
-Here's some suggestions on how you can use the preconfigured TLS Playground nginx virtual servers.
+Here's some suggestions on how you can use the pre-configured TLS Playground nginx virtual servers.
 
 
 
 ### Hostname Setup
 
-The virtual servers of the TLS playground all run on the same IP (localhost) and port. In order to address them, it is recommended that you add the following to your `/etc/hosts` file:
+The virtual servers of the TLS Playground all run on the same IP (localhost) and port. In order to address them, it is recommended that you add the following to your `/etc/hosts` file:
 
     # TLS Playground hosts
     127.0.0.1       server1.tls-playground.localhost
