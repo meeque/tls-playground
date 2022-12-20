@@ -35,7 +35,7 @@ function configure {
     config_file="$( echo "${config_file_template}" | sed -e 's/.tmpl$//' )"
     echo -n "[TP] Generating ${config_file}... "
     cat "${config_file_template}" \
-        | envsubst 'TP_HTTP_LISTEN_ADDRESS,TP_HTTP_LISTEN_ADDRESS,TP_HTTPS_LISTEN_ADDRESS,TP_HTTPS_LISTEN_PORT' \
+        | envsubst '$TP_SERVER_DOMAIN,$TP_HTTP_LISTEN_ADDRESS,$TP_HTTP_LISTEN_PORT,$TP_HTTPS_LISTEN_ADDRESS,$TP_HTTPS_LISTEN_PORT' \
         > "${config_file}"
     echo "done."
   done
