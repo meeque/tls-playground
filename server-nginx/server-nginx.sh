@@ -3,19 +3,39 @@ set -e -o pipefail
 
 
 
+address_regexp=
+port_regexp=''
+
+
+
+function check-env {
+  local status=0
+  [[ "${TP_HTTP_LISTEN_ADDRESS}" =~ ^([*]|[0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3})$ ]] \
+      || { status=1; echo "[TP] Variable TP_HTTP_LISTEN_ADDRESS with value '${TP_HTTP_LISTEN_ADDRESS}' does not look like an IP address!"; }
+  [[ "${TP_HTTP_LISTEN_PORT}" =~ ^[0-9]{1,5}$ ]] \
+      || { status=1; echo "[TP] Variable TP_HTTP_LISTEN_PORT with value '${TP_HTTP_LISTEN_PORT}' does not look like a network port number!"; }
+  [[ "${TP_HTTPS_LISTEN_ADDRESS}" =~ ^([*]|[0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3})$ ]] \
+      || { status=1; echo "[TP] Variable TP_HTTPS_LISTEN_ADDRESS with value '${TP_HTTPS_LISTEN_ADDRESS}' does not look like an IP address!"; }
+  [[ "${TP_HTTPS_LISTEN_PORT}" =~ ^[0-9]{1,5}$ ]] \
+      || { status=1; echo "[TP] Variable TP_HTTPS_LISTEN_PORT with value '${TP_HTTPS_LISTEN_PORT}' does not look like a network port number!"; }
+  return "${status}"
+}
+
+
+
 function configure {
   cd "${server_nginx_base_dir}"
 
-  # TODO validate env vars for templating
+  check-env || return
 
   for config_file_template in $( find . -type f -and -name '*.tmpl' )
   do
     config_file="$( echo "${config_file_template}" | sed -e 's/.tmpl$//' )"
-    echo "[TP] Generating ${config_file}"...
+    echo -n "[TP] Generating ${config_file}... "
     cat "${config_file_template}" \
         | envsubst 'TP_HTTP_LISTEN_ADDRESS,TP_HTTP_LISTEN_ADDRESS,TP_HTTPS_LISTEN_ADDRESS,TP_HTTPS_LISTEN_PORT' \
         > "${config_file}"
-    echo "[TP] done."
+    echo "done."
   done
 }
 
@@ -41,12 +61,13 @@ server_nginx_base_dir="$( cd "$(dirname "$0")" ; pwd -P )"
 command="$1"
 shift
 
-case "$command" in
-  'configure' | 'clean' )
-    "$command" "$@"
+case "${command}" in
+  'check-env' | 'configure' | 'clean' )
+    "${command}" "$@"
     ;;
   * )
     echo "[TP] Unsupported command '$command'."
     exit 1
     ;;
 esac
+
