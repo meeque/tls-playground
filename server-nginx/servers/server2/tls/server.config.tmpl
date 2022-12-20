@@ -12,8 +12,9 @@ C = DE
 ST = Bavaria
 L = Munich
 O  = TLS Playground
-CN = server2.tls-playground.localhost
+CN = server2.tls-playground.${TP_SERVER_DOMAIN}
 
 [ req_extensions ]
 basicConstraints=CA:FALSE
 subjectKeyIdentifier = hash
+

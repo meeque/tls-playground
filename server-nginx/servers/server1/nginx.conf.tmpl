@@ -4,14 +4,13 @@ server {
   # Thus we put it into the server context.
 
   # listen on the default HTTPS port and enable SSL
-  listen 127.0.0.1:8443 ssl;
+  listen ${TP_SERVER_LISTEN_ADDRESS}:${TP_SERVER_HTTPS_PORT} ssl;
 
   # the server name (should match the server name in the certificate below)
-  server_name localhost;
-  server_name server1.tls-playground.localhost;
-  server_name server1a.tls-playground.localhost;
-  server_name server1b.tls-playground.localhost;
-  server_name *.server1.tls-playground.localhost;
+  server_name server1.tls-playground.${TP_SERVER_DOMAIN};
+  server_name server1a.tls-playground.${TP_SERVER_DOMAIN}
+  server_name server1b.tls-playground.${TP_SERVER_DOMAIN};
+  server_name *.server1.tls-playground.${TP_SERVER_DOMAIN};
 
   # server certificate (including full certificate chain up to the root certificate)
   ssl_certificate        servers/server1/tls/server-cert.pem;

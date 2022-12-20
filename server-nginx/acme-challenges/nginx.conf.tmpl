@@ -12,10 +12,10 @@ http {
 
   server {
     # listen on the default HTTP port
-    listen *:80 default_server;
+    listen ${TP_SERVER_LISTEN_ADDRESS}:${TP_SERVER_HTTP_PORT} default_server;
 
     # the server name
-    server_name play.meeque.de;
+    server_name ${TP_SERVER_DOMAIN};
 
     # ...
     root acme-challenges/public;
