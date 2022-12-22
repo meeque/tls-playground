@@ -12,8 +12,6 @@ RUN apt-get update \
     openssl \
     certbot \
     nginx \
-    openjdk-17-jdk-headless \
-    maven \
     curl \
     gettext-base \
     coreutils \
