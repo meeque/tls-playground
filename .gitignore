@@ -14,7 +14,7 @@
 /ca/**/newcerts/
 
 /acme/**/*.conf
-/acme/**/*.config
+/acme/**/*.ini
 
 /server-nginx/**/*.conf
 /server-nginx/**/*.config

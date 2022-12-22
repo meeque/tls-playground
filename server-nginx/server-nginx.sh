@@ -52,6 +52,9 @@ function configure {
 function clean {
   cd "${server_nginx_base_dir}"
   find . -type f -and '(' -name '*.conf' -or -name '*.config' ')' | xargs rm -f  2>/dev/null || true
+
+  cd ../acme/certbot
+  find . -type f -and -name '*.ini' | xargs rm -f  2>/dev/null || true
 }
 
 
