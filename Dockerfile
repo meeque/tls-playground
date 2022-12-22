@@ -21,6 +21,16 @@ RUN apt-get update \
     && \
     rm -rf /var/lib/apt/lists/*
 
+RUN apt-get update \
+    && \
+    apt-get upgrade --assume-yes \
+    && \
+    apt-get install --assume-yes --option 'APT::Install-Recommends=false' \
+    openjdk-17-jdk-headless \
+    maven \
+    && \
+    rm -rf /var/lib/apt/lists/*
+
 
 # copy tls-playground files
 
