@@ -6,8 +6,10 @@ config-dir = /opt/tls-playground/certbot/
 server = ${TP_ACME_SERVER_URL}
 
 # configure acme account
-email = ${TP_ACME_ACCOUNT_EMAIL}
 agree-tos = true
+email = ${TP_ACME_ACCOUNT_EMAIL}
+register-unsafely-without-email = true
+eff-email = false
 
 # configure acme challenge authenticator
 #authenticator = manual
