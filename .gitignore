@@ -13,6 +13,9 @@
 /ca/**/serial.*
 /ca/**/newcerts/
 
+/acme/**/*.conf
+/acme/**/*.config
+
 /server-nginx/**/*.conf
 /server-nginx/**/*.config
 

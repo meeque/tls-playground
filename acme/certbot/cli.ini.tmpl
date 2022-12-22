@@ -1,0 +1,18 @@
+
+# configure cryptography
+key-type = ecdsa
+elliptic-curve = secp384r1
+#key-type = rsa
+#rsa-key-size = 4096
+
+# configure acme server
+server = ${TP_ACME_SERVER_URL}
+
+# configure acme account
+email = ${TP_ACME_ACCOUNT_EMAIL}
+agree-tos = true
+
+# configure acme challenge authenticator
+#authenticator = manual
+authenticator = webroot
+webroot-path = /opt/tls-playground/acme/challenges-nginx/public/
