@@ -15,6 +15,7 @@
 
 /acme/**/*.conf
 /acme/**/*.ini
+/acme/certbot/accounts/
 
 /server-nginx/**/*.conf
 /server-nginx/**/*.config

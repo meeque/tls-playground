@@ -7,15 +7,18 @@
 *.der
 *.pfx
 
-/Dockerfile
-
 /ca/**/db.txt
 /ca/**/db.txt.*
 /ca/**/serial
 /ca/**/serial.*
 /ca/**/newcerts/
 
+/acme/**/*.conf
+/acme/**/*.ini
+/acme/certbot/accounts/
+
 /server-nginx/**/*.conf
 /server-nginx/**/*.config
 
 target/
+
