@@ -1,9 +1,6 @@
 
-# configure cryptography
-key-type = ecdsa
-elliptic-curve = secp384r1
-#key-type = rsa
-#rsa-key-size = 4096
+# configure directories
+config-dir = /opt/tls-playground/certbot/
 
 # configure acme server
 server = ${TP_ACME_SERVER_URL}
@@ -16,3 +13,9 @@ agree-tos = true
 #authenticator = manual
 authenticator = webroot
 webroot-path = /opt/tls-playground/acme/challenges-nginx/public/
+
+# configure cryptography
+key-type = ecdsa
+elliptic-curve = secp384r1
+#key-type = rsa
+#rsa-key-size = 4096
