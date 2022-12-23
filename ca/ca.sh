@@ -22,8 +22,8 @@ function reset {
       echo -n D78B3C0000000001 > serial
 
       set -x
-      openssl req -new -config ca-req.config -newkey rsa:4096 -passout env:TLS_PLAYGROUND_PASS -keyout private/ca-key.pem -out ca-csr.pem
-      openssl x509 -req -in ca-csr.pem -days 90 -signkey private/ca-key.pem -passin env:TLS_PLAYGROUND_PASS -out ca-cert.pem
+      openssl req -new -config ca-req.config -newkey rsa:4096 -passout env:TP_PASS -keyout private/ca-key.pem -out ca-csr.pem
+      openssl x509 -req -in ca-csr.pem -days 90 -signkey private/ca-key.pem -passin env:TP_PASS -out ca-cert.pem
     )
   else
     echo "No CA name specified. Specify the CA to reset!"
@@ -56,7 +56,7 @@ function sign {
 
         (
           set -x
-          openssl ca -config ca.conf -name "${ca_name}" -batch -passin env:TLS_PLAYGROUND_PASS -in "${csr_file_path}"
+          openssl ca -config ca.conf -name "${ca_name}" -batch -passin env:TP_PASS -in "${csr_file_path}"
         )
 
         echo "Newly signed certificate is now available at '${new_cert_file_path}'."
@@ -103,7 +103,7 @@ function request {
       rm "${cert_link_path}" 2>/dev/null || true
       (
         set -x
-        openssl req -new -config "${config_file_path}" -newkey rsa:2048 -passout env:TLS_PLAYGROUND_PASS -keyout "${key_file_path}" -out "${reqest_file_path}"
+        openssl req -new -config "${config_file_path}" -newkey rsa:2048 -passout env:TP_PASS -keyout "${key_file_path}" -out "${reqest_file_path}"
       )
 
       sign "${ca_name}" "${reqest_file_path}" "${cert_link_path}"
@@ -129,7 +129,7 @@ function pkcs8 {
 
     (
       set -x
-      openssl pkcs8 -topk8 -in "${key_file}" -passin env:TLS_PLAYGROUND_PASS -outform DER -out "${pkcs8_file}" -nocrypt
+      openssl pkcs8 -topk8 -in "${key_file}" -passin env:TP_PASS -outform DER -out "${pkcs8_file}" -nocrypt
     )
   else
     echo "No key file name specified. Specify the key file to convert to PKCS8!"
@@ -152,7 +152,7 @@ function pkcs12 {
 
     (
       set -x
-      openssl pkcs12 -export -in "${cert_file}" -inkey "${key_file}" -passin env:TLS_PLAYGROUND_PASS -out "${pkcs12_file}" -aes256 -passout env:TLS_PLAYGROUND_PASS
+      openssl pkcs12 -export -in "${cert_file}" -inkey "${key_file}" -passin env:TP_PASS -out "${pkcs12_file}" -aes256 -passout env:TP_PASS
     )
   else
     echo "No certificate file name specified. Specify the certificate file to convert to PKCS12!"
@@ -174,7 +174,7 @@ function clean {
 
 
 
-export TLS_PLAYGROUND_PASS="${TLS_PLAYGROUND_PASS:=1234}"
+export TP_PASS="${TP_PASS:=1234}"
 
 ca_base_dir="$( cd "$(dirname "$0")" ; pwd -P )"
 

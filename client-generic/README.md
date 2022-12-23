@@ -37,7 +37,7 @@ Here is how you use `ca.sh` to bundle a certificate and corresponding key into a
 
 This command will assume a corresponding private key relative to the `client1-cert.pem`. In the above example, it will look for the private key in `client-generic/tls/private/client1-key.pem`. That is just where the previous `ca.sh request` sub-command has put the private key.
 
-Likewise, the resulting PKCS12 file will be emitted to a path relative to `client1-cert.pem`. In the above example, it will be emitted to `client-generic/tls/private/client1.pfx`. The file will be encrypted with a passphrase specified in the `$TLS_PLAYGROUND_PASS` environment variable. As always this defaults to `1234`.
+Likewise, the resulting PKCS12 file will be emitted to a path relative to `client1-cert.pem`. In the above example, it will be emitted to `client-generic/tls/private/client1.pfx`. The file will be encrypted with a passphrase specified in the `$TP_PASS` environment variable. As always this defaults to `1234`.
 
 You can now install the certificate and key in your operating system, where most browsers will pick it up. For Firefox, you can instead install it in the browser itself. Follow these steps:
 
