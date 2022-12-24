@@ -26,7 +26,7 @@ function reset {
       openssl x509 -req -in ca-csr.pem -days 90 -signkey private/ca-key.pem -passin env:TP_PASS -out ca-cert.pem
     )
   else
-    echo "No CA name specified. Specify the CA to reset!"
+    echo "[TP] No CA name specified. Specify the CA to reset!"
     exit 1
   fi
 }
@@ -52,26 +52,26 @@ function sign {
         cd "${ca_base_dir}"
         local new_serial=$(<"${ca_name}/serial")
         local new_cert_file_path="$( pwd -P )/${ca_name}/newcerts/${new_serial}.pem"
-        echo "Signing CSR ${new_serial} from file '${csr_file_path}'..."
+        echo "[TP] Signing CSR ${new_serial} from file '${csr_file_path}'..."
 
         (
           set -x
           openssl ca -config ca.conf -name "${ca_name}" -batch -passin env:TP_PASS -in "${csr_file_path}"
         )
 
-        echo "Newly signed certificate is now available at '${new_cert_file_path}'."
+        echo "[TP] Newly signed certificate is now available at '${new_cert_file_path}'."
         if [[ "${cert_link}" ]]
         then
           ln -sf "${new_cert_file_path}" "${cert_link_path}"
-          echo "Also linked signed certificate to '${cert_link_path}'."
+          echo "[TP] Also linked signed certificate to '${cert_link_path}'."
         fi
       )
     else
-      echo "No CSR file name specified. Specify the CSR file to sign!"
+      echo "[TP] No CSR file name specified. Specify the CSR file to sign!"
       exit 1
     fi
   else
-    echo "No CA name specified. Specify the CA to sign with!"
+    echo "[TP] No CA name specified. Specify the CA to sign with!"
     exit 1
   fi
 }
@@ -108,11 +108,11 @@ function request {
 
       sign "${ca_name}" "${reqest_file_path}" "${cert_link_path}"
     else
-      echo "No certificate request config file name specified. Specify the config file to request and sign!"
+      echo "[TP] No certificate request config file name specified. Specify the config file to request and sign!"
       exit 1
     fi
   else
-    echo "No CA name specified. Specify the CA to sign with!"
+    echo "[TP] No CA name specified. Specify the CA to sign with!"
     exit 1
   fi
 }
@@ -132,7 +132,7 @@ function pkcs8 {
       openssl pkcs8 -topk8 -in "${key_file}" -passin env:TP_PASS -outform DER -out "${pkcs8_file}" -nocrypt
     )
   else
-    echo "No key file name specified. Specify the key file to convert to PKCS8!"
+    echo "[TP] No key file name specified. Specify the key file to convert to PKCS8!"
     exit 1
   fi
 }
@@ -155,7 +155,7 @@ function pkcs12 {
       openssl pkcs12 -export -in "${cert_file}" -inkey "${key_file}" -passin env:TP_PASS -out "${pkcs12_file}" -aes256 -passout env:TP_PASS
     )
   else
-    echo "No certificate file name specified. Specify the certificate file to convert to PKCS12!"
+    echo "[TP] No certificate file name specified. Specify the certificate file to convert to PKCS12!"
     exit 1
   fi
 }
@@ -188,7 +188,7 @@ case "$command" in
     "$command" "$@"
     ;;
   * )
-    echo "Unsupported command '$command'."
+    echo "[TP] Unsupported command '$command'."
     exit 1
     ;;
 esac
