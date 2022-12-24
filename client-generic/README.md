@@ -45,3 +45,4 @@ You can now install the certificate and key in your operating system, where most
 2. Go to the *Your Certificates* tab, and click on *Import...*
 3. Now select the client certificate PKCS12 file, e.g. `client1.pfx`.
 4. When prompted for a passphrase enter `1234`.
+

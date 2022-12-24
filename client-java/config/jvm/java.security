@@ -5,3 +5,4 @@
 # https://docs.oracle.com/javase/8/docs/technotes/guides/security/jsse/ocsp.html
 ocsp.enable=true
 jdk.tls.client.enableStatusRequestExtension=true
+

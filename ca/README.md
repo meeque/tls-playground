@@ -99,3 +99,4 @@ To print certificate fingerprints using various hash functions:
 To verify a certificate against a custom CA certificate:
 
     openssl verify -CAfile path/to/ca-cert.pem path/to/foo-cert.pem
+
