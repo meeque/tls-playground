@@ -181,9 +181,9 @@ ca_base_dir="$( cd "$(dirname "$0")" ; pwd -P )"
 
 
 command="$1"
-shift
+shift || true
 
-case "$command" in
+case "${command}" in
   'reset' | 'sign' | 'request' | 'pkcs8' | 'pkcs12' | 'clean' )
     "${command}" "$@"
     ;;
