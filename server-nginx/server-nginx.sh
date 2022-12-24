@@ -3,11 +3,6 @@ set -e -o pipefail
 
 
 
-address_regexp=
-port_regexp=''
-
-
-
 function check-env {
   local status=0
 
