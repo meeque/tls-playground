@@ -18,6 +18,7 @@ RUN apt-get update \
     lsof \
     procps \
     psmisc \
+    util-linux \
     && \
     rm -rf /var/lib/apt/lists/*
 
