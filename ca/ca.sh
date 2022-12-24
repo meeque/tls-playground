@@ -56,7 +56,7 @@ function sign {
 
         (
           set -x
-          openssl ca -config ca.conf -name "${ca_name}" -batch -passin env:TP_PASS -in "${csr_file_path}"
+          openssl ca -config ca.conf -name "${ca_name}" -batch -notext -passin env:TP_PASS -in "${csr_file_path}"
         )
 
         echo "[TP] Newly signed certificate is now available at '${new_cert_file_path}'."
@@ -185,10 +185,11 @@ shift
 
 case "$command" in
   'reset' | 'sign' | 'request' | 'pkcs8' | 'pkcs12' | 'clean' )
-    "$command" "$@"
+    "${command}" "$@"
     ;;
   * )
     echo "[TP] Unsupported command '$command'."
     exit 1
     ;;
 esac
+
