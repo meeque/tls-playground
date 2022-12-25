@@ -261,14 +261,19 @@ function tp_ca_init {
 
     if [[ -z "${ca_name}" ]]
     then
-        echo "[TP] No CA name specified. Specify the CA to reset!"
-        return 1
+        echo "[TP] No CA name specified. Proceeding to initialize all CAs..."
+        for ca_name in $( find "${TP_BASE_DIR}/ca" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort )
+        do
+            echo
+            tp_ca_init "${ca_name}"
+        done
+        return $?
     fi
 
     tp_ca_clean "${ca_name}"
+    echo "[TP] Creating scaffolding for CA '${ca_name}'..."
     (
         cd "${TP_BASE_DIR}/ca/${ca_name}"
-
         mkdir 'newcerts'
         mkdir 'private'
         chmod go-rwx 'private'
@@ -348,6 +353,19 @@ function tp_ca_sign {
 
 function tp_ca_clean {
     local ca_name="$1"
+
+    if [[ -z "${ca_name}" ]]
+    then
+        echo "[TP] No CA name specified. Proceeding to clean all CAs..."
+        for ca_name in $( find "${TP_BASE_DIR}/ca" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort )
+        do
+            echo
+            tp_ca_clean "${ca_name}"
+        done
+        return $?
+    fi
+
+    echo "[TP] Cleaning transient files of CA '${ca_name}'..."
     (
         cd "${TP_BASE_DIR}/ca/${ca_name}"
         find . -type d -and '(' -name 'newcerts' -or -name 'private' ')' | xargs rm -r 2>/dev/null || true
