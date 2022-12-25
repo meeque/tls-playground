@@ -172,7 +172,7 @@ function tp_ca {
     shift || true
 
     case "${command}" in
-        'init' | 'sign' | 'request' | 'pkcs8' | 'pkcs12' | 'clean' )
+        'init' | 'sign' | 'clean' )
             "tp_ca_${command}" "$@"
             ;;
         * )
