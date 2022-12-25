@@ -72,10 +72,7 @@ function tp_ca {
 
     case "${command}" in
         'init' | 'sign' | 'request' | 'pkcs8' | 'pkcs12' | 'clean' )
-            (
-            cd "${TP_BASE_DIR}/ca"
             "tp_ca_${command}" "$@"
-            )
             ;;
         * )
             echo "[TP] Unsupported ca command '$command'."
@@ -90,7 +87,7 @@ function tp_ca_init {
     if [[ "${ca_name}" ]]
     then
         (
-            cd "${ca_name}"
+            cd "${TP_BASE_DIR}/ca/${ca_name}"
 
             find . -type d -and -not -name '.' | xargs rm -r 2>/dev/null || true
             find . -type f -and -not -name 'ca-req.config' | xargs rm 2>/dev/null || true
@@ -99,8 +96,11 @@ function tp_ca_init {
             mkdir 'private'
             chmod go-rwx 'private'
             touch db.txt
+            # TODO use distinct serial ranges for individual cas
             echo -n D78B3C0000000001 > serial
 
+            # TODO [TP] add explanatory messages
+            # TODO delegate to some self-signed cert sub-command
             set -x
             openssl req -new -config ca-req.config -newkey rsa:4096 -passout env:TP_PASS -keyout private/ca-key.pem -out ca-csr.pem
             openssl x509 -req -in ca-csr.pem -days 90 -signkey private/ca-key.pem -passin env:TP_PASS -out ca-cert.pem
@@ -127,6 +127,7 @@ function tp_ca_sign {
             fi
 
             (
+                cd "${TP_BASE_DIR}/ca/"
                 local new_serial=$(<"${ca_name}/serial")
                 local new_cert_file_path="$( pwd -P )/${ca_name}/newcerts/${new_serial}.pem"
 
@@ -134,7 +135,7 @@ function tp_ca_sign {
                 echo
                 (
                     set -x
-                    openssl ca -config ca.conf -name "${ca_name}" -batch -notext -passin env:TP_PASS -in "${csr_file_path}"
+                    openssl ca -config "ca.conf" -name "${ca_name}" -batch -notext -passin env:TP_PASS -in "${csr_file_path}"
                 )
                 echo
                 echo "[TP] New certificate in '${new_cert_file_path}'."
@@ -208,8 +209,8 @@ function tp_ca_pkcs8 {
         local pkcs8_file="${key_name}-pkcs8.der"
 
         (
-          set -x
-          openssl pkcs8 -topk8 -in "${key_file}" -passin env:TP_PASS -outform DER -out "${pkcs8_file}" -nocrypt
+            set -x
+            openssl pkcs8 -topk8 -in "${key_file}" -passin env:TP_PASS -outform DER -out "${pkcs8_file}" -nocrypt
         )
     else
         echo "[TP] No key file name specified. Specify the key file to convert to PKCS8!"
