@@ -232,6 +232,11 @@ function tp_cert_pkcs12 {
     echo "[TP] PKCS12 bundle in '${pkcs12_file}'."
 }
 
+# TODO add general cert cleanup functionality
+# find . -type f -and '(' -name '*.pem' -or -name '*.der' -or -name '*.pfx' ')' | xargs rm 2>/dev/null || true
+# find . -type l -and '(' -name '*.pem' -or -name '*.der' -or -name '*.pfx' ')' | xargs rm 2>/dev/null || true
+# find . -type d -and -empty -and '(' -name 'private' -or -name 'newcerts' ')' | xargs rmdir 2>/dev/null || true
+
 
 
 # TP ca sub-commands
@@ -260,11 +265,9 @@ function tp_ca_init {
         return 1
     fi
 
+    tp_ca_clean "${ca_name}"
     (
         cd "${TP_BASE_DIR}/ca/${ca_name}"
-
-        find . -type d -and -not -name '.' | xargs rm -r 2>/dev/null || true
-        find . -type f -and -not -name 'ca-root.config' | xargs rm 2>/dev/null || true
 
         mkdir 'newcerts'
         mkdir 'private'
@@ -323,7 +326,7 @@ function tp_ca_sign {
         echo
         (
             set -x
-            openssl ca -config "ca.conf" -name "${ca_name}" -batch -notext -passin env:TP_PASS -in "${csr_file_path}"
+            openssl ca -config 'ca.config' -name "${ca_name}" -batch -notext -passin env:TP_PASS -in "${csr_file_path}"
         )
         echo
         echo "[TP] New certificate in '${new_cert_file_path}'."
@@ -344,13 +347,11 @@ function tp_ca_sign {
 }
 
 function tp_ca_clean {
+    local ca_name="$1"
     (
-        cd "${TP_BASE_DIR}"
-
-        find . -type f -and '(' -name '*.pem' -or -name '*.der' -or -name '*.pfx' ')' | xargs rm 2>/dev/null || true
-        find ca -type f -and '(' -name 'serial' -or -name 'serial.*' -or -name 'db.txt' -or -name 'db.txt.*' ')' | xargs rm 2>/dev/null || true
-        find . -type l -and '(' -name '*.pem' -or -name '*.der' -or -name '*.pfx' ')' | xargs rm 2>/dev/null || true
-        find . -type d -and -empty -and '(' -name 'private' -or -name 'newcerts' ')' | xargs rmdir 2>/dev/null || true
+        cd "${TP_BASE_DIR}/ca/${ca_name}"
+        find . -type d -and '(' -name 'newcerts' -or -name 'private' ')' | xargs rm -r 2>/dev/null || true
+        find . -type f -and -not '(' -name '*.config' -or -name '*.md' ')' | xargs rm 2>/dev/null || true
     )
 }
 
