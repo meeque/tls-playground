@@ -208,10 +208,14 @@ function tp_ca_pkcs8 {
         local key_name="$( echo "${key_file}" | sed -e 's/[.]pem$//' )"
         local pkcs8_file="${key_name}-pkcs8.der"
 
+        echo "[TP] Converting private key '${key_file}' to PKCS8 format..."
+        echo
         (
             set -x
             openssl pkcs8 -topk8 -in "${key_file}" -passin env:TP_PASS -outform DER -out "${pkcs8_file}" -nocrypt
         )
+        echo
+        echo "[TP] PKCS8 private key in '${pkcs8_file}'."
     else
         echo "[TP] No key file name specified. Specify the key file to convert to PKCS8!"
         exit 1
@@ -229,12 +233,16 @@ function tp_ca_pkcs12 {
         local key_file="${cert_file_path}/private/${cert_name}-key.pem"
         local pkcs12_file="${cert_file_path}/private/${cert_name}.pfx"
 
+        echo "[TP] Bundling certificate '${cert_file}' and private key '${key_file}' to PKCS12..."
+        echo
         (
             set -x
             openssl pkcs12 -export -in "${cert_file}" -inkey "${key_file}" -passin env:TP_PASS -out "${pkcs12_file}" -aes256 -passout env:TP_PASS
         )
+        echo
+        echo "[TP] PKCS12 bundle in '${pkcs12_file}'."
     else
-        echo "[TP] No certificate file name specified. Specify the certificate file to convert to PKCS12!"
+        echo "[TP] No certificate specified. Specify the certificate to bundled to PKCS12!"
         return 1
     fi
 }
