@@ -128,6 +128,8 @@ function tp_cert_request {
         return 1
     fi
 
+    # TODO print config file
+
     local config_file_path="$( cd "${TP_WORK_DIR}"; cd "$(dirname "${config_file}")" ; pwd -P )/$(basename "${config_file}")"
     local config_file_basepath="$(dirname ${config_file_path})"
     local config_name="$(basename ${config_file_path})"
@@ -154,7 +156,33 @@ function tp_cert_request {
 }
 
 function tp_cert_selfsign {
-    local cert_config_or_csr="$1"
+    local config_file="$1"
+
+    if [[ -z "${config_file}" ]]
+    then
+        echo "[TP] No certificate request config file name specified. Specify a config file for your self-signed certificate!"
+        return 1
+    fi
+
+    echo "[TP] Preparing CSR for self-signed certificate, based on config file '${config_file}'..."
+    tp_cert_request "${config_file}"
+
+    local csr_file="$( echo "${config_file}" | sed -e 's/[.]config$/-csr.pem/' )"
+    local key_file="$( echo "${config_file}" | sed --regexp-extended -e 's_(^|/)([^/]+)[.]config$_\1private/\2-key.pem_' )"
+    local cert_file="$( echo "${config_file}" | sed -e 's/[.]config$/-cert.pem/' )"
+
+    echo "[TP] Signing CSR '${csr_file}' with it's own private key..."
+    echo
+    (
+        set -x
+        openssl x509 -req -in "${csr_file}" -days 90 -signkey "${key_file}" -passin env:TP_PASS -out "${cert_file}"
+    )
+    echo "[TP] New certificate in '${cert_file}'."
+
+    echo
+    tp_cert_show "${cert_file}"
+    echo
+    tp_cert_fingerprint "${cert_file}"
 }
 
 function tp_cert_pkcs8 {
@@ -294,7 +322,7 @@ function tp_ca_sign {
         local new_serial=$(<"${ca_name}/serial")
         local new_cert_file_path="$( pwd -P )/${ca_name}/newcerts/${new_serial}.pem"
 
-        echo "[TP] Signing CSR from '${csr_file_path}' with serial ${new_serial}..."
+        echo "[TP] Signing CSR from '${csr_file_path}' with CA ${ca_name} at serial ${new_serial}..."
         echo
         (
             set -x
