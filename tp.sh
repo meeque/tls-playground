@@ -264,7 +264,7 @@ function tp_ca_init {
         cd "${TP_BASE_DIR}/ca/${ca_name}"
 
         find . -type d -and -not -name '.' | xargs rm -r 2>/dev/null || true
-        find . -type f -and -not -name 'ca-req.config' | xargs rm 2>/dev/null || true
+        find . -type f -and -not -name 'ca-root.config' | xargs rm 2>/dev/null || true
 
         mkdir 'newcerts'
         mkdir 'private'
@@ -272,13 +272,10 @@ function tp_ca_init {
         touch db.txt
         # TODO use distinct serial ranges for individual cas
         echo -n D78B3C0000000001 > serial
-
-        # TODO [TP] add explanatory messages
-        # TODO delegate to some self-signed cert sub-command
-        set -x
-        openssl req -new -config ca-req.config -newkey rsa:4096 -passout env:TP_PASS -keyout private/ca-key.pem -out ca-csr.pem
-        openssl x509 -req -in ca-csr.pem -days 90 -signkey private/ca-key.pem -passin env:TP_PASS -out ca-cert.pem
     )
+
+    echo "[TP] Preparing root certificate for CA '${ca_name}'..."
+    tp_cert_selfsign "${TP_BASE_DIR}/ca/${ca_name}/ca-root.config"
 }
 
 function tp_ca_sign {
