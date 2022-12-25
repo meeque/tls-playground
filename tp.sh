@@ -59,7 +59,7 @@ function tp_main_env_defaults {
     export TP_SERVER_HTTP_PORT="${TP_SERVER_HTTP_PORT:=8080}"
     export TP_SERVER_HTTPS_PORT="${TP_SERVER_HTTPS_PORT:=8443}"
     export TP_ACME_SERVER_URL="${TP_ACME_SERVER_URL:=https://acme-staging-v02.api.letsencrypt.org/directory}"
-    export TP_ACME_ACCOUNT_EMAIL="${TP_ACME_ACCOUNT_EMAIL:=webmaster@example.net}"
+    export TP_ACME_ACCOUNT_EMAIL="${TP_ACME_ACCOUNT_EMAIL:=webmaster@tls-playground.example}"
 }
 
 
@@ -71,16 +71,16 @@ function tp_ca {
     shift || true
 
     case "${command}" in
-      'init' | 'sign' | 'request' | 'pkcs8' | 'pkcs12' | 'clean' )
-        (
+        'init' | 'sign' | 'request' | 'pkcs8' | 'pkcs12' | 'clean' )
+            (
             cd "${TP_BASE_DIR}/ca"
             "tp_ca_${command}" "$@"
-        )
-        ;;
-      * )
-        echo "[TP] Unsupported ca command '$command'."
-        return 1
-        ;;
+            )
+            ;;
+        * )
+            echo "[TP] Unsupported ca command '$command'."
+            return 1
+            ;;
     esac
 }
 
@@ -129,19 +129,21 @@ function tp_ca_sign {
             (
                 local new_serial=$(<"${ca_name}/serial")
                 local new_cert_file_path="$( pwd -P )/${ca_name}/newcerts/${new_serial}.pem"
-                echo "[TP] Signing CSR ${new_serial} from file '${csr_file_path}'..."
 
+                echo "[TP] Signing CSR from '${csr_file_path}' with serial ${new_serial}..."
+                echo
                 (
                     set -x
                     openssl ca -config ca.conf -name "${ca_name}" -batch -notext -passin env:TP_PASS -in "${csr_file_path}"
                 )
+                echo
+                echo "[TP] New certificate in '${new_cert_file_path}'."
 
-                echo "[TP] Newly signed certificate is now available at '${new_cert_file_path}'."
                 if [[ "${cert_link}" ]]
                 then
                     # TODO use relative paths in symlinks, because absolute paths break in container bind mounts
                     ln -sf "${new_cert_file_path}" "${cert_link_path}"
-                    echo "[TP] Also linked signed certificate to '${cert_link_path}'."
+                    echo "[TP] Also linked certificate into '${cert_link_path}'."
                 fi
             )
         else
@@ -162,27 +164,31 @@ function tp_ca_request {
     then
         if [[ "${config_file}" ]]
         then
-          local config_file_path="$( cd "${TP_WORK_DIR}"; cd "$(dirname "${config_file}")" ; pwd -P )/$(basename "${config_file}")"
-          local config_file_basepath="$(dirname ${config_file_path})"
-          local config_name="$(basename ${config_file_path})"
-          local config_name="$( echo "${config_name}" | sed -e 's/[.]config$//' )"
-          local reqest_file_path="${config_file_basepath}/${config_name}-csr.pem"
-          local key_file_path="${config_file_basepath}/private/${config_name}-key.pem"
-          local cert_link_path="${config_file_basepath}/${config_name}-cert.pem"
+            local config_file_path="$( cd "${TP_WORK_DIR}"; cd "$(dirname "${config_file}")" ; pwd -P )/$(basename "${config_file}")"
+            local config_file_basepath="$(dirname ${config_file_path})"
+            local config_name="$(basename ${config_file_path})"
+            local config_name="$( echo "${config_name}" | sed -e 's/[.]config$//' )"
+            local reqest_file_path="${config_file_basepath}/${config_name}-csr.pem"
+            local key_file_path="${config_file_basepath}/private/${config_name}-key.pem"
+            local cert_link_path="${config_file_basepath}/${config_name}-cert.pem"
 
-          echo "${config_file_basepath}" ' >>> ' "${config_name}"
+            mkdir -p "${config_file_basepath}/private"
+            chmod og-rwx "${config_file_basepath}/private"
+            rm "${reqest_file_path}" 2>/dev/null || true
+            rm "${key_file_path}" 2>/dev/null || true
+            rm "${cert_link_path}" 2>/dev/null || true
 
-          mkdir -p "${config_file_basepath}/private"
-          chmod og-rwx "${config_file_basepath}/private"
-          rm "${reqest_file_path}" 2>/dev/null || true
-          rm "${key_file_path}" 2>/dev/null || true
-          rm "${cert_link_path}" 2>/dev/null || true
-          (
-              set -x
-              openssl req -new -config "${config_file_path}" -newkey rsa:2048 -passout env:TP_PASS -keyout "${key_file_path}" -out "${reqest_file_path}"
-          )
+            echo "[TP] Generating key-pair and CSR based on config file '${config_file_path}'..."
+            echo
+            (
+                set -x
+                openssl req -new -config "${config_file_path}" -newkey rsa:2048 -passout env:TP_PASS -keyout "${key_file_path}" -out "${reqest_file_path}"
+            )
+            echo
+            echo "[TP] New private key in '${key_file_path}'."
+            echo "[TP] New CSR in '${reqest_file_path}'."
 
-          tp_ca_sign "${ca_name}" "${reqest_file_path}" "${cert_link_path}"
+            tp_ca_sign "${ca_name}" "${reqest_file_path}" "${cert_link_path}"
         else
             echo "[TP] No certificate request config file name specified. Specify the config file to request and sign!"
             return 1
