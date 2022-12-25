@@ -72,7 +72,7 @@ function tp_cert {
     shift || true
 
     case "${command}" in
-        'show' | 'request' | 'selfsign' | 'pkcs8' | 'pkcs12' )
+        'show' | 'fingerprint' | 'request' | 'selfsign' | 'pkcs8' | 'pkcs12' )
             "tp_cert_${command}" "$@"
             ;;
         * )
@@ -80,6 +80,43 @@ function tp_cert {
             return 1
             ;;
     esac
+}
+
+function tp_cert_show {
+    local cert_file="$1"
+    # TODO alternatively show CSRs and keys, based on naming conventions
+
+    if [[ -z "${cert_file}" ]]
+    then
+        echo "[TP] No certificate specified. Specify the certificate file to show!"
+        return 1
+    fi
+
+    echo "[TP] Showing contents of certificate in '${cert_file}'..."
+    echo
+    (
+        set -x
+        openssl x509 -in "${cert_file}" -noout -text
+    )
+}
+
+function tp_cert_fingerprint {
+    local cert_file="$1"
+    # TODO alternatively calculate fingerprints of CSRs and keys, based on naming conventions?
+
+    if [[ -z "${cert_file}" ]]
+    then
+        echo "[TP] No certificate specified. Specify the certificate file whose fingerprint to calculate!"
+        return 1
+    fi
+
+    # TODO support configurable list of hash algs
+    echo "[TP] Calculating fingerprint of certificate in '${cert_file}'..."
+    echo
+    (
+        set -x
+        openssl x509 -in "${cert_file}" -noout -fingerprint -sha256
+    )
 }
 
 function tp_cert_request {
@@ -114,6 +151,10 @@ function tp_cert_request {
     echo
     echo "[TP] New private key in '${key_file_path}'."
     echo "[TP] New CSR in '${reqest_file_path}'."
+}
+
+function tp_cert_selfsign {
+    local cert_config_or_csr="$1"
 }
 
 function tp_cert_pkcs8 {
@@ -262,10 +303,16 @@ function tp_ca_sign {
         echo
         echo "[TP] New certificate in '${new_cert_file_path}'."
 
+        echo
+        tp_cert_show "${new_cert_file_path}"
+        echo
+        tp_cert_fingerprint "${new_cert_file_path}"
+
         if [[ "${cert_link}" ]]
         then
             # TODO use relative paths in symlinks, because absolute paths break in container bind mounts
             ln -sf "${new_cert_file_path}" "${cert_link_path}"
+            echo
             echo "[TP] Also linked certificate into '${cert_link_path}'."
         fi
     )
