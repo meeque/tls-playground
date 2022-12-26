@@ -19,4 +19,5 @@
 
 /server-nginx/**/*.conf
 
+var/
 target/
