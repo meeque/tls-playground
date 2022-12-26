@@ -7,12 +7,10 @@ set -e -o pipefail
 
 function tp_main {
 
-    # set directories
-    export TP_WORK_DIR="$( pwd -P )"
-    export TP_BASE_DIR="$( cd "$(dirname "$0")"; pwd -P )"
-
-    # set env defaults
+    # setup environment
+    tp_main_env_global
     tp_main_env_defaults
+    tp_main_env_check
 
     # parse arguments
     local tp_arguments="$( getopt --options 'c:' --longoptions 'ca:' --name 'tp.sh' -- "$@" )"
@@ -52,6 +50,11 @@ function tp_main {
     esac
 }
 
+function tp_main_env_global {
+    export TP_WORK_DIR="$( pwd -P )"
+    export TP_BASE_DIR="$( cd "$(dirname "$0")"; pwd -P )"
+}
+
 function tp_main_env_defaults {
     export TP_PASS="${TP_PASS:=1234}"
     export TP_SERVER_DOMAIN="${TP_SERVER_DOMAIN:=localhost}"
@@ -60,6 +63,26 @@ function tp_main_env_defaults {
     export TP_SERVER_HTTPS_PORT="${TP_SERVER_HTTPS_PORT:=8443}"
     export TP_ACME_SERVER_URL="${TP_ACME_SERVER_URL:=https://acme-staging-v02.api.letsencrypt.org/directory}"
     export TP_ACME_ACCOUNT_EMAIL="${TP_ACME_ACCOUNT_EMAIL:=webmaster@tls-playground.example}"
+}
+
+function tp_main_env_check {
+  local status=0
+
+    [[ "${TP_SERVER_DOMAIN}" =~ ^([-a-zA-Z0-9]+[.])*[-a-zA-Z0-9]+$ ]] \
+        || { status=1; echo "[TP] Variable TP_SERVER_DOMAIN with value '${TP_SERVER_DOMAIN}' does not look like a DNS domain name!"; }
+    [[ "${TP_SERVER_LISTEN_ADDRESS}" =~ ^([*]|[0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3})$ ]] \
+        || { status=1; echo "[TP] Variable TP_SERVER_LISTEN_ADDRESS with value '${TP_SERVER_LISTEN_ADDRESS}' does not look like an IP address!"; }
+    [[ "${TP_SERVER_HTTP_PORT}" =~ ^[0-9]{1,5}$ ]] \
+        || { status=1; echo "[TP] Variable TP_SERVER_HTTP_PORT with value '${TP_SERVER_HTTP_PORT}' does not look like a network port number!"; }
+    [[ "${TP_SERVER_HTTPS_PORT}" =~ ^[0-9]{1,5}$ ]] \
+        || { status=1; echo "[TP] Variable TP_SERVER_HTTPS_PORT with value '${TP_SERVER_HTTPS_PORT}' does not look like a network port number!"; }
+
+    [[ "${TP_ACME_SERVER_URL}" =~ ^https:[/][/]([-a-zA-Z0-9]+[.])*[-a-zA-Z0-9]+(:[0-9]{1,5})?([/][-a-zA-Z0-9.+*_~]*)*$ ]] \
+        || { status=1; echo "[TP] Variable TP_ACME_SERVER_URL with value '${TP_ACME_SERVER_URL}' does not look like an absolute https url! Please note that user-info, query string, fragment, or exotic path characters are not allowed here!"; }
+    [[ "${TP_ACME_ACCOUNT_EMAIL}" =~ ^[-a-zA-Z0-9._%+]+@([-a-zA-Z0-9]+[.])*[-a-zA-Z0-9]+$ ]] \
+        || { status=1; echo "[TP] Variable TP_ACME_ACCOUNT_EMAIL with value '${TP_ACME_ACCOUNT_EMAIL}' does not look like an email address!"; }
+
+  return "${status}"
 }
 
 
