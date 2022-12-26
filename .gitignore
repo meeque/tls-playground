@@ -18,7 +18,6 @@
 /acme/certbot/accounts/
 
 /server-nginx/**/*.conf
-/server-nginx/**/*.config
 
 target/
 
