@@ -369,7 +369,7 @@ function tp_ca_sign {
         echo
         tp_cert_fingerprint "${new_cert_file_path}"
 
-        if [[ "${cert_link}" ]]
+        if [[ "${cert_link_path}" ]]
         then
             # TODO use relative paths in symlinks, because absolute paths break in container bind mounts
             ln -sf "${new_cert_file_path}" "${cert_link_path}"
