@@ -44,7 +44,7 @@ function tp_main {
             return $?
             ;;
         * )
-            echo "[TP] Unsupported command '${tp_command}'."
+            echo "[TP] Unsupported TLS Playground command '${tp_command}'."
             return 1
             ;;
     esac
@@ -99,7 +99,7 @@ function tp_cert {
             "tp_cert_${command}" "$@"
             ;;
         * )
-            echo "[TP] Unsupported cert command '$command'."
+            echo "[TP] Unsupported certificate command '${command}'."
             return 1
             ;;
     esac
@@ -266,7 +266,6 @@ function tp_cert_clean {
 
     if [[ -z "${path}" ]]
     then
-        echo "[TP] No path given to clean. Assuming whole TLS Playground"
         local path="${TP_BASE_DIR}"
     fi
 
@@ -292,7 +291,7 @@ function tp_ca {
             "tp_ca_${command}" "$@"
             ;;
         * )
-            echo "[TP] Unsupported ca command '$command'."
+            echo "[TP] Unsupported CA command '${command}'."
             return 1
             ;;
     esac
@@ -404,7 +403,6 @@ function tp_ca_clean {
         echo "[TP] No CA name specified. Proceeding to clean all CAs..."
         for ca_name in $( find "${TP_BASE_DIR}/ca" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort )
         do
-            echo
             tp_ca_clean "${ca_name}"
         done
         return $?
@@ -421,7 +419,45 @@ function tp_ca_clean {
 
 
 # TODO TP acme sub-commands
-#
+
+function tp_acme {
+    local command="$1"
+    shift || true
+
+    case "${command}" in
+        'init' | 'challenges' | 'sign' | 'clean' )
+            "tp_acme_${command}" "$@"
+            ;;
+        * )
+            echo "[TP] Unsupported ACME command '${command}'."
+            return 1
+            ;;
+    esac
+}
+
+function tp_acme_init {
+    tp_server_nginx_init "${TP_BASE_DIR}/acme/challenges-nginx"
+}
+
+function tp_acme_challenges {
+    local command="$1"
+    shift || true
+
+    case "${command}" in
+        'run' | 'start' | 'stop' )
+            "tp_server_nginx_${command}" "${TP_BASE_DIR}/acme/challenges-nginx"
+            ;;
+        * )
+            echo "[TP] Unsupported ACME challenges command '${command}'."
+            return 1
+            ;;
+    esac
+}
+
+function tp_acme_clean {
+    tp_server_nginx_clean "${TP_BASE_DIR}/acme/challenges-nginx"
+}
+
 #certbot --config acme/certbot/cli.ini certonly --domains "$TP_SERVER_DOMAIN"
 #ln -sf ../../../../acme/certbot/live/play.meeque.de/fullchain.pem server-nginx/servers/server0/tls/server.cert.pem
 #ln -sf ../../../../../acme/certbot/live/play.meeque.de/privkey.pem server-nginx/servers/server0/tls/private/server.key.pem
@@ -446,7 +482,7 @@ function tp_server {
             "tp_server_nginx_${command}" "${TP_BASE_DIR}/server-nginx"
             ;;
         * )
-            echo "[TP] Unsupported server command '$command'."
+            echo "[TP] Unsupported demo server command '${command}'."
             return 1
             ;;
     esac
@@ -456,23 +492,7 @@ function tp_server_init {
     local cert_issuer="$1"
 
     echo "[TP] Initializing nginx-based demo server..."
-    (
-        cd "${TP_BASE_DIR}/server-nginx"
-
-        # TODO exract templating to a utility function
-        for config_file_template in $( find . -type f -and -name '*.tmpl' )
-        do
-            config_file="$( echo "${config_file_template}" | sed -e 's/[.]tmpl$//' )"
-            echo -n "[TP] Generating configuration file ${config_file} from template... "
-            cat "${config_file_template}" \
-                | envsubst '${TP_SERVER_DOMAIN},${TP_SERVER_LISTEN_ADDRESS},${TP_SERVER_HTTP_PORT},${TP_SERVER_HTTPS_PORT},${TP_ACME_SERVER_URL},${TP_ACME_ACCOUNT_EMAIL}' \
-                > "${config_file}"
-            echo "done."
-        done
-
-        mkdir -p 'var/logs'
-        mkdir -p 'var/run'
-    )
+    tp_server_nginx_init "${TP_BASE_DIR}/server-nginx"
 
     echo "[TP] Creating server certificates for nginx-based demo server..."
     if [[ -z "${cert_issuer}" ]]
@@ -509,11 +529,8 @@ function tp_server_init {
 
 function tp_server_clean {
     echo "[TP] Cleaning transient files of nginx-based demo server..."
-    (
-        cd "${TP_BASE_DIR}/server-nginx"
-        find . -type f -and -name '*.conf' | xargs rm -f  2>/dev/null || true
-        rm -rf 'var' 2>/dev/null || true
-    )
+    find "${TP_BASE_DIR}/server-nginx" -type f -and -name '*.conf' | xargs rm -f  2>/dev/null || true
+    tp_server_nginx_clean "${TP_BASE_DIR}/server-nginx"
     tp_cert_clean "${TP_BASE_DIR}/server-nginx"
 }
 
@@ -530,6 +547,23 @@ function tp_server_cert_ca {
 function tp_server_cert_acme {
     # TODO request server certs via acme
     echo
+}
+
+function tp_server_nginx_init {
+    local server_dir="$1"
+
+    # TODO exract templating to a utility function
+    for config_file_template in $( find "${server_dir}" -type f -and -name '*.tmpl' )
+    do
+        config_file="$( echo "${config_file_template}" | sed -e 's/[.]tmpl$//' )"
+        echo -n "[TP] Generating configuration file ${config_file} from template... "
+        cat "${config_file_template}" \
+            | envsubst '${TP_SERVER_DOMAIN},${TP_SERVER_LISTEN_ADDRESS},${TP_SERVER_HTTP_PORT},${TP_SERVER_HTTPS_PORT},${TP_ACME_SERVER_URL},${TP_ACME_ACCOUNT_EMAIL}' \
+            > "${config_file}"
+        echo "done."
+    done
+
+    mkdir -p "${server_dir}/var/logs"
 }
 
 function tp_server_nginx_run {
@@ -550,15 +584,21 @@ function tp_server_nginx_stop {
     nginx -p "${server_dir}" -c 'nginx.conf' -s 'stop'
 }
 
+function tp_server_nginx_clean {
+    local server_dir="$1"
+    rm -rf "${server_dir}/var" 2>/dev/null || true
+}
+
 
 
 # TP clean command
 
 function tp_clean {
     echo "[TP] Cleaning up everything..."
+    # TODO also clean demo clients
     tp_server_clean
+    tp_acme_clean
     tp_ca_clean
-    # TODO also clean demo clients and acme files
     tp_cert_clean
 }
 
