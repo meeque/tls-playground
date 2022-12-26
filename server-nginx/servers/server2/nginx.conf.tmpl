@@ -18,7 +18,7 @@ server {
 
   # enforce client certificates
   ssl_verify_client on;
-  ssl_client_certificate   servers/server2/tls/trusted-clients-cas.pem;
+  ssl_client_certificate   servers/server2/tls/trusted-clients-cas.certs.pem;
 
   # enable HSTS (HTTP Strict Transport Security)
   add_header Strict-Transport-Security "max-age=15768000; includeSubdomains;";

@@ -121,6 +121,7 @@ function tp_cert_show {
         set -x
         openssl x509 -in "${cert_file}" -noout -text
     )
+    echo
 }
 
 function tp_cert_fingerprint {
@@ -140,6 +141,7 @@ function tp_cert_fingerprint {
         set -x
         openssl x509 -in "${cert_file}" -noout -fingerprint -sha256
     )
+    echo
 }
 
 function tp_cert_request {
@@ -451,22 +453,36 @@ function tp_server_init {
         done
     )
 
+    echo "[TP] Creating server certificates for nginx-based demo server..."
     if [[ -z "${cert_issuer}" ]]
     then
         echo "[TP] No certificate issuer specified. Assuming 'selfsign'."
         local cert_issuer="selfsign"
     fi
+    if [[ ! "${cert_issuer}" =~ ^selfsign|ca|acme$ ]]
+    then
+        echo "[TP] Unsupported certificate issuer '$cert_issuer'."
+        return 1
+    fi
     for config_file in $( find "${TP_BASE_DIR}/server-nginx" -path '*/tls/*' -name '*.cert.conf' )
     do
-        case "${cert_issuer}" in
-            'selfsign' | 'ca' | 'acme' )
-                "tp_server_init_${cert_issuer}" "${config_file}"
-                ;;
-            * )
-                echo "[TP] Unsupported certificate issuer '$cert_issuer'."
-                return 1
-                ;;
-        esac
+        "tp_server_init_${cert_issuer}" "${config_file}"
+    done
+
+    echo "[TP] Configuring trusted CAs for client certificates that the nginx-based demo server accepts..."
+    local trusted_certs_file="${TP_BASE_DIR}/server-nginx/servers/server2/tls/trusted-clients-cas.certs.pem"
+    :> "${trusted_certs_file}"
+
+    for ca_name in $( find "${TP_BASE_DIR}/ca" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort )
+    do
+        local ca_root_cert="${TP_BASE_DIR}/ca/${ca_name}/ca-root.cert.pem"
+        if [[ -f "${ca_root_cert}" ]]
+        then
+            echo "[TP] Adding root certificate of CA '${ca_name}' to trusted CAs file '${trusted_certs_file}'..."
+            cat "${ca_root_cert}" >> "${trusted_certs_file}"
+        else
+            echo "[TP] Looks like CA '${ca_name}' is not initialized. Omitting it from trusted CAs file '${trusted_certs_file}'!"
+        fi
     done
 }
 
