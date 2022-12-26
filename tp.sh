@@ -456,31 +456,32 @@ function tp_server_init {
         echo "[TP] No certificate issuer specified. Assuming 'selfsign'."
         local cert_issuer="selfsign"
     fi
-    case "${cert_issuer}" in
-        'selfsign' | 'ca' | 'acme' )
-            "tp_server_init_${cert_issuer}" "$@"
-            ;;
-        * )
-            echo "[TP] Unsupported certificate issuer '$cert_issuer'."
-            return 1
-            ;;
-    esac
-}
-
-function tp_server_init_selfsign {
     for config_file in $( find "${TP_BASE_DIR}/server-nginx" -path '*/tls/*' -name '*.config' )
     do
-        tp_cert_selfsign "${config_file}"
+        case "${cert_issuer}" in
+            'selfsign' | 'ca' | 'acme' )
+                "tp_server_init_${cert_issuer}" "${config_file}"
+                ;;
+            * )
+                echo "[TP] Unsupported certificate issuer '$cert_issuer'."
+                return 1
+                ;;
+        esac
     done
 }
 
+function tp_server_init_selfsign {
+    local config_file="$1"
+    tp_cert_selfsign "${config_file}"
+}
+
 function tp_server_init_ca {
-    # TODO
-    echo
+    local config_file="$1"
+    tp_ca_sign ca1 "${config_file}"
 }
 
 function tp_server_init_acme {
-    # TODO
+    # TODO request server certs via acme
     echo
 }
 
