@@ -15,9 +15,10 @@
 
 /acme/**/*.conf
 /acme/**/*.ini
-/acme/certbot/accounts/
+/acme/certbot/etc/
 
 /server-nginx/**/*.conf
 
 var/
 target/
+

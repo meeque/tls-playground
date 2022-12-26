@@ -280,7 +280,7 @@ function tp_cert_clean {
 
 
 
-# TP ca sub-commands
+# TP CA sub-commands
 
 function tp_ca {
     local command="$1"
@@ -418,7 +418,7 @@ function tp_ca_clean {
 
 
 
-# TODO TP acme sub-commands
+# TP ACME sub-commands
 
 function tp_acme {
     local command="$1"
@@ -436,6 +436,7 @@ function tp_acme {
 }
 
 function tp_acme_init {
+    mkdir -p "${TP_BASE_DIR}/acme/certbot/etc/"
     tp_server_nginx_init "${TP_BASE_DIR}/acme/challenges-nginx"
 }
 
@@ -455,6 +456,7 @@ function tp_acme_challenges {
 }
 
 function tp_acme_clean {
+    rm -rf "${TP_BASE_DIR}/acme/certbot/etc/" | xargs rm -r 2>/dev/null || true
     tp_server_nginx_clean "${TP_BASE_DIR}/acme/challenges-nginx"
 }
 
@@ -525,6 +527,8 @@ function tp_server_init {
             echo "[TP] Looks like CA '${ca_name}' is not initialized. Omitting it from trusted CAs file '${trusted_certs_file}'!"
         fi
     done
+
+    # TODO install some dummy cert, if trusted certs file still empty, because nginx does not accept an empty file
 }
 
 function tp_server_clean {
@@ -558,7 +562,7 @@ function tp_server_nginx_init {
         config_file="$( echo "${config_file_template}" | sed -e 's/[.]tmpl$//' )"
         echo -n "[TP] Generating configuration file ${config_file} from template... "
         cat "${config_file_template}" \
-            | envsubst '${TP_SERVER_DOMAIN},${TP_SERVER_LISTEN_ADDRESS},${TP_SERVER_HTTP_PORT},${TP_SERVER_HTTPS_PORT},${TP_ACME_SERVER_URL},${TP_ACME_ACCOUNT_EMAIL}' \
+            | envsubst '${TP_BASE_DIR},${TP_SERVER_DOMAIN},${TP_SERVER_LISTEN_ADDRESS},${TP_SERVER_HTTP_PORT},${TP_SERVER_HTTPS_PORT},${TP_ACME_SERVER_URL},${TP_ACME_ACCOUNT_EMAIL}' \
             > "${config_file}"
         echo "done."
     done

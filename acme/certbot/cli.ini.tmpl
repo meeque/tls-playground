@@ -1,6 +1,6 @@
 
 # configure directories
-config-dir = /opt/tls-playground/acme/certbot/
+config-dir = ${TP_BASE_DIR}/acme/certbot/etc/
 
 # configure acme server
 server = ${TP_ACME_SERVER_URL}
@@ -14,7 +14,7 @@ eff-email = false
 # configure acme challenge authenticator
 #authenticator = manual
 authenticator = webroot
-webroot-path = /opt/tls-playground/acme/challenges-nginx/public/
+webroot-path = ${TP_BASE_DIR}/acme/challenges-nginx/public/
 
 # configure cryptography
 #key-type = ecdsa
