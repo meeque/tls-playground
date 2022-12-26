@@ -409,6 +409,52 @@ function tp_ca_clean {
 #ln -sf ../../../../../acme/certbot/live/play.meeque.de/privkey.pem server-nginx/servers/server0/tls/private/server-key.pem
 # TODO show how to use certbot with own CSR
 # TODO show how to use certbot with manual challange
+#
+#find . -type f -and -name '*.ini' | xargs rm -f  2>/dev/null || true
+
+
+
+# TP server sub-commands
+
+function tp_server {
+    local command="$1"
+    shift || true
+
+    case "${command}" in
+        'init' | 'clean' )
+            "tp_server_${command}" "$@"
+            ;;
+        * )
+            echo "[TP] Unsupported server command '$command'."
+            return 1
+            ;;
+    esac
+}
+
+function tp_server_init {
+    echo "[TP] Initializing nginx-based demo server..."
+    (
+        cd "${TP_BASE_DIR}/server-nginx"
+
+        for config_file_template in $( find . -type f -and -name '*.tmpl' )
+        do
+            config_file="$( echo "${config_file_template}" | sed -e 's/[.]tmpl$//' )"
+            echo -n "[TP] Generating configuration file ${config_file} from template... "
+            cat "${config_file_template}" \
+                | envsubst '${TP_SERVER_DOMAIN},${TP_SERVER_LISTEN_ADDRESS},${TP_SERVER_HTTP_PORT},${TP_SERVER_HTTPS_PORT},${TP_ACME_SERVER_URL},${TP_ACME_ACCOUNT_EMAIL}' \
+                > "${config_file}"
+            echo "done."
+        done
+    )
+}
+
+function tp_server_clean {
+    echo "[TP] Cleaning transient files of nginx-based demo server..."
+    (
+        cd "${TP_BASE_DIR}/server-nginx"
+        find . -type f -and '(' -name '*.conf' -or -name '*.config' ')' | xargs rm -f  2>/dev/null || true
+    )
+}
 
 
 
