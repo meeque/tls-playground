@@ -343,10 +343,11 @@ function tp_ca_sign {
     fi
 
     local csr_file_path="$( cd "${TP_WORK_DIR}"; cd "$(dirname "${csr_file}")" ; pwd -P )/$(basename "${csr_file}")"
-    # TODO determine link by naming convention instead
     if [[ "${cert_link}" ]]
     then
         local cert_link_path="$( cd "${TP_WORK_DIR}"; cd "$(dirname "${cert_link}")" ; pwd -P )/$(basename "${cert_link}")"
+    else
+        local cert_link_path="$( echo "${csr_file_path}" | sed -e 's/-csr.pem$/-cert.pem/' )"
     fi
 
     (
@@ -453,7 +454,7 @@ function tp_server_init {
     if [[ -z "${cert_issuer}" ]]
     then
         echo "[TP] No certificate issuer specified. Assuming 'selfsign'."
-        cert_issuer="selfsign"
+        local cert_issuer="selfsign"
     fi
     case "${cert_issuer}" in
         'selfsign' | 'ca' | 'acme' )
