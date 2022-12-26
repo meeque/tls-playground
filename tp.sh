@@ -154,10 +154,10 @@ function tp_cert_request {
     local config_file_path="$( cd "${TP_WORK_DIR}"; cd "$(dirname "${config_file}")" ; pwd -P )/$(basename "${config_file}")"
     local config_file_basepath="$(dirname ${config_file_path})"
     local config_name="$(basename ${config_file_path})"
-    local config_name="$( echo "${config_name}" | sed -e 's/[.]config$//' )"
-    local reqest_file_path="${config_file_basepath}/${config_name}-csr.pem"
-    local key_file_path="${config_file_basepath}/private/${config_name}-key.pem"
-    local cert_link_path="${config_file_basepath}/${config_name}-cert.pem"
+    local config_name="$( echo "${config_name}" | sed -e 's/[.]cert[.]conf$//' )"
+    local reqest_file_path="${config_file_basepath}/${config_name}.csr.pem"
+    local key_file_path="${config_file_basepath}/private/${config_name}.key.pem"
+    local cert_link_path="${config_file_basepath}/${config_name}.cert.pem"
 
     # TODO extract clean-up code to separate sub-command
     mkdir -p "${config_file_basepath}/private"
@@ -194,9 +194,9 @@ function tp_cert_selfsign {
     echo "[TP] Preparing CSR for self-signed certificate, based on config file '${config_file}'..."
     tp_cert_request "${config_file}"
 
-    local csr_file="$( echo "${config_file}" | sed -e 's/[.]config$/-csr.pem/' )"
-    local key_file="$( echo "${config_file}" | sed --regexp-extended -e 's_(^|/)([^/]+)[.]config$_\1private/\2-key.pem_' )"
-    local cert_file="$( echo "${config_file}" | sed -e 's/[.]config$/-cert.pem/' )"
+    local csr_file="$( echo "${config_file}" | sed -e 's/[.]cert[.]conf$/.csr.pem/' )"
+    local key_file="$( echo "${config_file}" | sed --regexp-extended -e 's_(^|/)([^/]+)[.]cert[.]conf$_\1private/\2.key.pem_' )"
+    local cert_file="$( echo "${config_file}" | sed -e 's/[.]cert[.]conf$/.cert.pem/' )"
 
     echo "[TP] Signing CSR '${csr_file}' with it's own private key..."
     echo
@@ -245,8 +245,8 @@ function tp_cert_pkcs12 {
 
     local cert_file_path="$(dirname ${cert_file})"
     local cert_name="$(basename ${cert_file})"
-    local cert_name="$( echo "${cert_name}" | sed -e 's/[.]pem$//' | sed -e 's/-cert$//' )"
-    local key_file="${cert_file_path}/private/${cert_name}-key.pem"
+    local cert_name="$( echo "${cert_name}" | sed -e 's/[.]cert[.]pem$//' )"
+    local key_file="${cert_file_path}/private/${cert_name}.key.pem"
     local pkcs12_file="${cert_file_path}/private/${cert_name}.pfx"
 
     echo "[TP] Bundling certificate '${cert_file}' and private key '${key_file}' to PKCS12..."
@@ -310,7 +310,7 @@ function tp_ca_init {
     )
 
     echo "[TP] Preparing root certificate for CA '${ca_name}'..."
-    tp_cert_selfsign "${TP_BASE_DIR}/ca/${ca_name}/ca-root.config"
+    tp_cert_selfsign "${TP_BASE_DIR}/ca/${ca_name}/ca-root.cert.conf"
 }
 
 function tp_ca_sign {
@@ -330,10 +330,10 @@ function tp_ca_sign {
         return 1
     fi
 
-    if [[ "${cert_config_or_csr}" =~ [.]config$ ]]
+    if [[ "${cert_config_or_csr}" =~ [.]cert[.]conf$ ]]
     then
         local config_file="${cert_config_or_csr}"
-        local csr_file="$( echo "${config_file}" | sed -e 's/[.]config$/-csr.pem/' )"
+        local csr_file="$( echo "${config_file}" | sed -e 's/[.]cert[.]conf$/.csr.pem/' )"
 
         echo "[TP] Preparing CSR to sign, based on config file '${config_file}'..."
         tp_cert_request "${config_file}"
@@ -347,7 +347,7 @@ function tp_ca_sign {
     then
         local cert_link_path="$( cd "${TP_WORK_DIR}"; cd "$(dirname "${cert_link}")" ; pwd -P )/$(basename "${cert_link}")"
     else
-        local cert_link_path="$( echo "${csr_file_path}" | sed -e 's/-csr.pem$/-cert.pem/' )"
+        local cert_link_path="$( echo "${csr_file_path}" | sed -e 's/[.]csr[.]pem$/.cert.pem/' )"
     fi
 
     (
@@ -359,7 +359,7 @@ function tp_ca_sign {
         echo
         (
             set -x
-            openssl ca -config 'ca.config' -name "${ca_name}" -batch -notext -passin env:TP_PASS -in "${csr_file_path}"
+            openssl ca -config 'ca.conf' -name "${ca_name}" -batch -notext -passin env:TP_PASS -in "${csr_file_path}"
         )
         echo
         echo "[TP] New certificate in '${new_cert_file_path}'."
@@ -397,7 +397,7 @@ function tp_ca_clean {
     (
         cd "${TP_BASE_DIR}/ca/${ca_name}"
         find . -type d -and '(' -name 'newcerts' -or -name 'private' ')' | xargs rm -r 2>/dev/null || true
-        find . -type f -and -not '(' -name '*.config' -or -name '*.md' ')' | xargs rm 2>/dev/null || true
+        find . -type f -and -not '(' -name '*.conf' -or -name '*.md' ')' | xargs rm 2>/dev/null || true
     )
 }
 
@@ -406,8 +406,8 @@ function tp_ca_clean {
 # TODO TP acme sub-commands
 #
 #certbot --config acme/certbot/cli.ini certonly --domains "$TP_SERVER_DOMAIN"
-#ln -sf ../../../../acme/certbot/live/play.meeque.de/fullchain.pem server-nginx/servers/server0/tls/server-cert.pem
-#ln -sf ../../../../../acme/certbot/live/play.meeque.de/privkey.pem server-nginx/servers/server0/tls/private/server-key.pem
+#ln -sf ../../../../acme/certbot/live/play.meeque.de/fullchain.pem server-nginx/servers/server0/tls/server.cert.pem
+#ln -sf ../../../../../acme/certbot/live/play.meeque.de/privkey.pem server-nginx/servers/server0/tls/private/server.key.pem
 # TODO show how to use certbot with own CSR
 # TODO show how to use certbot with manual challange
 #
@@ -456,7 +456,7 @@ function tp_server_init {
         echo "[TP] No certificate issuer specified. Assuming 'selfsign'."
         local cert_issuer="selfsign"
     fi
-    for config_file in $( find "${TP_BASE_DIR}/server-nginx" -path '*/tls/*' -name '*.config' )
+    for config_file in $( find "${TP_BASE_DIR}/server-nginx" -path '*/tls/*' -name '*.cert.conf' )
     do
         case "${cert_issuer}" in
             'selfsign' | 'ca' | 'acme' )
@@ -489,7 +489,7 @@ function tp_server_clean {
     echo "[TP] Cleaning transient files of nginx-based demo server..."
     (
         cd "${TP_BASE_DIR}/server-nginx"
-        find . -type f -and '(' -name '*.conf' -or -name '*.config' ')' | xargs rm -f  2>/dev/null || true
+        find . -type f -and -name '*.conf' | xargs rm -f  2>/dev/null || true
     )
 }
 
