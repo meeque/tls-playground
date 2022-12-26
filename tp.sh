@@ -128,8 +128,6 @@ function tp_cert_request {
         return 1
     fi
 
-    # TODO print config file
-
     local config_file_path="$( cd "${TP_WORK_DIR}"; cd "$(dirname "${config_file}")" ; pwd -P )/$(basename "${config_file}")"
     local config_file_basepath="$(dirname ${config_file_path})"
     local config_name="$(basename ${config_file_path})"
@@ -138,11 +136,17 @@ function tp_cert_request {
     local key_file_path="${config_file_basepath}/private/${config_name}-key.pem"
     local cert_link_path="${config_file_basepath}/${config_name}-cert.pem"
 
+    # TODO extract clean-up code to separate sub-command
     mkdir -p "${config_file_basepath}/private"
     chmod og-rwx "${config_file_basepath}/private"
     rm "${reqest_file_path}" 2>/dev/null || true
     rm "${key_file_path}" 2>/dev/null || true
     rm "${cert_link_path}" 2>/dev/null || true
+
+    echo "[TP] Using OpenSSL CSR config file '${config_file_path}'..."
+    echo
+    cat "${config_file_path}"
+    echo
 
     echo "[TP] Generating key-pair and CSR based on config file '${config_file_path}'..."
     echo
