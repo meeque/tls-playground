@@ -437,7 +437,7 @@ function tp_server {
     shift || true
 
     case "${command}" in
-        'init' | 'clean' )
+        'init' | 'run' | 'start' | 'stop' | 'clean' )
             "tp_server_${command}" "$@"
             ;;
         * )
@@ -512,6 +512,42 @@ function tp_server_init_ca {
 function tp_server_init_acme {
     # TODO request server certs via acme
     echo
+}
+
+function tp_server_run {
+    local server_dir="$1"
+
+    if [[ -z "${server_dir}" ]]
+    then
+        local server_dir="${TP_BASE_DIR}/server-nginx"
+    fi
+
+    echo "[TP] Running nginx server at '${server_dir}' in the foreground..."
+    nginx -p "${server_dir}" -c 'ngix.conf'
+}
+
+function tp_server_start {
+    local server_dir="$1"
+
+    if [[ -z "${server_dir}" ]]
+    then
+        local server_dir="${TP_BASE_DIR}/server-nginx"
+    fi
+
+    echo "[TP] Starting nginx server at '${server_dir}' in the background..."
+    nginx -p "${server_dir}" -c 'ngix.conf' -g 'daemon=on' -g pid='nginx.pid'
+}
+
+function tp_server_stop {
+    local server_dir="$1"
+
+    if [[ -z "${server_dir}" ]]
+    then
+        local server_dir="${TP_BASE_DIR}/server-nginx"
+    fi
+
+    echo "[TP] Stopping nginx server at '${server_dir}'..."
+    nginx -p "${server_dir}" -c 'ngix.conf' -s 'stop' -g pid='nginx.pid'
 }
 
 function tp_server_clean {
