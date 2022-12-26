@@ -439,8 +439,11 @@ function tp_server {
     shift || true
 
     case "${command}" in
-        'init' | 'run' | 'start' | 'stop' | 'clean' )
+        'init' | 'clean' )
             "tp_server_${command}" "$@"
+            ;;
+        'run' | 'start' | 'stop' )
+            "tp_server_nginx_${command}" "${TP_BASE_DIR}/server-nginx"
             ;;
         * )
             echo "[TP] Unsupported server command '$command'."
@@ -484,7 +487,7 @@ function tp_server_init {
     fi
     for config_file in $( find "${TP_BASE_DIR}/server-nginx" -path '*/tls/*' -name '*.cert.conf' )
     do
-        "tp_server_init_${cert_issuer}" "${config_file}"
+        "tp_server_cert_${cert_issuer}" "${config_file}"
     done
 
     echo "[TP] Configuring trusted CAs for client certificates that the nginx-based demo server accepts..."
@@ -504,57 +507,6 @@ function tp_server_init {
     done
 }
 
-function tp_server_init_selfsign {
-    local config_file="$1"
-    tp_cert_selfsign "${config_file}"
-}
-
-function tp_server_init_ca {
-    local config_file="$1"
-    tp_ca_sign ca1 "${config_file}"
-}
-
-function tp_server_init_acme {
-    # TODO request server certs via acme
-    echo
-}
-
-function tp_server_run {
-    local server_dir="$1"
-
-    if [[ -z "${server_dir}" ]]
-    then
-        local server_dir="${TP_BASE_DIR}/server-nginx"
-    fi
-
-    echo "[TP] Running nginx server at '${server_dir}' in the foreground..."
-    nginx -p "${server_dir}" -c 'nginx.conf' -g 'daemon off;'
-}
-
-function tp_server_start {
-    local server_dir="$1"
-
-    if [[ -z "${server_dir}" ]]
-    then
-        local server_dir="${TP_BASE_DIR}/server-nginx"
-    fi
-
-    echo "[TP] Starting nginx server at '${server_dir}' in the background..."
-    nginx -p "${server_dir}" -c 'nginx.conf' -g 'daemon on;'
-}
-
-function tp_server_stop {
-    local server_dir="$1"
-
-    if [[ -z "${server_dir}" ]]
-    then
-        local server_dir="${TP_BASE_DIR}/server-nginx"
-    fi
-
-    echo "[TP] Stopping nginx server at '${server_dir}'..."
-    nginx -p "${server_dir}" -c 'nginx.conf' -s 'stop'
-}
-
 function tp_server_clean {
     echo "[TP] Cleaning transient files of nginx-based demo server..."
     (
@@ -563,6 +515,39 @@ function tp_server_clean {
         rm -rf 'var' 2>/dev/null || true
     )
     tp_cert_clean "${TP_BASE_DIR}/server-nginx"
+}
+
+function tp_server_cert_selfsign {
+    local config_file="$1"
+    tp_cert_selfsign "${config_file}"
+}
+
+function tp_server_cert_ca {
+    local config_file="$1"
+    tp_ca_sign ca1 "${config_file}"
+}
+
+function tp_server_cert_acme {
+    # TODO request server certs via acme
+    echo
+}
+
+function tp_server_nginx_run {
+    local server_dir="$1"
+    echo "[TP] Running nginx server at '${server_dir}' in the foreground..."
+    nginx -p "${server_dir}" -c 'nginx.conf' -g 'daemon off;'
+}
+
+function tp_server_nginx_start {
+    local server_dir="$1"
+    echo "[TP] Starting nginx server at '${server_dir}' in the background..."
+    nginx -p "${server_dir}" -c 'nginx.conf' -g 'daemon on;'
+}
+
+function tp_server_nginx_stop {
+    local server_dir="$1"
+    echo "[TP] Stopping nginx server at '${server_dir}'..."
+    nginx -p "${server_dir}" -c 'nginx.conf' -s 'stop'
 }
 
 
