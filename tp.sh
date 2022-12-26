@@ -432,10 +432,13 @@ function tp_server {
 }
 
 function tp_server_init {
+    local cert_issuer="$1"
+
     echo "[TP] Initializing nginx-based demo server..."
     (
         cd "${TP_BASE_DIR}/server-nginx"
 
+        # TODO exract templating to a utility function
         for config_file_template in $( find . -type f -and -name '*.tmpl' )
         do
             config_file="$( echo "${config_file_template}" | sed -e 's/[.]tmpl$//' )"
@@ -446,6 +449,38 @@ function tp_server_init {
             echo "done."
         done
     )
+
+    if [[ -z "${cert_issuer}" ]]
+    then
+        echo "[TP] No certificate issuer specified. Assuming 'selfsign'."
+        cert_issuer="selfsign"
+    fi
+    case "${cert_issuer}" in
+        'selfsign' | 'ca' | 'acme' )
+            "tp_server_init_${cert_issuer}" "$@"
+            ;;
+        * )
+            echo "[TP] Unsupported certificate issuer '$cert_issuer'."
+            return 1
+            ;;
+    esac
+}
+
+function tp_server_init_selfsign {
+    for config_file in $( find "${TP_BASE_DIR}/server-nginx" -path '*/tls/*' -name '*.config' )
+    do
+        tp_cert_selfsign "${config_file}"
+    done
+}
+
+function tp_server_init_ca {
+    # TODO
+    echo
+}
+
+function tp_server_init_acme {
+    # TODO
+    echo
 }
 
 function tp_server_clean {
