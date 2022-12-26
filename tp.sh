@@ -384,6 +384,8 @@ function tp_ca_sign {
         echo
         tp_cert_fingerprint "${new_cert_file_path}"
 
+        # TODO also generate and link full cert-chain
+
         if [[ "${cert_link_path}" ]]
         then
             # TODO use relative paths in symlinks, because absolute paths break in container bind mounts
@@ -464,6 +466,9 @@ function tp_server_init {
                 > "${config_file}"
             echo "done."
         done
+
+        mkdir -p 'var/logs'
+        mkdir -p 'var/run'
     )
 
     echo "[TP] Creating server certificates for nginx-based demo server..."
@@ -523,7 +528,7 @@ function tp_server_run {
     fi
 
     echo "[TP] Running nginx server at '${server_dir}' in the foreground..."
-    nginx -p "${server_dir}" -c 'nginx.conf'
+    nginx -p "${server_dir}" -c 'nginx.conf' -g 'daemon off;'
 }
 
 function tp_server_start {
@@ -535,7 +540,7 @@ function tp_server_start {
     fi
 
     echo "[TP] Starting nginx server at '${server_dir}' in the background..."
-    nginx -p "${server_dir}" -c 'nginx.conf' -g 'daemon on;pid nginx.pid;'
+    nginx -p "${server_dir}" -c 'nginx.conf' -g 'daemon on;'
 }
 
 function tp_server_stop {
@@ -547,7 +552,7 @@ function tp_server_stop {
     fi
 
     echo "[TP] Stopping nginx server at '${server_dir}'..."
-    nginx -p "${server_dir}" -c 'nginx.conf' -s 'stop' -g 'pid nginx.pid;'
+    nginx -p "${server_dir}" -c 'nginx.conf' -s 'stop'
 }
 
 function tp_server_clean {
@@ -555,6 +560,7 @@ function tp_server_clean {
     (
         cd "${TP_BASE_DIR}/server-nginx"
         find . -type f -and -name '*.conf' | xargs rm -f  2>/dev/null || true
+        rm -rf 'var' 2>/dev/null || true
     )
     tp_cert_clean "${TP_BASE_DIR}/server-nginx"
 }

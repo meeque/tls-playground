@@ -1,7 +1,7 @@
-worker_processes 1;
+pid var/run/nginx.pid
+error_log var/logs/error.log
 
-daemon off;
-
+worker_processes 3;
 events {
   worker_connections  1024;
 }
@@ -32,6 +32,9 @@ http {
   ssl_session_cache shared:foo-example-net:20m;
   ssl_session_timeout 10m;
   ssl_session_tickets off;
+
+  # log http(s) requests to file
+  access_log var/logs/access.log
 
   # include configuration for distinct servers (virtual hosts)
   include ./servers/*/nginx.conf;
