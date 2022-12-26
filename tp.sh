@@ -535,7 +535,7 @@ function tp_server_start {
     fi
 
     echo "[TP] Starting nginx server at '${server_dir}' in the background..."
-    nginx -p "${server_dir}" -c 'nginx.conf' -g 'daemon=on;pid=nginx.pid;'
+    nginx -p "${server_dir}" -c 'nginx.conf' -g 'daemon on;pid nginx.pid;'
 }
 
 function tp_server_stop {
@@ -547,7 +547,7 @@ function tp_server_stop {
     fi
 
     echo "[TP] Stopping nginx server at '${server_dir}'..."
-    nginx -p "${server_dir}" -c 'nginx.conf' -s 'stop' -g 'pid=nginx.pid;'
+    nginx -p "${server_dir}" -c 'nginx.conf' -s 'stop' -g 'pid nginx.pid;'
 }
 
 function tp_server_clean {
