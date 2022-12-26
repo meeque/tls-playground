@@ -39,7 +39,7 @@ function tp_main {
     tp_command="$1"
     shift || true
     case "${tp_command}" in
-        'cert' | 'ca' | 'acme' | 'server' | 'all' )
+        'cert' | 'ca' | 'acme' | 'server' | 'clean' )
             "tp_${tp_command}" "$@"
             return $?
             ;;
@@ -95,7 +95,7 @@ function tp_cert {
     shift || true
 
     case "${command}" in
-        'show' | 'fingerprint' | 'request' | 'selfsign' | 'pkcs8' | 'pkcs12' )
+        'show' | 'fingerprint' | 'request' | 'selfsign' | 'pkcs8' | 'pkcs12' | 'clean' )
             "tp_cert_${command}" "$@"
             ;;
         * )
@@ -261,10 +261,23 @@ function tp_cert_pkcs12 {
     echo "[TP] PKCS12 bundle in '${pkcs12_file}'."
 }
 
-# TODO add general cert cleanup functionality
-# find . -type f -and '(' -name '*.pem' -or -name '*.der' -or -name '*.pfx' ')' | xargs rm 2>/dev/null || true
-# find . -type l -and '(' -name '*.pem' -or -name '*.der' -or -name '*.pfx' ')' | xargs rm 2>/dev/null || true
-# find . -type d -and -empty -and '(' -name 'private' -or -name 'newcerts' ')' | xargs rmdir 2>/dev/null || true
+function tp_cert_clean {
+    local path="$1"
+
+    if [[ -z "${path}" ]]
+    then
+        echo "[TP] No path given to clean. Assuming whole TLS Playground"
+        local path="${TP_BASE_DIR}"
+    fi
+
+    echo "[TP] Cleaning up certificates and related files in '${path}'..."
+    (
+        cd "${path}"
+        find . -type f -and '(' -name '*.pem' -or -name '*.der' -or -name '*.pfx' ')' | xargs rm 2>/dev/null || true
+        find . -type l -and '(' -name '*.pem' -or -name '*.der' -or -name '*.pfx' ')' | xargs rm 2>/dev/null || true
+        find . -type d -and -empty -and -name 'private' | xargs rmdir 2>/dev/null || true
+    )
+}
 
 
 
@@ -507,6 +520,19 @@ function tp_server_clean {
         cd "${TP_BASE_DIR}/server-nginx"
         find . -type f -and -name '*.conf' | xargs rm -f  2>/dev/null || true
     )
+    tp_cert_clean "${TP_BASE_DIR}/server-nginx"
+}
+
+
+
+# TP clean command
+
+function tp_clean {
+    echo "[TP] Cleaning up everything..."
+    tp_server_clean
+    tp_ca_clean
+    # TODO also clean demo clients and acme files
+    tp_cert_clean
 }
 
 
