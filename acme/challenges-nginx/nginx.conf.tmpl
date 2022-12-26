@@ -1,9 +1,9 @@
+pid var/nginx.pid;
+error_log var/logs/error.log;
+
 worker_processes 1;
-
-daemon off;
-
 events {
-  worker_connections  1024;
+  worker_connections  128;
 }
 
 http {
@@ -17,8 +17,11 @@ http {
     # the server name
     server_name ${TP_SERVER_DOMAIN};
 
-    # ...
+    # serve acme challenges from the webroot
     root public;
+
+    # log http(s) requests to file
+    access_log var/logs/access.log;
   }
 }
 
