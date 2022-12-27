@@ -11,10 +11,11 @@ register-unsafely-without-email = true
 agree-tos = true
 no-eff-email = true
 
-# configure acme challenge authenticator
+# configure certificate management
 #authenticator = manual
 authenticator = webroot
 webroot-path = ${TP_BASE_DIR}/acme/challenges-nginx/public/
+no-delete-after-revoke = true
 
 # configure cryptography
 #key-type = ecdsa
