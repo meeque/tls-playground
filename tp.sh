@@ -436,6 +436,8 @@ function tp_acme {
 }
 
 function tp_acme_init {
+    echo "[TP] Initializing ACME and Certbot..."
+    tp_util_template "${TP_BASE_DIR}/acme/certbot/cli.ini.tmpl" TP_BASE_DIR TP_ACME_SERVER_URL TP_ACME_ACCOUNT_EMAIL
     mkdir -p "${TP_BASE_DIR}/acme/certbot/etc/"
     tp_server_nginx_init "${TP_BASE_DIR}/acme/challenges-nginx"
 }
@@ -456,7 +458,9 @@ function tp_acme_challenges {
 }
 
 function tp_acme_clean {
-    rm -rf "${TP_BASE_DIR}/acme/certbot/etc/" | xargs rm -r 2>/dev/null || true
+    echo "[TP] Cleaning transient ACME and Certbot files..."
+    rm "${TP_BASE_DIR}/acme/certbot/cli.ini" 2>/dev/null || true
+    find "${TP_BASE_DIR}/acme/certbot" -mindepth 2 -maxdepth 2 -type d -and -not -name 'accounts' | xargs rm -r 2>/dev/null || true
     tp_server_nginx_clean "${TP_BASE_DIR}/acme/challenges-nginx"
 }
 
@@ -465,8 +469,6 @@ function tp_acme_clean {
 #ln -sf ../../../../../acme/certbot/live/play.meeque.de/privkey.pem server-nginx/servers/server0/tls/private/server.key.pem
 # TODO show how to use certbot with own CSR
 # TODO show how to use certbot with manual challange
-#
-#find . -type f -and -name '*.ini' | xargs rm -f  2>/dev/null || true
 
 
 
@@ -556,15 +558,9 @@ function tp_server_cert_acme {
 function tp_server_nginx_init {
     local server_dir="$1"
 
-    # TODO exract templating to a utility function
     for config_file_template in $( find "${server_dir}" -type f -and -name '*.tmpl' )
     do
-        config_file="$( echo "${config_file_template}" | sed -e 's/[.]tmpl$//' )"
-        echo -n "[TP] Generating configuration file ${config_file} from template... "
-        cat "${config_file_template}" \
-            | envsubst '${TP_BASE_DIR},${TP_SERVER_DOMAIN},${TP_SERVER_LISTEN_ADDRESS},${TP_SERVER_HTTP_PORT},${TP_SERVER_HTTPS_PORT},${TP_ACME_SERVER_URL},${TP_ACME_ACCOUNT_EMAIL}' \
-            > "${config_file}"
-        echo "done."
+        tp_util_template "${config_file_template}" TP_SERVER_DOMAIN TP_SERVER_LISTEN_ADDRESS TP_SERVER_HTTP_PORT TP_SERVER_HTTPS_PORT
     done
 
     mkdir -p "${server_dir}/var/logs"
@@ -590,6 +586,12 @@ function tp_server_nginx_stop {
 
 function tp_server_nginx_clean {
     local server_dir="$1"
+
+    for config_file_template in $( find "${server_dir}" -type f -and -name '*.tmpl' )
+    do
+        tp_util_template_clean "${config_file_template}"
+    done
+
     rm -rf "${server_dir}/var" 2>/dev/null || true
 }
 
@@ -604,6 +606,39 @@ function tp_clean {
     tp_acme_clean
     tp_ca_clean
     tp_cert_clean
+}
+
+
+
+# TP utility functions
+
+function tp_util_template {
+    if [[ $# -le 1 ]]
+    then
+        echo "[TP] Template util needs at least 2 arguments, one template file and multiple template variable names!"
+        return 1
+    fi
+
+    local template_file="$1"
+    local target_file="$( echo "${template_file}" | sed -e 's/[.]tmpl$//' )"
+
+    shift || true
+    local var_names_array=( "$@" )
+    local var_names_string=''
+    for var_name in "${var_names_array[@]}"
+    do
+        var_names_string+='${'"${var_name}"'}'
+    done
+
+    echo -n "[TP] Generating file ${target_file} from template... "
+    cat "${template_file}" | envsubst "${var_names_string}" > "${target_file}"
+    echo "done."
+}
+
+function tp_util_template_clean {
+    local template_file="$1"
+    local target_file="$( echo "${template_file}" | sed -e 's/[.]tmpl$//' )"
+    rm "${target_file}" 2>/dev/null || true
 }
 
 
