@@ -510,7 +510,7 @@ function tp_acme_sign {
     local chain_file="$( echo "${csr_file}" | sed -e 's/[.]csr[.]pem$/.chain.pem/' )"
     local fullchain_file="$( echo "${csr_file}" | sed -e 's/[.]csr[.]pem$/.fullchain.pem/' )"
 
-    echo "[TP] Signing CSR from '${csr_file_path}' with ACME..."
+    echo "[TP] Signing CSR from '${csr_file}' with ACME..."
     echo
     (
         set -x
