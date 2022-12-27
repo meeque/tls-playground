@@ -539,6 +539,9 @@ function tp_acme_sign {
 function tp_acme_revoke {
     local cert_file="$1"
 
+    # TODO also provide --key-path arg, if corresponding private key is available
+    #      this may be necessary after acme account changed (or if authorizations expired?)
+
     echo "[TP] Revoking certificate in '${cert_file}' with ACME..."
     echo
     (
