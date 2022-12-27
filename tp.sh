@@ -425,7 +425,7 @@ function tp_acme {
     shift || true
 
     case "${command}" in
-        'init' | 'challenges' | 'sign' | 'clean' )
+        'init' | 'account' | 'challenges' | 'sign' | 'clean' )
             "tp_acme_${command}" "$@"
             ;;
         * )
@@ -440,6 +440,29 @@ function tp_acme_init {
     tp_util_template "${TP_BASE_DIR}/acme/certbot/cli.ini.tmpl" TP_BASE_DIR TP_ACME_SERVER_URL TP_ACME_ACCOUNT_EMAIL
     mkdir -p "${TP_BASE_DIR}/acme/certbot/etc/"
     tp_server_nginx_init "${TP_BASE_DIR}/acme/challenges-nginx"
+}
+
+function tp_acme_account {
+    local command="$1"
+    shift || true
+
+    case "${command}" in
+        'register' | 'unregister' )
+            "tp_acme_account_${command}"
+            ;;
+        * )
+            echo "[TP] Unsupported ACME account command '${command}'."
+            return 1
+            ;;
+    esac
+}
+
+function tp_acme_account_register {
+     certbot --config "${TP_BASE_DIR}/acme/certbot/cli.ini" register
+}
+
+function tp_acme_account_unregister {
+     certbot --config "${TP_BASE_DIR}/acme/certbot/cli.ini" unregister
 }
 
 function tp_acme_challenges {
