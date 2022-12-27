@@ -442,6 +442,7 @@ function tp_acme_init {
     echo "[TP] Initializing ACME and Certbot..."
     tp_util_template "${TP_BASE_DIR}/acme/certbot/cli.ini.tmpl" TP_BASE_DIR TP_ACME_SERVER_URL TP_ACME_ACCOUNT_EMAIL
     mkdir -p "${TP_BASE_DIR}/acme/certbot/etc/"
+    mkdir -p "${TP_BASE_DIR}/acme/newcerts/"
     tp_server_nginx_init "${TP_BASE_DIR}/acme/challenges-nginx"
 }
 
@@ -524,13 +525,14 @@ function tp_acme_clean {
     echo "[TP] Cleaning transient ACME and Certbot files..."
     rm "${TP_BASE_DIR}/acme/certbot/cli.ini" 2>/dev/null || true
     find "${TP_BASE_DIR}/acme/certbot" -mindepth 2 -maxdepth 2 -type d -and -not -name 'accounts' | xargs rm -r 2>/dev/null || true
+    rm -r "${TP_BASE_DIR}/acme/newcerts/" 2>/dev/null || true
     tp_server_nginx_clean "${TP_BASE_DIR}/acme/challenges-nginx"
 }
 
 #certbot --config acme/certbot/cli.ini certonly --domains "$TP_SERVER_DOMAIN"
 #ln -sf ../../../../acme/certbot/live/play.meeque.de/fullchain.pem server-nginx/servers/server0/tls/server.cert.pem
 #ln -sf ../../../../../acme/certbot/live/play.meeque.de/privkey.pem server-nginx/servers/server0/tls/private/server.key.pem
-# TODO show how to use certbot with own CSR
+# TODO show how to use certbot without own csr
 # TODO show how to use certbot with manual challange
 
 
