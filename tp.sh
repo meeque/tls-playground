@@ -442,7 +442,6 @@ function tp_acme_init {
     echo "[TP] Initializing ACME and Certbot..."
     tp_util_template "${TP_BASE_DIR}/acme/certbot/cli.ini.tmpl" TP_BASE_DIR TP_ACME_SERVER_URL TP_ACME_ACCOUNT_EMAIL
     mkdir -p "${TP_BASE_DIR}/acme/certbot/etc/"
-    mkdir -p "${TP_BASE_DIR}/acme/newcerts/"
     tp_server_nginx_init "${TP_BASE_DIR}/acme/challenges-nginx"
 }
 
@@ -486,7 +485,6 @@ function tp_acme_challenges {
 
 function tp_acme_sign {
     local cert_config_or_csr="$1"
-    local cert_link="$2"
 
     if [[ -z "${cert_config_or_csr}" ]]
     then
@@ -507,25 +505,36 @@ function tp_acme_sign {
         echo "[TP] Preparing to sign existing CSR..."
     fi
 
-    # TODO control cert lineage name, probably based on an additional arguments or naming conventions
-    # TODO calculate location of new cert
+    # calculate certificate file paths
+    local cert_file="$( echo "${csr_file}" | sed -e 's/[.]csr[.]pem$/.cert.pem/' )"
+    local chain_file="$( echo "${csr_file}" | sed -e 's/[.]csr[.]pem$/.chain.pem/' )"
+    local fullchain_file="$( echo "${csr_file}" | sed -e 's/[.]csr[.]pem$/.fullchain.pem/' )"
 
     echo "[TP] Signing CSR from '${csr_file_path}' with ACME..."
     echo
     (
         set -x
-        certbot --config "${TP_BASE_DIR}/acme/certbot/cli.ini" certonly --csr "${csr_file}"
+        certbot \
+            --config "${TP_BASE_DIR}/acme/certbot/cli.ini" \
+            certonly \
+            --csr "${csr_file}" \
+            --cert-path "${cert_file}" \
+            --chain-path "${chain_file}" \
+            --fullchain-path "${fullchain_file}" \
     )
+    echo
+    echo "[TP] New certificate in '${cert_file}'."
 
-    # TODO show certificate text and fingerprint
-    # TODO link certificate and chain next to the CSR
+    echo
+    tp_cert_show "${cert_file}"
+    echo
+    tp_cert_fingerprint "${cert_file}"
 }
 
 function tp_acme_clean {
     echo "[TP] Cleaning transient ACME and Certbot files..."
     rm "${TP_BASE_DIR}/acme/certbot/cli.ini" 2>/dev/null || true
     find "${TP_BASE_DIR}/acme/certbot" -mindepth 2 -maxdepth 2 -type d -and -not -name 'accounts' | xargs rm -r 2>/dev/null || true
-    rm -r "${TP_BASE_DIR}/acme/newcerts/" 2>/dev/null || true
     tp_server_nginx_clean "${TP_BASE_DIR}/acme/challenges-nginx"
 }
 

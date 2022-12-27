@@ -16,12 +16,8 @@ no-eff-email = true
 authenticator = webroot
 webroot-path = ${TP_BASE_DIR}/acme/challenges-nginx/public/
 
-# configure certbot behavior when using custom CSR
-cert-path = ${TP_BASE_DIR}/acme/newcerts/
-
 # configure cryptography
 #key-type = ecdsa
 #elliptic-curve = secp384r1
 key-type = rsa
 rsa-key-size = 4096
-
