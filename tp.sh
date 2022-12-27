@@ -605,7 +605,6 @@ function tp_clean {
     tp_server_clean
     tp_acme_clean
     tp_ca_clean
-    tp_cert_clean
 }
 
 
