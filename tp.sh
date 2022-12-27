@@ -56,6 +56,8 @@ function tp_main_env_global {
 }
 
 function tp_main_env_defaults {
+    # TODO move closer to commands that actually use these env-vars?
+    # TODO validate CLI args, too? e.g. for file naming conventions and file existence?
     export TP_PASS="${TP_PASS:=1234}"
     export TP_SERVER_DOMAIN="${TP_SERVER_DOMAIN:=localhost}"
     export TP_SERVER_LISTEN_ADDRESS="${TP_SERVER_LISTEN_ADDRESS:=127.0.0.1}"
@@ -384,6 +386,7 @@ function tp_ca_sign {
         tp_cert_fingerprint "${new_cert_file_path}"
 
         # TODO also generate and link full cert-chain
+        # TODO extract cert link behavior to a separate utility function? also needed for ACME certs
 
         if [[ "${cert_link_path}" ]]
         then
@@ -478,6 +481,43 @@ function tp_acme_challenges {
             return 1
             ;;
     esac
+}
+
+function tp_acme_sign {
+    local cert_config_or_csr="$1"
+    local cert_link="$2"
+
+    if [[ -z "${cert_config_or_csr}" ]]
+    then
+        echo "[TP] Nothing to sign. Specify a certificate config file or a CSR!"
+        return 1
+    fi
+
+    # TODO copied from tp_ca_sign, extract to utility function?
+    if [[ "${cert_config_or_csr}" =~ [.]cert[.]conf$ ]]
+    then
+        local config_file="${cert_config_or_csr}"
+        local csr_file="$( echo "${config_file}" | sed -e 's/[.]cert[.]conf$/.csr.pem/' )"
+
+        echo "[TP] Preparing CSR to sign, based on config file '${config_file}'..."
+        tp_cert_request "${config_file}"
+    else
+        local csr_file="${cert_config_or_csr}"
+        echo "[TP] Preparing to sign existing CSR..."
+    fi
+
+    # TODO control cert lineage name, probably based on an additional argumentv or naming conventions
+    # TODO calculate location of new cert
+
+    echo "[TP] Signing CSR from '${csr_file_path}' with CA ${ca_name} at serial ${new_serial}..."
+    echo
+    (
+        set -x
+        certbot certonly --csr "${csr_file}"
+    )
+
+    # TODO show certificate text and fingerprint
+    # TODO link certificate and chain next to the CSR
 }
 
 function tp_acme_clean {
