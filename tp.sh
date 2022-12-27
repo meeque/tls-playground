@@ -506,14 +506,14 @@ function tp_acme_sign {
         echo "[TP] Preparing to sign existing CSR..."
     fi
 
-    # TODO control cert lineage name, probably based on an additional argumentv or naming conventions
+    # TODO control cert lineage name, probably based on an additional arguments or naming conventions
     # TODO calculate location of new cert
 
-    echo "[TP] Signing CSR from '${csr_file_path}' with CA ${ca_name} at serial ${new_serial}..."
+    echo "[TP] Signing CSR from '${csr_file_path}' with ACME..."
     echo
     (
         set -x
-        certbot certonly --csr "${csr_file}"
+        certbot --config "${TP_BASE_DIR}/acme/certbot/cli.ini" certonly --csr "${csr_file}"
     )
 
     # TODO show certificate text and fingerprint
