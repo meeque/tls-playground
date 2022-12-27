@@ -333,6 +333,7 @@ function tp_ca_sign {
     local ca_name="$1"
     local cert_config_or_csr="$2"
     local cert_link="$3"
+    # TODO remove support for the cert_link argument, always deduce from naming conventions instead!
 
     if [[ -z "${ca_name}" ]]
     then
@@ -428,7 +429,7 @@ function tp_acme {
     shift || true
 
     case "${command}" in
-        'init' | 'account' | 'challenges' | 'sign' | 'clean' )
+        'init' | 'account' | 'challenges' | 'sign' | 'revoke' | 'clean' )
             "tp_acme_${command}" "$@"
             ;;
         * )
@@ -484,6 +485,10 @@ function tp_acme_challenges {
 }
 
 function tp_acme_sign {
+    # TODO this implementation uses custom CSR and webroot challenge
+    # TODO implement alternative with manual challenge
+    # TODO implement alternative with Certbot-managed keys and csr (using a proper certbot lineage)
+
     local cert_config_or_csr="$1"
 
     if [[ -z "${cert_config_or_csr}" ]]
@@ -529,6 +534,22 @@ function tp_acme_sign {
     tp_cert_show "${cert_file}"
     echo
     tp_cert_fingerprint "${cert_file}"
+}
+
+function tp_acme_revoke {
+    local cert_file="$1"
+
+    echo "[TP] Revoking certificate in '${cert_file}' with ACME..."
+    echo
+    (
+        set -x
+        certbot \
+            --config "${TP_BASE_DIR}/acme/certbot/cli.ini" \
+            revoke \
+            --cert-path "${cert_file}" \
+    )
+    echo
+    echo "[TP] Revoked certificate from '${cert_file}'."
 }
 
 function tp_acme_clean {
@@ -683,7 +704,7 @@ function tp_clean {
 
 
 
-# TP utility functions
+# general TP utility functions
 
 function tp_util_template {
     if [[ $# -le 1 ]]
