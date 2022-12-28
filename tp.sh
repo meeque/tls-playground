@@ -399,9 +399,9 @@ function tp_ca_sign {
         )
         echo
         echo "[TP] New certificate in '${new_cert_file_path}'."
-        cat "${ca_name}/ca-root.cert.pem" > "${new_chain_file_path}"
+        cat "${ca_name}/ca-root.fullchain.pem" > "${new_chain_file_path}"
         echo "[TP] New certificate chain in '${new_chain_file_path}'."
-        cat "${ca_name}/ca-root.cert.pem" "${new_cert_file_path}" > "${new_fullchain_file_path}"
+        cat "${new_cert_file_path}" "${ca_name}/ca-root.fullchain.pem" > "${new_fullchain_file_path}"
         echo "[TP] New certificate full-chain in '${new_fullchain_file_path}'."
 
         echo
@@ -647,6 +647,7 @@ function tp_server_init {
         "tp_server_cert_${cert_issuer}" "${config_file}"
     done
 
+    echo
     echo "[TP] Configuring trusted CAs for client certificates that the nginx-based demo server accepts..."
     local trusted_certs_file="${TP_BASE_DIR}/server-nginx/servers/server2/tls/trusted-clients-cas.certs.pem"
     :> "${trusted_certs_file}"
