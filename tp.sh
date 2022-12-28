@@ -196,12 +196,16 @@ function tp_cert_selfsign {
         return 1
     fi
 
+    local base_dir="$( dirname "${config_file}" )"
+    local base_name="$( basename "${config_file}" | sed -e 's/[.].*$//' )"
+    local csr_file="${base_dir}/${base_name}.csr.pem"
+    local key_file="${base_dir}/private/${base_name}.key.pem"
+    local cert_file="${base_dir}/${base_name}.cert.pem"
+    local chain_file="${base_dir}/${base_name}.chain.pem"
+    local fullchain_file="${base_dir}/${base_name}.fullchain.pem"
+
     echo "[TP] Preparing CSR for self-signed certificate, based on config file '${config_file}'..."
     tp_cert_request "${config_file}"
-
-    local csr_file="$( echo "${config_file}" | sed -e 's/[.]cert[.]conf$/.csr.pem/' )"
-    local key_file="$( echo "${config_file}" | sed --regexp-extended -e 's_(^|/)([^/]+)[.]cert[.]conf$_\1private/\2.key.pem_' )"
-    local cert_file="$( echo "${config_file}" | sed -e 's/[.]cert[.]conf$/.cert.pem/' )"
 
     echo "[TP] Signing CSR '${csr_file}' with it's own private key..."
     echo
@@ -209,9 +213,12 @@ function tp_cert_selfsign {
         set -x
         openssl x509 -req -in "${csr_file}" -days 90 -signkey "${key_file}" -passin env:TP_PASS -out "${cert_file}"
     )
+    echo
     echo "[TP] New certificate in '${cert_file}'."
-
-    # TODO also create and link chain and fullchain files
+    :> "${chain_file}"
+    echo "[TP] New (empty) certificate chain in '${chain_file}'."
+    cp "${cert_file}" "${fullchain_file}"
+    echo "[TP] New (single-entry) certificate full-chain in '${fullchain_file}'."
 
     echo
     tp_cert_show "${cert_file}"
