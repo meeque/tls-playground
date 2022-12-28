@@ -183,12 +183,12 @@ function tp_cert_request {
     echo
     echo "[TP] New private key in '${key_file_path}'."
     echo "[TP] New CSR in '${reqest_file_path}'."
-
-    # TODO also create and link chain and fullchain files
 }
 
 function tp_cert_selfsign {
     local config_file="$1"
+
+    # TODO also accept existing CSR, like TP ca and acme commands do
 
     if [[ -z "${config_file}" ]]
     then
@@ -210,6 +210,8 @@ function tp_cert_selfsign {
         openssl x509 -req -in "${csr_file}" -days 90 -signkey "${key_file}" -passin env:TP_PASS -out "${cert_file}"
     )
     echo "[TP] New certificate in '${cert_file}'."
+
+    # TODO also create and link chain and fullchain files
 
     echo
     tp_cert_show "${cert_file}"
@@ -333,8 +335,6 @@ function tp_ca_init {
 function tp_ca_sign {
     local ca_name="$1"
     local cert_config_or_csr="$2"
-    local cert_link="$3"
-    # TODO remove support for the cert_link argument, always deduce from naming conventions instead!
 
     if [[ -z "${ca_name}" ]]
     then
@@ -348,55 +348,68 @@ function tp_ca_sign {
         return 1
     fi
 
+    local base_dir="$( dirname "${cert_config_or_csr}" )"
+    local base_name="$( basename "${cert_config_or_csr}" | sed -e 's/[.].*$//' )"
+
     if [[ "${cert_config_or_csr}" =~ [.]cert[.]conf$ ]]
     then
         local config_file="${cert_config_or_csr}"
-        local csr_file="$( echo "${config_file}" | sed -e 's/[.]cert[.]conf$/.csr.pem/' )"
+        local csr_file="${base_dir}/${base_name}.csr.pem"
 
         echo "[TP] Preparing CSR to sign, based on config file '${config_file}'..."
         tp_cert_request "${config_file}"
-    else
+    else if [[ "${cert_config_or_csr}" =~ [.]csr[.]pem$ ]]
+    then
         local csr_file="${cert_config_or_csr}"
         echo "[TP] Preparing to sign existing CSR..."
+    else
+        echo "[TP] Signing file '${cert_config_or_csr}' is not supported!"
+        echo "[TP] Specify either a certificate configuration (.cert.conf) or a CSR (.csr.pem)!"
+        return 1
     fi
 
-    local csr_file_path="$( cd "${TP_WORK_DIR}"; cd "$(dirname "${csr_file}")" ; pwd -P )/$(basename "${csr_file}")"
-    if [[ "${cert_link}" ]]
-    then
-        local cert_link_path="$( cd "${TP_WORK_DIR}"; cd "$(dirname "${cert_link}")" ; pwd -P )/$(basename "${cert_link}")"
-    else
-        local cert_link_path="$( echo "${csr_file_path}" | sed -e 's/[.]csr[.]pem$/.cert.pem/' )"
-    fi
+    # generate absolute paths, because we need to run 'openssl ca' in the CA directory
+    local abs_base_dir="$( cd "${TP_WORK_DIR}"; cd "${base_dir}"; pwd -P )"
+    local abs_csr_file="${abs_base_dir}/${base_name}.csr.pem"
+    local abs_cert_link="${abs_base_dir}/${base_name}.cert.pem"
+    local abs_chain_link="${abs_base_dir}/${base_name}.chain.pem"
+    local abs_fullchain_link="${abs_base_dir}/${base_name}.fullchain.pem"
 
     (
         cd "${TP_BASE_DIR}/ca/"
         local new_serial=$(<"${ca_name}/serial")
+        # TODO can we configure openssl ca to use ending .chain.pem rather than just .pem?
         local new_cert_file_path="$( pwd -P )/${ca_name}/newcerts/${new_serial}.pem"
+        local new_chain_file_path="$( pwd -P )/${ca_name}/newcerts/${new_serial}.chain.pem"
+        local new_fullchain_file_path="$( pwd -P )/${ca_name}/newcerts/${new_serial}.fullchain.pem"
 
-        echo "[TP] Signing CSR from '${csr_file_path}' with CA ${ca_name} at serial ${new_serial}..."
+        echo "[TP] Signing CSR from '${abs_csr_file}' with CA ${ca_name} at serial ${new_serial}..."
         echo
         (
             set -x
-            openssl ca -config 'ca.conf' -name "${ca_name}" -batch -notext -passin env:TP_PASS -in "${csr_file_path}"
+            openssl ca -config 'ca.conf' -name "${ca_name}" -batch -notext -passin env:TP_PASS -in "${abs_csr_file}"
         )
         echo
         echo "[TP] New certificate in '${new_cert_file_path}'."
+        cat "${ca_name}/ca-root.cert.pem" > "${new_chain_file_path}"
+        echo "[TP] New certificate chain in '${new_chain_file_path}'."
+        cat "${ca_name}/ca-root.cert.pem" ${new_cert_file_path} > "${new_fullchain_file_path}"
+        echo "[TP] New certificate full-chain in '${new_fullchain_file_path}'."
 
         echo
         tp_cert_show "${new_cert_file_path}"
         echo
         tp_cert_fingerprint "${new_cert_file_path}"
 
-        # TODO also generate and link full cert-chain
         # TODO extract cert link behavior to a separate utility function? also needed for ACME certs
-
-        if [[ "${cert_link_path}" ]]
-        then
-            # TODO use relative paths in symlinks, because absolute paths break in container bind mounts
-            ln -sf "${new_cert_file_path}" "${cert_link_path}"
-            echo
-            echo "[TP] Also linked certificate into '${cert_link_path}'."
-        fi
+        # TODO use relative paths in symlinks, because absolute paths break in container bind mounts
+        echo
+        ln -sf "${new_cert_file_path}" "${abs_cert_link}"
+        echo "[TP] Linked new certificate into '${abs_cert_link}'."
+        ln -sf "${new_chain_file_path}" "${abs_chain_link}"
+        echo "[TP] Linked new certificate into '${abs_chain_link}'."
+        ln -sf "${new_fullchain_file_path}" "${abs_fullchain_link}"
+        echo "[TP] Linked new certificate into '${abs_fullchain_link}'."
     )
 }
 
