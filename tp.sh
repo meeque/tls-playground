@@ -652,8 +652,8 @@ function tp_server_cert_ca {
 }
 
 function tp_server_cert_acme {
-    # TODO request server certs via acme
-    echo
+    local config_file="$1"
+    tp_acme_sign "${config_file}"
 }
 
 function tp_server_nginx_init {
