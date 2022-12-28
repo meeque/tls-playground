@@ -51,6 +51,7 @@ ENV TP_ACME_SERVER_URL="https://acme-staging-v02.api.letsencrypt.org/directory"
 ENV TP_ACME_ACCOUNT_EMAIL=""
 
 ENTRYPOINT ["/usr/bin/bash"]
+CMD ["--rcfile", ".bashrc"]
 
 VOLUME ["/opt/tls-playground"]
 
