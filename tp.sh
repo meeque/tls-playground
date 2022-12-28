@@ -515,7 +515,7 @@ function tp_acme_sign {
     local fullchain_file="$( echo "${csr_file}" | sed -e 's/[.]csr[.]pem$/.fullchain.pem/' )"
 
     # clean old certificate files, because Certbot refuses to overwrite them
-    tp_cert_clean "$( dirname "${cert_file}" )"
+    rm "${cert_file}" "${chain_file}" "${fullchain_file}" 2>/dev/null || true
 
     echo "[TP] Signing CSR from '${csr_file}' with ACME..."
     echo
