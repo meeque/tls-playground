@@ -637,7 +637,6 @@ function tp_server_init {
 
 function tp_server_clean {
     echo "[TP] Cleaning transient files of nginx-based demo server..."
-    find "${TP_BASE_DIR}/server-nginx" -type f -and -name '*.conf' | xargs rm -f
     tp_server_nginx_clean "${TP_BASE_DIR}/server-nginx"
     tp_cert_clean "${TP_BASE_DIR}/server-nginx"
 }
