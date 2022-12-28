@@ -592,7 +592,7 @@ function tp_acme_revoke {
 function tp_acme_clean {
     echo "[TP] Cleaning transient ACME and Certbot files..."
     rm -f "${TP_BASE_DIR}/acme/certbot/cli.ini"
-    find "${TP_BASE_DIR}/acme/certbot/conf" -mindepth 1 -maxdepth 1 -type d -and -not -name 'accounts' | xargs rm -rf
+    find acme/certbot -mindepth 1 -type d -and -not -path '*/conf' -and -not -path '*/conf/accounts' | xargs rm -rf
     rm -rf "${TP_BASE_DIR}/acme/certbot/lib"
     rm -rf "${TP_BASE_DIR}/acme/certbot/log"
     tp_server_nginx_clean "${TP_BASE_DIR}/acme/challenges-nginx"
