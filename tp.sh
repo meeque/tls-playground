@@ -558,6 +558,8 @@ function tp_acme_clean {
     echo "[TP] Cleaning transient ACME and Certbot files..."
     rm "${TP_BASE_DIR}/acme/certbot/cli.ini" 2>/dev/null || true
     find "${TP_BASE_DIR}/acme/certbot/conf" -mindepth 1 -maxdepth 1 -type d -and -not -name 'accounts' | xargs rm -r 2>/dev/null || true
+    rm -r "${TP_BASE_DIR}/acme/certbot/lib" 2>/dev/null || true
+    rm -r "${TP_BASE_DIR}/acme/certbot/log" 2>/dev/null || true
     tp_server_nginx_clean "${TP_BASE_DIR}/acme/challenges-nginx"
 }
 
