@@ -358,7 +358,7 @@ function tp_ca_sign {
 
         echo "[TP] Preparing CSR to sign, based on config file '${config_file}'..."
         tp_cert_request "${config_file}"
-    else if [[ "${cert_config_or_csr}" =~ [.]csr[.]pem$ ]]
+    elif [[ "${cert_config_or_csr}" =~ [.]csr[.]pem$ ]]
     then
         local csr_file="${cert_config_or_csr}"
         echo "[TP] Preparing to sign existing CSR..."
@@ -393,7 +393,7 @@ function tp_ca_sign {
         echo "[TP] New certificate in '${new_cert_file_path}'."
         cat "${ca_name}/ca-root.cert.pem" > "${new_chain_file_path}"
         echo "[TP] New certificate chain in '${new_chain_file_path}'."
-        cat "${ca_name}/ca-root.cert.pem" ${new_cert_file_path} > "${new_fullchain_file_path}"
+        cat "${ca_name}/ca-root.cert.pem" "${new_cert_file_path}" > "${new_fullchain_file_path}"
         echo "[TP] New certificate full-chain in '${new_fullchain_file_path}'."
 
         echo
