@@ -164,13 +164,12 @@ function tp_cert_request {
     local cert_link_path="${config_file_basepath}/${config_name}.cert.pem"
 
     # TODO extract clean-up code to separate sub-command
+    # TODO also clean up chain and fullchain files
     mkdir -p "${config_file_basepath}/private"
     chmod og-rwx "${config_file_basepath}/private"
-    rm "${reqest_file_path}" 2>/dev/null || true
-    rm "${key_file_path}" 2>/dev/null || true
-    rm "${cert_link_path}" 2>/dev/null || true
+    rm -f "${reqest_file_path}" "${key_file_path}" "${cert_link_path}"
 
-    echo "[TP] Using OpenSSL CSR config file '${config_file_path}'..."
+    echo "[TP] Using OpenSSL CSR config file '${config_file_path}':"
     echo
     cat "${config_file_path}"
     echo
@@ -184,6 +183,8 @@ function tp_cert_request {
     echo
     echo "[TP] New private key in '${key_file_path}'."
     echo "[TP] New CSR in '${reqest_file_path}'."
+
+    # TODO also create and link chain and fullchain files
 }
 
 function tp_cert_selfsign {
@@ -274,9 +275,9 @@ function tp_cert_clean {
     echo "[TP] Cleaning up certificates and related files in '${path}'..."
     (
         cd "${path}"
-        find . -type f -and '(' -name '*.pem' -or -name '*.der' -or -name '*.pfx' ')' | xargs rm 2>/dev/null || true
-        find . -type l -and '(' -name '*.pem' -or -name '*.der' -or -name '*.pfx' ')' | xargs rm 2>/dev/null || true
-        find . -type d -and -empty -and -name 'private' | xargs rmdir 2>/dev/null || true
+        find . -type f -and '(' -name '*.pem' -or -name '*.der' -or -name '*.pfx' ')' | xargs rm -f
+        find . -type l -and '(' -name '*.pem' -or -name '*.der' -or -name '*.pfx' ')' | xargs rm -f
+        find . -type d -and -empty -and -name 'private' | xargs rm -f
     )
 }
 
@@ -415,8 +416,8 @@ function tp_ca_clean {
     echo "[TP] Cleaning transient files of CA '${ca_name}'..."
     (
         cd "${TP_BASE_DIR}/ca/${ca_name}"
-        find . -type d -and '(' -name 'newcerts' -or -name 'private' ')' | xargs rm -r 2>/dev/null || true
-        find . -type f -and -not '(' -name '*.conf' -or -name '*.md' ')' | xargs rm 2>/dev/null || true
+        find . -type d -and '(' -name 'newcerts' -or -name 'private' ')' | xargs rm -rf
+        find . -type f -and -not '(' -name '*.conf' -or -name '*.md' ')' | xargs rm -f
     )
 }
 
@@ -515,7 +516,7 @@ function tp_acme_sign {
     local fullchain_file="$( echo "${csr_file}" | sed -e 's/[.]csr[.]pem$/.fullchain.pem/' )"
 
     # clean old certificate files, because Certbot refuses to overwrite them
-    rm "${cert_file}" "${chain_file}" "${fullchain_file}" 2>/dev/null || true
+    rm -f "${cert_file}" "${chain_file}" "${fullchain_file}"
 
     echo "[TP] Signing CSR from '${csr_file}' with ACME..."
     echo
@@ -559,10 +560,10 @@ function tp_acme_revoke {
 
 function tp_acme_clean {
     echo "[TP] Cleaning transient ACME and Certbot files..."
-    rm "${TP_BASE_DIR}/acme/certbot/cli.ini" 2>/dev/null || true
-    find "${TP_BASE_DIR}/acme/certbot/conf" -mindepth 1 -maxdepth 1 -type d -and -not -name 'accounts' | xargs rm -r 2>/dev/null || true
-    rm -r "${TP_BASE_DIR}/acme/certbot/lib" 2>/dev/null || true
-    rm -r "${TP_BASE_DIR}/acme/certbot/log" 2>/dev/null || true
+    rm -f "${TP_BASE_DIR}/acme/certbot/cli.ini"
+    find "${TP_BASE_DIR}/acme/certbot/conf" -mindepth 1 -maxdepth 1 -type d -and -not -name 'accounts' | xargs rm -rf
+    rm -rf "${TP_BASE_DIR}/acme/certbot/lib"
+    rm -rf "${TP_BASE_DIR}/acme/certbot/log"
     tp_server_nginx_clean "${TP_BASE_DIR}/acme/challenges-nginx"
 }
 
@@ -636,7 +637,7 @@ function tp_server_init {
 
 function tp_server_clean {
     echo "[TP] Cleaning transient files of nginx-based demo server..."
-    find "${TP_BASE_DIR}/server-nginx" -type f -and -name '*.conf' | xargs rm -f  2>/dev/null || true
+    find "${TP_BASE_DIR}/server-nginx" -type f -and -name '*.conf' | xargs rm -f
     tp_server_nginx_clean "${TP_BASE_DIR}/server-nginx"
     tp_cert_clean "${TP_BASE_DIR}/server-nginx"
 }
@@ -693,7 +694,7 @@ function tp_server_nginx_clean {
         tp_util_template_clean "${config_file_template}"
     done
 
-    rm -rf "${server_dir}/var" 2>/dev/null || true
+    rm -rf "${server_dir}/var"
 }
 
 
@@ -738,7 +739,7 @@ function tp_util_template {
 function tp_util_template_clean {
     local template_file="$1"
     local target_file="$( echo "${template_file}" | sed -e 's/[.]tmpl$//' )"
-    rm "${target_file}" 2>/dev/null || true
+    rm -f "${target_file}"
 }
 
 
