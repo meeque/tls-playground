@@ -316,7 +316,7 @@ function tp_ca_init {
     if [[ -z "${ca_name}" ]]
     then
         echo "[TP] No CA name specified. Proceeding to initialize all CAs..."
-        for ca_name in $( find "${TP_BASE_DIR}/ca" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort )
+        for ca_name in $( find "${TP_BASE_DIR}/ca" -mindepth 1 -maxdepth 1 -type d  -exec basename '{}' ';' | sort )
         do
             echo
             tp_ca_init "${ca_name}"
@@ -427,7 +427,7 @@ function tp_ca_clean {
     if [[ -z "${ca_name}" ]]
     then
         echo "[TP] No CA name specified. Proceeding to clean all CAs..."
-        for ca_name in $( find "${TP_BASE_DIR}/ca" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort )
+        for ca_name in $( find "${TP_BASE_DIR}/ca" -mindepth 1 -maxdepth 1 -type d  -exec basename '{}' ';' | sort )
         do
             tp_ca_clean "${ca_name}"
         done
@@ -651,7 +651,7 @@ function tp_server_init {
     local trusted_certs_file="${TP_BASE_DIR}/server-nginx/servers/server2/tls/trusted-clients-cas.certs.pem"
     :> "${trusted_certs_file}"
 
-    for ca_name in $( find "${TP_BASE_DIR}/ca" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort )
+    for ca_name in $( find "${TP_BASE_DIR}/ca" -mindepth 1 -maxdepth 1 -type d  -exec basename '{}' ';' | sort )
     do
         local ca_root_cert="${TP_BASE_DIR}/ca/${ca_name}/ca-root.cert.pem"
         if [[ -f "${ca_root_cert}" ]]
