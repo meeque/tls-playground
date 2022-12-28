@@ -689,6 +689,12 @@ function tp_server_nginx_stop {
 function tp_server_nginx_clean {
     local server_dir="$1"
 
+    if [[ -f "${server_dir}/var/nginx.pid" ]]
+    then
+        echo "[TP] Looks like server in '${server_dir}' is still running. Aborting clean-up! Stop the server or remove its .pid file before trying again!"
+        return 1
+    fi
+
     for config_file_template in $( find "${server_dir}" -type f -and -name '*.tmpl' )
     do
         tp_util_template_clean "${config_file_template}"
