@@ -15,7 +15,7 @@ http {
     listen ${TP_SERVER_LISTEN_ADDRESS}:${TP_SERVER_HTTP_PORT} default_server;
 
     # the server name
-    server_name ${TP_SERVER_DOMAIN};
+    server_name tls-playground.${TP_SERVER_DOMAIN};
 
     # serve acme challenges from the webroot
     root public;
@@ -24,4 +24,3 @@ http {
     access_log var/logs/access.log;
   }
 }
-
