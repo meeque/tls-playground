@@ -15,7 +15,9 @@
 
 /acme/**/*.conf
 /acme/**/*.ini
-/acme/certbot/etc/
+/acme/certbot/conf/
+/acme/certbot/lib/
+/acme/certbot/log/
 !/acme/letsencrypt/*.pem
 
 /server-nginx/**/*.conf
