@@ -1,23 +1,26 @@
 
-# configure directories
-config-dir = ${TP_BASE_DIR}/acme/certbot/etc/
+# directories
+config-dir = ${TP_BASE_DIR}/acme/certbot/conf/
+work-dir = ${TP_BASE_DIR}/acme/certbot/lib/
+logs-dir = ${TP_BASE_DIR}/acme/certbot/log/
 
-# configure acme server
+# general behavior
+non-interactive = true
+
+# ACME account
 server = ${TP_ACME_SERVER_URL}
-
-# configure acme account
 email = ${TP_ACME_ACCOUNT_EMAIL}
 register-unsafely-without-email = true
 agree-tos = true
 no-eff-email = true
 
-# configure certificate management
+# certificate management
 #authenticator = manual
 authenticator = webroot
 webroot-path = ${TP_BASE_DIR}/acme/challenges-nginx/public/
 no-delete-after-revoke = true
 
-# configure cryptography
+# cryptography
 #key-type = ecdsa
 #elliptic-curve = secp384r1
 key-type = rsa
