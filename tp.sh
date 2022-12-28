@@ -196,6 +196,7 @@ function tp_cert_selfsign {
         return 1
     fi
 
+    # calculate certificate file paths
     local base_dir="$( dirname "${config_file}" )"
     local base_name="$( basename "${config_file}" | sed -e 's/[.].*$//' )"
     local csr_file="${base_dir}/${base_name}.csr.pem"
@@ -517,23 +518,31 @@ function tp_acme_sign {
         return 1
     fi
 
+    local base_dir="$( dirname "${cert_config_or_csr}" )"
+    local base_name="$( basename "${cert_config_or_csr}" | sed -e 's/[.].*$//' )"
+
     # TODO copied from tp_ca_sign, extract to utility function?
     if [[ "${cert_config_or_csr}" =~ [.]cert[.]conf$ ]]
     then
         local config_file="${cert_config_or_csr}"
-        local csr_file="$( echo "${config_file}" | sed -e 's/[.]cert[.]conf$/.csr.pem/' )"
+        local csr_file="${base_dir}/${base_name}.csr.pem"
 
         echo "[TP] Preparing CSR to sign, based on config file '${config_file}'..."
         tp_cert_request "${config_file}"
-    else
+    elif [[ "${cert_config_or_csr}" =~ [.]csr[.]pem$ ]]
+    then
         local csr_file="${cert_config_or_csr}"
         echo "[TP] Preparing to sign existing CSR..."
+    else
+        echo "[TP] Signing file '${cert_config_or_csr}' is not supported!"
+        echo "[TP] Specify either a certificate configuration (.cert.conf) or a CSR (.csr.pem)!"
+        return 1
     fi
 
     # calculate certificate file paths
-    local cert_file="$( echo "${csr_file}" | sed -e 's/[.]csr[.]pem$/.cert.pem/' )"
-    local chain_file="$( echo "${csr_file}" | sed -e 's/[.]csr[.]pem$/.chain.pem/' )"
-    local fullchain_file="$( echo "${csr_file}" | sed -e 's/[.]csr[.]pem$/.fullchain.pem/' )"
+    local cert_file="${base_dir}/${base_name}.cert.pem"
+    local chain_file="${base_dir}/${base_name}.chain.pem"
+    local fullchain_file="${base_dir}/${base_name}.fullchain.pem"
 
     # clean old certificate files, because Certbot refuses to overwrite them
     rm -f "${cert_file}" "${chain_file}" "${fullchain_file}"
@@ -552,6 +561,8 @@ function tp_acme_sign {
     )
     echo
     echo "[TP] New certificate in '${cert_file}'."
+    echo "[TP] New certificate chain in '${chain_file}'."
+    echo "[TP] New certificate full-chain in '${fullchain_file}'."
 
     echo
     tp_cert_show "${cert_file}"
