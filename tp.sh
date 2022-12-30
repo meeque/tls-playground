@@ -318,7 +318,7 @@ function tp_ca_init {
     if [[ -z "${ca_name}" ]]
     then
         echo "[TP] No CA name specified. Proceeding to initialize all CAs..."
-        for ca_name in $( find "${TP_BASE_DIR}/ca" -mindepth 1 -maxdepth 1 -type d  -exec basename '{}' ';' | sort )
+        for ca_name in $( tp_ca_list )
         do
             echo
             tp_ca_init "${ca_name}"
@@ -349,6 +349,12 @@ function tp_ca_sign {
     if [[ -z "${ca_name}" ]]
     then
         echo "[TP] No CA name specified. Specify the CA to sign with!"
+        return 1
+    elif [[ ! -d "${TP_BASE_DIR}/ca/${ca_name}" ]]
+    then
+        echo "[TP] CA with name '${ca_name}' does not exist!"
+        echo "[TP] Try one of the following instead:"
+        tp_ca_list
         return 1
     fi
 
@@ -441,6 +447,10 @@ function tp_ca_clean {
         find . -type d -and '(' -name 'newcerts' -or -name 'private' ')' | xargs rm -rf
         find . -type f -and -not '(' -name '*.conf' -or -name '*.md' ')' | xargs rm -f
     )
+}
+
+function tp_ca_list {
+    find "${TP_BASE_DIR}/ca" -mindepth 1 -maxdepth 1 -type d  -exec basename '{}' ';' | sort
 }
 
 
