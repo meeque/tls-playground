@@ -761,6 +761,40 @@ function tp_clean {
 
 # general TP utility functions
 
+function tp_util_names {
+    local varname="$1"
+    local filename="$2"
+
+    # TODO check for missing varname and file
+
+    declare -A -g "${varname}"
+    declare -n varref="${varname}"
+
+    local dir="$( dirname "${filename}" )"
+    local file="$( basename "${filename}" )"
+    local name="$( echo "${file}" | sed -e 's/[.].*$//' )"
+    local suffix="$( echo "${file}" | sed --regexp-extended -e 's/^[^.]*[.]?//' )"
+
+    varref=(
+        [dir]="${dir}"
+        [file]="${file}"
+        [name]="${name}"
+        [suffix]="${suffix}"
+        [cert_conf_file]="${name}.cert.conf"
+        [key_pem_file]="${name}.key.pem"
+        [csr_pem_file]="${name}.csr.pem"
+        [cert_pem_file]="${name}.cert.pem"
+        [chain_pem_file]="${name}.chain.pem"
+        [fullchain_pem_file]="${name}.fullchain.pem"
+    )
+
+    # XXX remove after debugging
+    for name in ${!varref[@]}
+    do
+        echo "${name}   =   ${varref[${name}]}"
+    done
+}
+
 function tp_util_template {
     if [[ $# -le 1 ]]
     then
@@ -793,5 +827,11 @@ function tp_util_template_clean {
 
 
 # TP entry point
-tp_main "$@"
+
+# if this script is NOT being sourced, run tp_main
+# (in bash, return from outside a function only succeeds, when the script is being sourced)
+if ! ( return 0 2>/dev/null )
+then
+    tp_main "$@"
+fi
 
