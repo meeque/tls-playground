@@ -388,8 +388,7 @@ function tp_ca_sign {
     (
         cd "${TP_BASE_DIR}/ca/"
         local new_serial=$(<"${ca_name}/serial")
-        # TODO can we configure openssl ca to use ending .chain.pem rather than just .pem?
-        local new_cert_file_path="$( pwd -P )/${ca_name}/newcerts/${new_serial}.pem"
+        local new_cert_file_path="$( pwd -P )/${ca_name}/newcerts/${new_serial}.cert.pem"
         local new_chain_file_path="$( pwd -P )/${ca_name}/newcerts/${new_serial}.chain.pem"
         local new_fullchain_file_path="$( pwd -P )/${ca_name}/newcerts/${new_serial}.fullchain.pem"
 
@@ -397,7 +396,7 @@ function tp_ca_sign {
         echo
         (
             set -x
-            openssl ca -config 'ca.conf' -name "${ca_name}" -batch -notext -passin env:TP_PASS -in "${abs_csr_file}"
+            openssl ca -config 'ca.conf' -name "${ca_name}" -batch -passin env:TP_PASS -in "${abs_csr_file}" -notext -out "${new_cert_file_path}"
         )
         echo
         echo "[TP] New certificate in '${new_cert_file_path}'."
