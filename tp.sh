@@ -56,9 +56,11 @@ function tp_main_env_global {
 }
 
 function tp_main_env_defaults {
+    # TODO do not hard-code the passphrase. instead try to load it from a file, if the envar is empty. if the file is missing, generate a new passphrase and store it in the file
+    export TP_PASS="${TP_PASS:=1234}"
+
     # TODO move closer to commands that actually use these env-vars?
     # TODO validate CLI args, too? e.g. for file naming conventions and file existence?
-    export TP_PASS="${TP_PASS:=1234}"
     export TP_SERVER_DOMAIN="${TP_SERVER_DOMAIN:=localhost}"
     export TP_SERVER_LISTEN_ADDRESS="${TP_SERVER_LISTEN_ADDRESS:=127.0.0.1}"
     export TP_SERVER_HTTP_PORT="${TP_SERVER_HTTP_PORT:=8080}"
