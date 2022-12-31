@@ -153,7 +153,7 @@ function tp_cert_request {
 
     if [[ -z "${cert_config_or_csr}" ]]
     then
-        echo "[TP] No certificate config file name specified. Specify the config file fore the CSR!"
+        echo "[TP] No certificate config file name specified. Specify the config file for the CSR!"
         return 1
     fi
 
@@ -192,45 +192,34 @@ function tp_cert_request {
 }
 
 function tp_cert_selfsign {
-    local config_file="$1"
+    local cert_config_or_csr="$1"
 
-    # TODO also accept existing CSR, like TP ca and acme commands do
-
-    if [[ -z "${config_file}" ]]
+    if [[ -z "${cert_config_or_csr}" ]]
     then
-        echo "[TP] No certificate request config file name specified. Specify a config file for your self-signed certificate!"
+        echo "[TP] Nothing to self-sign. Specify a certificate config file or a CSR!"
         return 1
     fi
 
-    # calculate certificate file paths
-    local base_dir="$( dirname "${config_file}" )"
-    local base_name="$( basename "${config_file}" | sed -e 's/[.].*$//' )"
-    local csr_file="${base_dir}/${base_name}.csr.pem"
-    local key_file="${base_dir}/private/${base_name}.key.pem"
-    local cert_file="${base_dir}/${base_name}.cert.pem"
-    local chain_file="${base_dir}/${base_name}.chain.pem"
-    local fullchain_file="${base_dir}/${base_name}.fullchain.pem"
+    tp_cert_request "${cert_config_or_csr}"
+    tp_util_names 'names' "${cert_config_or_csr}"
 
-    echo "[TP] Preparing CSR for self-signed certificate, based on config file '${config_file}'..."
-    tp_cert_request "${config_file}"
-
-    echo "[TP] Signing CSR '${csr_file}' with it's own private key..."
+    echo "[TP] Signing CSR with it's own private key..."
     echo
     (
         set -x
-        openssl x509 -req -in "${csr_file}" -days 90 -signkey "${key_file}" -passin env:TP_PASS -out "${cert_file}"
+        openssl x509 -req -in "${names[csr_pem_path]}" -days 90 -signkey "${names[key_pem_path]}" -passin env:TP_PASS -out "${names[cert_pem_path]}"
     )
     echo
-    echo "[TP] New certificate in '${cert_file}'."
-    :> "${chain_file}"
-    echo "[TP] New (empty) certificate chain in '${chain_file}'."
-    cp "${cert_file}" "${fullchain_file}"
-    echo "[TP] New (single-entry) certificate full-chain in '${fullchain_file}'."
+    echo "[TP] New certificate in '${names[cert_pem_path]}'."
+    :> "${names[chain_pem_path]}"
+    echo "[TP] New (empty) certificate chain in '${names[chain_pem_path]}'."
+    cp "${names[cert_pem_path]}" "${names[fullchain_pem_path]}"
+    echo "[TP] New (single-entry) certificate full-chain in '${names[fullchain_pem_path]}'."
 
     echo
-    tp_cert_show "${cert_file}"
+    tp_cert_show "${names[cert_pem_path]}"
     echo
-    tp_cert_fingerprint "${cert_file}"
+    tp_cert_fingerprint "${names[cert_pem_path]}"
 }
 
 function tp_cert_pkcs8 {
@@ -368,6 +357,7 @@ function tp_ca_sign {
         return 1
     fi
 
+    tp_cert_request "${cert_config_or_csr}"
     tp_util_names 'names' "${cert_config_or_csr}"
 
     # generate absolute paths, because we need to run 'openssl ca' in the CA directory
