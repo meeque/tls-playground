@@ -51,9 +51,9 @@ function tp_main {
 }
 
 function tp_main_env_global {
-    export TP_BASE_DIR="$( cd "$(dirname "$0")"; pwd -P )"
+    # XXX export TP_BASE_DIR="$( cd "$(dirname "$0")"; pwd -P )"
     # TODO use relative base-path wherever possible (maybe not in some config files)
-    #export TP_BASE_DIR="$( realpath --relative-to '.' "$(dirname "$0")/" )"
+    export TP_BASE_DIR="$( realpath --relative-to '.' "$(dirname "$0")/" )"
 }
 
 function tp_main_env_defaults {
@@ -359,46 +359,43 @@ function tp_ca_sign {
     fi
 
     tp_cert_request "${cert_config_or_csr}"
-    tp_util_names 'names' "${cert_config_or_csr}"
+    tp_util_names 'target_names' "${cert_config_or_csr}"
+    tp_util_names 'ca_names' "${TP_BASE_DIR}/ca/${ca_name}/ca-root.cert.pem"
 
-    local csr_file="$( realpath --relative-to "${TP_BASE_DIR}/ca/" "${names[csr_pem_path]}" )"
-    local ca_rel_path="$( realpath --relative-to "${names[dir]}/" "${TP_BASE_DIR}/ca" )"
+    local csr_file="$( realpath --relative-to "${TP_BASE_DIR}/ca/" "${target_names[csr_pem_path]}" )"
+    local ca_rel_path="$( realpath --relative-to "${target_names[dir]}/" "${TP_BASE_DIR}" )"
 
+    local new_serial=$(<"${ca_names[dir]}/serial")
+    tp_util_names 'new_names' "${TP_BASE_DIR}/ca/${ca_name}/newcerts/${new_serial}.pem"
+
+    echo "[TP] Signing CSR from '${target_names[csr_pem_path]}' with CA ${ca_name} at serial ${new_serial}..."
+    echo
     (
         cd "${TP_BASE_DIR}/ca/"
-
-        local new_serial=$(<"${ca_name}/serial")
-        local new_cert_file_path="${ca_name}/newcerts/${new_serial}.cert.pem"
-        local new_chain_file_path="${ca_name}/newcerts/${new_serial}.chain.pem"
-        local new_fullchain_file_path="${ca_name}/newcerts/${new_serial}.fullchain.pem"
-
-        echo "[TP] Signing CSR from '${names[csr_pem_path]}' with CA ${ca_name} at serial ${new_serial}..."
-        echo
-        (
-            set -x
-            openssl ca -config 'ca.conf' -name "${ca_name}" -batch -passin env:TP_PASS -in "${csr_file}" -notext -out "${new_cert_file_path}"
-        )
-        echo
-        echo "[TP] New certificate in '${new_cert_file_path}'."
-        cat "${ca_name}/ca-root.fullchain.pem" > "${new_chain_file_path}"
-        echo "[TP] New certificate chain in '${new_chain_file_path}'."
-        cat "${new_cert_file_path}" "${ca_name}/ca-root.fullchain.pem" > "${new_fullchain_file_path}"
-        echo "[TP] New certificate full-chain in '${new_fullchain_file_path}'."
-
-        echo
-        tp_cert_show "${new_cert_file_path}"
-        echo
-        tp_cert_fingerprint "${new_cert_file_path}"
-
-        # TODO extract cert link behavior to a separate utility function? also needed for ACME certs
-        echo
-        ln -sf "${ca_rel_path}/${new_cert_file_path}" "${names[cert_pem_path]}"
-        echo "[TP] Linked new certificate into '${names[cert_pem_path]}'."
-        ln -sf "${ca_rel_path}/${new_chain_file_path}" "${names[chain_pem_path]}"
-        echo "[TP] Linked new certificate chain into '${names[chain_pem_path]}'."
-        ln -sf "${ca_rel_path}/${new_fullchain_file_path}" "${names[fullchain_pem_path]}"
-        echo "[TP] Linked new certificate full-chain into '${names[fullchain_pem_path]}'."
+        set -x
+        openssl ca -config 'ca.conf' -name "${ca_name}" -batch -passin env:TP_PASS -in "${csr_file}" -notext
     )
+    echo
+    cat "${new_names[file_path]}" > "${new_names[cert_pem_path]}"
+    echo "[TP] New certificate in '${new_names[cert_pem_path]}'."
+    cat "${ca_names[fullchain_pem_path]}" > "${new_names[chain_pem_path]}"
+    echo "[TP] New certificate chain in '${new_names[chain_pem_path]}'."
+    cat "${new_names[cert_pem_path]}" "${ca_names[fullchain_pem_path]}" > "${new_names[fullchain_pem_path]}"
+    echo "[TP] New certificate full-chain in '${new_names[fullchain_pem_path]}'."
+
+    echo
+    tp_cert_show "${new_names[cert_pem_path]}"
+    echo
+    tp_cert_fingerprint "${new_names[cert_pem_path]}"
+
+    # TODO extract cert link behavior to a separate utility function? also needed for ACME certs
+    echo
+    ln -sf "${ca_rel_path}/${new_names[cert_pem_path]}" "${target_names[cert_pem_path]}"
+    echo "[TP] Linked new certificate into '${target_names[cert_pem_path]}'."
+    ln -sf "${ca_rel_path}/${new_names[chain_pem_path]}" "${target_names[chain_pem_path]}"
+    echo "[TP] Linked new certificate chain into '${target_names[chain_pem_path]}'."
+    ln -sf "${ca_rel_path}/${new_names[fullchain_pem_path]}" "${target_names[fullchain_pem_path]}"
+    echo "[TP] Linked new certificate full-chain into '${target_names[fullchain_pem_path]}'."
 }
 
 function tp_ca_clean {
@@ -447,7 +444,7 @@ function tp_acme {
 
 function tp_acme_init {
     echo "[TP] Initializing ACME and Certbot..."
-    tp_util_template "${TP_BASE_DIR}/acme/certbot/cli.ini.tmpl" TP_BASE_DIR TP_ACME_SERVER_URL TP_ACME_ACCOUNT_EMAIL
+    tp_util_template "${TP_BASE_DIR}/acme/certbot/cli.ini.tmpl" TP_ACME_SERVER_URL TP_ACME_ACCOUNT_EMAIL
     tp_server_nginx_init "${TP_BASE_DIR}/acme/challenges-nginx"
 }
 
@@ -511,6 +508,7 @@ function tp_acme_sign {
     echo "[TP] Signing CSR from '${names[csr_pem_path]}' with ACME..."
     echo
     (
+        # TODO change into TP base-dir or acme-dir, since paths in cli.ini are relative
         set -x
         certbot \
             --config "${TP_BASE_DIR}/acme/certbot/cli.ini" \
