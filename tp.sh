@@ -398,9 +398,9 @@ function tp_ca_sign {
         ln -sf "${new_cert_file_path}" "${abs_cert_link}"
         echo "[TP] Linked new certificate into '${abs_cert_link}'."
         ln -sf "${new_chain_file_path}" "${abs_chain_link}"
-        echo "[TP] Linked new certificate into '${abs_chain_link}'."
+        echo "[TP] Linked new certificate chain into '${abs_chain_link}'."
         ln -sf "${new_fullchain_file_path}" "${abs_fullchain_link}"
-        echo "[TP] Linked new certificate into '${abs_fullchain_link}'."
+        echo "[TP] Linked new certificate full-chain into '${abs_fullchain_link}'."
     )
 }
 
@@ -501,60 +501,37 @@ function tp_acme_sign {
 
     if [[ -z "${cert_config_or_csr}" ]]
     then
-        echo "[TP] Nothing to sign. Specify a certificate config file or a CSR!"
+        echo "[TP] Nothing to sign with ACME. Specify a certificate config file or a CSR!"
         return 1
     fi
 
-    local base_dir="$( dirname "${cert_config_or_csr}" )"
-    local base_name="$( basename "${cert_config_or_csr}" | sed -e 's/[.].*$//' )"
-
-    # TODO copied from tp_ca_sign, but logic is now in tp_cert_request, so just call that
-    if [[ "${cert_config_or_csr}" =~ [.]cert[.]conf$ ]]
-    then
-        local config_file="${cert_config_or_csr}"
-        local csr_file="${base_dir}/${base_name}.csr.pem"
-
-        echo "[TP] Preparing CSR to sign, based on config file '${config_file}'..."
-        tp_cert_request "${config_file}"
-    elif [[ "${cert_config_or_csr}" =~ [.]csr[.]pem$ ]]
-    then
-        local csr_file="${cert_config_or_csr}"
-        echo "[TP] Preparing to sign existing CSR..."
-    else
-        echo "[TP] Signing file '${cert_config_or_csr}' is not supported!"
-        echo "[TP] Specify either a certificate configuration (.cert.conf) or a CSR (.csr.pem)!"
-        return 1
-    fi
-
-    # calculate certificate file paths
-    local cert_file="${base_dir}/${base_name}.cert.pem"
-    local chain_file="${base_dir}/${base_name}.chain.pem"
-    local fullchain_file="${base_dir}/${base_name}.fullchain.pem"
+    tp_cert_request "${cert_config_or_csr}"
+    tp_util_names 'names' "${cert_config_or_csr}"
 
     # clean old certificate files, because Certbot refuses to overwrite them
-    rm -f "${cert_file}" "${chain_file}" "${fullchain_file}"
+    rm -f "${names[cert_pem_path]}" "${names[chain_pem_path]}" "${names[fullchain_pem_path]}"
 
-    echo "[TP] Signing CSR from '${csr_file}' with ACME..."
+    echo "[TP] Signing CSR from '${names[csr_pem_path]}' with ACME..."
     echo
     (
         set -x
         certbot \
             --config "${TP_BASE_DIR}/acme/certbot/cli.ini" \
             certonly \
-            --csr "${csr_file}" \
-            --cert-path "${cert_file}" \
-            --chain-path "${chain_file}" \
-            --fullchain-path "${fullchain_file}" \
+            --csr "${names[csr_pem_path]}" \
+            --cert-path "${names[cert_pem_path]}" \
+            --chain-path "${names[chain_pem_path]}" \
+            --fullchain-path "${names[fullchain_pem_path]}" \
     )
     echo
-    echo "[TP] New certificate in '${cert_file}'."
-    echo "[TP] New certificate chain in '${chain_file}'."
-    echo "[TP] New certificate full-chain in '${fullchain_file}'."
+    echo "[TP] New certificate in '${names[cert_pem_path]}'."
+    echo "[TP] New certificate chain in '${names[chain_pem_path]}'."
+    echo "[TP] New certificate full-chain in '${names[fullchain_pem_path]}'."
 
     echo
-    tp_cert_show "${cert_file}"
+    tp_cert_show "${names[cert_pem_path]}"
     echo
-    tp_cert_fingerprint "${cert_file}"
+    tp_cert_fingerprint "${names[cert_pem_path]}"
 }
 
 function tp_acme_revoke {
