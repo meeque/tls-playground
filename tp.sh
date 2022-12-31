@@ -149,42 +149,46 @@ function tp_cert_fingerprint {
 }
 
 function tp_cert_request {
-    local config_file="$1"
+    local cert_config_or_csr="$1"
 
-    if [[ -z "${config_file}" ]]
+    if [[ -z "${cert_config_or_csr}" ]]
     then
-        echo "[TP] No certificate request config file name specified. Specify the config file to request and sign!"
+        echo "[TP] No certificate config file name specified. Specify the config file fore the CSR!"
         return 1
     fi
 
-    local config_file_path="$( cd "${TP_WORK_DIR}"; cd "$(dirname "${config_file}")" ; pwd -P )/$(basename "${config_file}")"
-    local config_file_basepath="$(dirname ${config_file_path})"
-    local config_name="$(basename ${config_file_path})"
-    local config_name="$( echo "${config_name}" | sed -e 's/[.]cert[.]conf$//' )"
-    local reqest_file_path="${config_file_basepath}/${config_name}.csr.pem"
-    local key_file_path="${config_file_basepath}/private/${config_name}.key.pem"
-    local cert_link_path="${config_file_basepath}/${config_name}.cert.pem"
+    tp_util_names 'names' "${cert_config_or_csr}"
 
-    # TODO extract clean-up code to separate sub-command
-    # TODO also clean up chain and fullchain files
-    mkdir -p "${config_file_basepath}/private"
-    chmod og-rwx "${config_file_basepath}/private"
-    rm -f "${reqest_file_path}" "${key_file_path}" "${cert_link_path}"
+    if [[ "${names[suffix]}" == 'csr.pem' ]]
+    then
+        # TODO check if the file actually exists
+        echo "[TP] CSR aleady exiss in '${cert_config_or_csr}'. Doing nothing."
+        return 0
+    elif [[ "${names[suffix]}" != 'cert.conf' ]]
+    then
+        echo "[TP] Creating a CSR from file '${cert_config_or_csr}' is not supported!"
+        echo "[TP] Specify a certificate configuration (.cert.conf) file!"
+        return 1
+    fi
 
-    echo "[TP] Using OpenSSL CSR config file '${config_file_path}':"
+    # TODO clean up chain and fullchain files? if they exist they wouldn't match the new key afterwards
+    mkdir -p "${names[dir]}/private"
+    chmod og-rwx "${names[dir]}/private"
+
+    echo "[TP] Using OpenSSL certificate config file '${names[cert_conf_path]}':"
     echo
-    cat "${config_file_path}"
+    cat "${names[cert_conf_path]}"
     echo
 
-    echo "[TP] Generating key-pair and CSR based on config file '${config_file_path}'..."
+    echo "[TP] Generating key-pair and CSR..."
     echo
     (
         set -x
-        openssl req -new -config "${config_file_path}" -newkey rsa:2048 -passout env:TP_PASS -keyout "${key_file_path}" -out "${reqest_file_path}"
+        openssl req -new -config "${names[cert_conf_path]}" -newkey rsa:2048 -passout env:TP_PASS -keyout "${names[key_pem_path]}" -out "${names[csr_pem_path]}"
     )
     echo
-    echo "[TP] New private key in '${key_file_path}'."
-    echo "[TP] New CSR in '${reqest_file_path}'."
+    echo "[TP] New private key in '${names[key_pem_path]}'."
+    echo "[TP] New CSR in '${names[csr_pem_path]}'."
 }
 
 function tp_cert_selfsign {
@@ -366,21 +370,6 @@ function tp_ca_sign {
 
     tp_util_names 'names' "${cert_config_or_csr}"
 
-    if [[ "${names[suffix]}" == 'cert.conf' ]]
-    then
-        echo "[TP] Preparing CSR to sign, based on config file '${cert_config_or_csr}'..."
-        tp_cert_request "${cert_config_or_csr}"
-        local csr_file="${names[dir]}/${names[csr_pem_file]}"
-    elif [[ "${names[suffix]}" == 'csr.pem' ]]
-    then
-        echo "[TP] Preparing to sign existing CSR..."
-        local csr_file="${cert_config_or_csr}"
-    else
-        echo "[TP] Signing file '${cert_config_or_csr}' is not supported!"
-        echo "[TP] Specify either a certificate configuration (.cert.conf) or a CSR (.csr.pem)!"
-        return 1
-    fi
-
     # generate absolute paths, because we need to run 'openssl ca' in the CA directory
     local abs_base_dir="$( cd "${TP_WORK_DIR}"; cd "${names[dir]}"; pwd -P )"
     local abs_csr_file="${abs_base_dir}/${names[csr_pem_file]}"
@@ -529,7 +518,7 @@ function tp_acme_sign {
     local base_dir="$( dirname "${cert_config_or_csr}" )"
     local base_name="$( basename "${cert_config_or_csr}" | sed -e 's/[.].*$//' )"
 
-    # TODO copied from tp_ca_sign, extract to utility function?
+    # TODO copied from tp_ca_sign, but logic is now in tp_cert_request, so just call that
     if [[ "${cert_config_or_csr}" =~ [.]cert[.]conf$ ]]
     then
         local config_file="${cert_config_or_csr}"
@@ -782,19 +771,31 @@ function tp_util_names {
     local file="$( basename "${file_path}" )"
     local name="$( echo "${file}" | sed -e 's/[.].*$//' )"
     local suffix="$( echo "${file}" | sed --regexp-extended -e 's/^[^.]*[.]?//' )"
+    local path="${dir}/${name}"
 
     varref=(
+        # name components
         [name]="${name}"
         [suffix]="${suffix}"
         [dir]="${dir}"
+        [path]="${path}"
+
+        # file base names
         [cert_conf_file]="${name}.cert.conf"
         [key_pem_file]="${name}.key.pem"
         [csr_pem_file]="${name}.csr.pem"
         [cert_pem_file]="${name}.cert.pem"
         [chain_pem_file]="${name}.chain.pem"
         [fullchain_pem_file]="${name}.fullchain.pem"
+
+        # file paths (dir + base name)
         [file_path]="${file_path}"
-        [name_path]="${dir}/${name}"
+        [cert_conf_path]="${path}.cert.conf"
+        [key_pem_path]="${dir}/private/${name}.key.pem"
+        [csr_pem_path]="${path}.csr.pem"
+        [cert_pem_path]="${path}.cert.pem"
+        [chain_pem_path]="${path}.chain.pem"
+        [fullchain_pem_path]="${path}.fullchain.pem"
     )
 }
 
