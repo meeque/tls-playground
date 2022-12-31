@@ -765,21 +765,32 @@ function tp_util_names {
     local varname="$1"
     local filename="$2"
 
-    # TODO check for missing varname and file
+    if [[ -z "${varname}" ]]
+    then
+        echo "[TP] No variable name given to store file names information!"
+        return 1
+    fi
+
+    if [[ -z "${filename}" ]]
+    then
+        echo "[TP] No file name given to extract naming information from!"
+        return 1
+    fi
 
     declare -A -g "${varname}"
     declare -n varref="${varname}"
 
+    # TODO nomalize dir path
     local dir="$( dirname "${filename}" )"
     local file="$( basename "${filename}" )"
     local name="$( echo "${file}" | sed -e 's/[.].*$//' )"
     local suffix="$( echo "${file}" | sed --regexp-extended -e 's/^[^.]*[.]?//' )"
 
     varref=(
-        [dir]="${dir}"
-        [file]="${file}"
         [name]="${name}"
         [suffix]="${suffix}"
+        [dir]="${dir}"
+        [file]="${file}"
         [cert_conf_file]="${name}.cert.conf"
         [key_pem_file]="${name}.key.pem"
         [csr_pem_file]="${name}.csr.pem"
