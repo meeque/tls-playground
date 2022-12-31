@@ -364,20 +364,17 @@ function tp_ca_sign {
         return 1
     fi
 
-    local base_dir="$( dirname "${cert_config_or_csr}" )"
-    local base_name="$( basename "${cert_config_or_csr}" | sed -e 's/[.].*$//' )"
+    tp_util_names 'names' "${cert_config_or_csr}"
 
-    if [[ "${cert_config_or_csr}" =~ [.]cert[.]conf$ ]]
+    if [[ "${names[suffix]}" == 'cert.conf' ]]
     then
-        local config_file="${cert_config_or_csr}"
-        local csr_file="${base_dir}/${base_name}.csr.pem"
-
-        echo "[TP] Preparing CSR to sign, based on config file '${config_file}'..."
-        tp_cert_request "${config_file}"
-    elif [[ "${cert_config_or_csr}" =~ [.]csr[.]pem$ ]]
+        echo "[TP] Preparing CSR to sign, based on config file '${cert_config_or_csr}'..."
+        tp_cert_request "${cert_config_or_csr}"
+        local csr_file="${names[dir]}/${names[csr_pem_file]}"
+    elif [[ "${names[suffix]}" == 'csr.pem' ]]
     then
-        local csr_file="${cert_config_or_csr}"
         echo "[TP] Preparing to sign existing CSR..."
+        local csr_file="${cert_config_or_csr}"
     else
         echo "[TP] Signing file '${cert_config_or_csr}' is not supported!"
         echo "[TP] Specify either a certificate configuration (.cert.conf) or a CSR (.csr.pem)!"
@@ -385,11 +382,11 @@ function tp_ca_sign {
     fi
 
     # generate absolute paths, because we need to run 'openssl ca' in the CA directory
-    local abs_base_dir="$( cd "${TP_WORK_DIR}"; cd "${base_dir}"; pwd -P )"
-    local abs_csr_file="${abs_base_dir}/${base_name}.csr.pem"
-    local abs_cert_link="${abs_base_dir}/${base_name}.cert.pem"
-    local abs_chain_link="${abs_base_dir}/${base_name}.chain.pem"
-    local abs_fullchain_link="${abs_base_dir}/${base_name}.fullchain.pem"
+    local abs_base_dir="$( cd "${TP_WORK_DIR}"; cd "${names[dir]}"; pwd -P )"
+    local abs_csr_file="${abs_base_dir}/${names[csr_pem_file]}"
+    local abs_cert_link="${abs_base_dir}/${names[cert_pem_file]}"
+    local abs_chain_link="${abs_base_dir}/${names[chain_pem_file]}"
+    local abs_fullchain_link="${abs_base_dir}/${names[fullchain_pem_file]}"
 
     (
         cd "${TP_BASE_DIR}/ca/"
@@ -763,17 +760,17 @@ function tp_clean {
 
 function tp_util_names {
     local varname="$1"
-    local filename="$2"
+    local file_path="$2"
 
     if [[ -z "${varname}" ]]
     then
-        echo "[TP] No variable name given to store file names information!"
+        echo "[TP] No variable name given to store file naming information!"
         return 1
     fi
 
-    if [[ -z "${filename}" ]]
+    if [[ -z "${file_path}" ]]
     then
-        echo "[TP] No file name given to extract naming information from!"
+        echo "[TP] No file path given to extract naming information from!"
         return 1
     fi
 
@@ -781,8 +778,8 @@ function tp_util_names {
     declare -n varref="${varname}"
 
     # TODO nomalize dir path
-    local dir="$( dirname "${filename}" )"
-    local file="$( basename "${filename}" )"
+    local dir="$( dirname "${file_path}" )"
+    local file="$( basename "${file_path}" )"
     local name="$( echo "${file}" | sed -e 's/[.].*$//' )"
     local suffix="$( echo "${file}" | sed --regexp-extended -e 's/^[^.]*[.]?//' )"
 
@@ -790,20 +787,15 @@ function tp_util_names {
         [name]="${name}"
         [suffix]="${suffix}"
         [dir]="${dir}"
-        [file]="${file}"
         [cert_conf_file]="${name}.cert.conf"
         [key_pem_file]="${name}.key.pem"
         [csr_pem_file]="${name}.csr.pem"
         [cert_pem_file]="${name}.cert.pem"
         [chain_pem_file]="${name}.chain.pem"
         [fullchain_pem_file]="${name}.fullchain.pem"
+        [file_path]="${file_path}"
+        [name_path]="${dir}/${name}"
     )
-
-    # XXX remove after debugging
-    for name in ${!varref[@]}
-    do
-        echo "${name}   =   ${varref[${name}]}"
-    done
 }
 
 function tp_util_template {
