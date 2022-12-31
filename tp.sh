@@ -51,8 +51,9 @@ function tp_main {
 }
 
 function tp_main_env_global {
-    export TP_WORK_DIR="$( pwd -P )"
     export TP_BASE_DIR="$( cd "$(dirname "$0")"; pwd -P )"
+    # TODO use relative base-path wherever possible (maybe not in some config files)
+    #export TP_BASE_DIR="$( realpath --relative-to '.' "$(dirname "$0")/" )"
 }
 
 function tp_main_env_defaults {
@@ -360,25 +361,22 @@ function tp_ca_sign {
     tp_cert_request "${cert_config_or_csr}"
     tp_util_names 'names' "${cert_config_or_csr}"
 
-    # generate absolute paths, because we need to run 'openssl ca' in the CA directory
-    local abs_base_dir="$( cd "${TP_WORK_DIR}"; cd "${names[dir]}"; pwd -P )"
-    local abs_csr_file="${abs_base_dir}/${names[csr_pem_file]}"
-    local abs_cert_link="${abs_base_dir}/${names[cert_pem_file]}"
-    local abs_chain_link="${abs_base_dir}/${names[chain_pem_file]}"
-    local abs_fullchain_link="${abs_base_dir}/${names[fullchain_pem_file]}"
+    local csr_file="$( realpath --relative-to "${TP_BASE_DIR}/ca/" "${names[csr_pem_path]}" )"
+    local ca_rel_path="$( realpath --relative-to "${names[dir]}/" "${TP_BASE_DIR}/ca" )"
 
     (
         cd "${TP_BASE_DIR}/ca/"
-        local new_serial=$(<"${ca_name}/serial")
-        local new_cert_file_path="$( pwd -P )/${ca_name}/newcerts/${new_serial}.cert.pem"
-        local new_chain_file_path="$( pwd -P )/${ca_name}/newcerts/${new_serial}.chain.pem"
-        local new_fullchain_file_path="$( pwd -P )/${ca_name}/newcerts/${new_serial}.fullchain.pem"
 
-        echo "[TP] Signing CSR from '${abs_csr_file}' with CA ${ca_name} at serial ${new_serial}..."
+        local new_serial=$(<"${ca_name}/serial")
+        local new_cert_file_path="${ca_name}/newcerts/${new_serial}.cert.pem"
+        local new_chain_file_path="${ca_name}/newcerts/${new_serial}.chain.pem"
+        local new_fullchain_file_path="${ca_name}/newcerts/${new_serial}.fullchain.pem"
+
+        echo "[TP] Signing CSR from '${names[csr_pem_path]}' with CA ${ca_name} at serial ${new_serial}..."
         echo
         (
             set -x
-            openssl ca -config 'ca.conf' -name "${ca_name}" -batch -passin env:TP_PASS -in "${abs_csr_file}" -notext -out "${new_cert_file_path}"
+            openssl ca -config 'ca.conf' -name "${ca_name}" -batch -passin env:TP_PASS -in "${csr_file}" -notext -out "${new_cert_file_path}"
         )
         echo
         echo "[TP] New certificate in '${new_cert_file_path}'."
@@ -393,14 +391,13 @@ function tp_ca_sign {
         tp_cert_fingerprint "${new_cert_file_path}"
 
         # TODO extract cert link behavior to a separate utility function? also needed for ACME certs
-        # TODO use relative paths in symlinks, because absolute paths break in container bind mounts
         echo
-        ln -sf "${new_cert_file_path}" "${abs_cert_link}"
-        echo "[TP] Linked new certificate into '${abs_cert_link}'."
-        ln -sf "${new_chain_file_path}" "${abs_chain_link}"
-        echo "[TP] Linked new certificate chain into '${abs_chain_link}'."
-        ln -sf "${new_fullchain_file_path}" "${abs_fullchain_link}"
-        echo "[TP] Linked new certificate full-chain into '${abs_fullchain_link}'."
+        ln -sf "${ca_rel_path}/${new_cert_file_path}" "${names[cert_pem_path]}"
+        echo "[TP] Linked new certificate into '${names[cert_pem_path]}'."
+        ln -sf "${ca_rel_path}/${new_chain_file_path}" "${names[chain_pem_path]}"
+        echo "[TP] Linked new certificate chain into '${names[chain_pem_path]}'."
+        ln -sf "${ca_rel_path}/${new_fullchain_file_path}" "${names[fullchain_pem_path]}"
+        echo "[TP] Linked new certificate full-chain into '${names[fullchain_pem_path]}'."
     )
 }
 
