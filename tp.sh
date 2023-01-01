@@ -609,7 +609,7 @@ function tp_server_init {
         echo "[TP] Unsupported certificate issuer '$cert_issuer'."
         return 1
     fi
-    for config_file in $( find "${TP_BASE_DIR}/server-nginx" -path '*/tls/*' -name '*.cert.conf' )
+    for config_file in $( find "${TP_BASE_DIR}/server-nginx" -path '*/tls/*' -name '*.cert.conf' | sort )
     do
         "tp_server_cert_${cert_issuer}" "${config_file}"
     done
@@ -627,11 +627,22 @@ function tp_server_init {
             echo "[TP] Adding root certificate of CA '${ca_name}' to trusted CAs file '${trusted_certs_file}'..."
             cat "${ca_root_cert}" >> "${trusted_certs_file}"
         else
-            echo "[TP] Looks like CA '${ca_name}' is not initialized. Omitting it from trusted CAs file '${trusted_certs_file}'!"
+            echo "[TP] Looks like CA '${ca_name}' is not initialized. Omitting it from trusted CAs file!"
         fi
     done
 
-    # TODO install some dummy cert, if trusted certs file still empty, because nginx does not accept an empty file
+    # trusted certs file may still be empty, if TLS Playground CAs have not been initialized yet
+    # if so, install a self-signed fallback cert, because nginx does not accept an empty trusted certs file
+    if [[ ! -s ${trusted_certs_file} ]]
+    then
+        echo
+        echo "[TP] Looks like no trusted CA certificates are available. Using self-signed fallback certificate instead..."
+        local fallback_cert_path="${TP_BASE_DIR}/server-nginx/servers/server2/tls/trusted-clients-fallback"
+        tp_cert_selfsign "${fallback_cert_path}.cert.conf"
+        echo
+        echo "[TP] Adding self-signed fallback certificate to trusted CAs file '${trusted_certs_file}'..."
+        cat "${fallback_cert_path}.cert.pem" > "${trusted_certs_file}"
+    fi
 }
 
 function tp_server_clean {
