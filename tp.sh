@@ -362,15 +362,16 @@ function tp_ca_init {
     fi
 
     tp_ca_clean "${ca_name}"
-    echo "[TP] Creating scaffolding for CA '${ca_name}'..."
+
+    local serial="$( tp_util_generate_hex_token "tls-playground-ca-${ca_name}" 8 )00000001"
+    echo "[TP] Creating scaffolding for CA '${ca_name}' with initial certificate serial number '${serial}'..."
     (
         cd "${TP_BASE_DIR}/ca/${ca_name}"
         mkdir 'newcerts'
         mkdir 'private'
         chmod go-rwx 'private'
         touch db.txt
-        # TODO use distinct serial ranges for individual cas
-        echo -n D78B3C0000000001 > serial
+        echo -n "${serial}" > serial
     )
 
     echo "[TP] Preparing root certificate for CA '${ca_name}'..."
@@ -857,6 +858,12 @@ function tp_util_template_clean {
     local template_file="$1"
     local target_file="$( echo "${template_file}" | sed -e 's/[.]tmpl$//' )"
     rm -f "${target_file}"
+}
+
+function tp_util_generate_hex_token {
+    local input="$1"
+    local size="${2:-16}"
+    echo "${input}" | sha256sum | { dd bs="${size}" count=1 2> /dev/null; } |  tr a-z A-Z
 }
 
 
