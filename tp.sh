@@ -484,7 +484,7 @@ function tp_acme_challenges {
     shift || true
 
     case "${command}" in
-        'run' | 'start' | 'stop' )
+        'run' | 'start' | 'reload' | 'stop' )
             "tp_server_nginx_${command}" "${TP_BASE_DIR}/acme/challenges-nginx"
             ;;
         * )
@@ -582,7 +582,7 @@ function tp_server {
         'init' | 'clean' )
             "tp_server_${command}" "$@"
             ;;
-        'run' | 'start' | 'stop' )
+        'run' | 'start' | 'reload' | 'stop' )
             "tp_server_nginx_${command}" "${TP_BASE_DIR}/server-nginx"
             ;;
         * )
@@ -676,6 +676,12 @@ function tp_server_nginx_start {
     local server_dir="$1"
     echo "[TP] Starting nginx server at '${server_dir}' in the background..."
     nginx -p "${server_dir}" -c 'nginx.conf' -g 'daemon on;'
+}
+
+function tp_server_nginx_reload {
+    local server_dir="$1"
+    echo "[TP] Reloading configuration of nginx server at '${server_dir}'..."
+    nginx -p "${server_dir}" -c 'nginx.conf' -s 'reload'
 }
 
 function tp_server_nginx_stop {
