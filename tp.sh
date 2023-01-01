@@ -609,7 +609,7 @@ function tp_server_init {
         echo "[TP] Unsupported certificate issuer '$cert_issuer'."
         return 1
     fi
-    for config_file in $( find "${TP_BASE_DIR}/server-nginx" -path '*/tls/*' -name '*.cert.conf' | sort )
+    for config_file in $( find "${TP_BASE_DIR}/server-nginx" -path '*/tls/*' -name 'server*.cert.conf' | sort )
     do
         "tp_server_cert_${cert_issuer}" "${config_file}"
     done
@@ -624,7 +624,7 @@ function tp_server_init {
         local ca_root_cert="${TP_BASE_DIR}/ca/${ca_name}/ca-root.cert.pem"
         if [[ -f "${ca_root_cert}" ]]
         then
-            echo "[TP] Adding root certificate of CA '${ca_name}' to trusted CAs file '${trusted_certs_file}'..."
+            echo "[TP] Adding root certificate of CA '${ca_name}' to trusted clients CAs file '${trusted_certs_file}'..."
             cat "${ca_root_cert}" >> "${trusted_certs_file}"
         else
             echo "[TP] Looks like CA '${ca_name}' is not initialized. Omitting it from trusted CAs file!"
@@ -640,7 +640,7 @@ function tp_server_init {
         local fallback_cert_path="${TP_BASE_DIR}/server-nginx/servers/server2/tls/trusted-clients-fallback"
         tp_cert_selfsign "${fallback_cert_path}.cert.conf"
         echo
-        echo "[TP] Adding self-signed fallback certificate to trusted CAs file '${trusted_certs_file}'..."
+        echo "[TP] Adding self-signed fallback certificate to trusted clients CAs file '${trusted_certs_file}'..."
         cat "${fallback_cert_path}.cert.pem" > "${trusted_certs_file}"
     fi
 }
@@ -706,6 +706,7 @@ function tp_server_nginx_clean {
 
     if [[ -f "${server_dir}/var/nginx.pid" ]]
     then
+        # TODO clean up dangling pid file insted, if it does not refer to a running process
         echo "[TP] Looks like server in '${server_dir}' is still running. Aborting clean-up! Stop the server or remove its .pid file before trying again!"
         return 1
     fi
