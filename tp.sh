@@ -139,7 +139,6 @@ function tp_cert_fingerprint {
         return 1
     fi
 
-    # TODO support configurable list of hash algs
     echo "[TP] Calculating fingerprint of certificate in '${cert_file}'..."
     echo
     (
@@ -597,9 +596,6 @@ function tp_acme_check_env {
     return "${status}"
 }
 
-# TODO show how to use certbot without own csr
-# TODO show how to use certbot with manual challange
-
 
 
 # TP server sub-commands
@@ -749,11 +745,19 @@ function tp_server_nginx_stop {
 function tp_server_nginx_clean {
     local server_dir="$1"
 
-    if [[ -f "${server_dir}/var/nginx.pid" ]]
+    local pid_file="${server_dir}/var/nginx.pid"
+    if [[ -f "${pid_file}" ]]
     then
-        # TODO clean up dangling pid file insted, if it does not refer to a running process
-        echo "[TP] Looks like server in '${server_dir}' is still running. Aborting clean-up! Stop the server or remove its .pid file before trying again!"
-        return 1
+        local pid="$(< "${pid_file}" )"
+        if comm=$( ps --format 'comm=' --pid "${pid}" ) && [[ "${comm}" == 'nginx' ]]
+        then
+            echo "[TP] Looks like server in '${server_dir}' is still running with PID '${pid}'."
+            echo "[TP] Aborting clean-up! Stop the server or remove PID file '${pid_file}' before trying again!"
+            return 1
+        else
+            echo "[TP] PID '${pid}' does not point to an nginx process anymore. Removing dangling PID file '${pid_file}'..."
+            rm -f "${pid_file}"
+        fi
     fi
 
     for config_file_template in $( find "${server_dir}" -type f -and -name '*.tmpl' )
