@@ -528,33 +528,34 @@ function tp_acme_sign {
     fi
 
     tp_cert_request_if_missing "${cert_config_or_csr}"
-    tp_util_names 'names' "${cert_config_or_csr}"
+    tp_util_names 'target_names' "${cert_config_or_csr}"
+    tp_util_names 'rel_names' "$( realpath --relative-to "${TP_BASE_DIR}/acme/" "${target_names[file_path]}" )"
 
     # clean old certificate files, because Certbot refuses to overwrite them
-    rm -f "${names[cert_pem_path]}" "${names[chain_pem_path]}" "${names[fullchain_pem_path]}"
+    rm -f "${target_names[cert_pem_path]}" "${target_names[chain_pem_path]}" "${target_names[fullchain_pem_path]}"
 
-    echo "[TP] Signing CSR from '${names[csr_pem_path]}' with ACME..."
+    echo "[TP] Signing CSR from '${target_names[csr_pem_path]}' with ACME..."
     echo
     (
-        # TODO change into TP base-dir or acme-dir, since paths in cli.ini are relative
+        cd "${TP_BASE_DIR}/acme/"
         set -x
         certbot \
-            --config "${TP_BASE_DIR}/acme/certbot/cli.ini" \
+            --config "certbot/cli.ini" \
             certonly \
-            --csr "${names[csr_pem_path]}" \
-            --cert-path "${names[cert_pem_path]}" \
-            --chain-path "${names[chain_pem_path]}" \
-            --fullchain-path "${names[fullchain_pem_path]}" \
+            --csr "${rel_names[csr_pem_path]}" \
+            --cert-path "${rel_names[cert_pem_path]}" \
+            --chain-path "${rel_names[chain_pem_path]}" \
+            --fullchain-path "${rel_names[fullchain_pem_path]}" \
     )
     echo
-    echo "[TP] New certificate in '${names[cert_pem_path]}'."
-    echo "[TP] New certificate chain in '${names[chain_pem_path]}'."
-    echo "[TP] New certificate full-chain in '${names[fullchain_pem_path]}'."
+    echo "[TP] New certificate in '${target_names[cert_pem_path]}'."
+    echo "[TP] New certificate chain in '${target_names[chain_pem_path]}'."
+    echo "[TP] New certificate full-chain in '${target_names[fullchain_pem_path]}'."
 
     echo
-    tp_cert_show "${names[cert_pem_path]}"
+    tp_cert_show "${target_names[cert_pem_path]}"
     echo
-    tp_cert_fingerprint "${names[cert_pem_path]}"
+    tp_cert_fingerprint "${target_names[cert_pem_path]}"
 }
 
 function tp_acme_revoke {

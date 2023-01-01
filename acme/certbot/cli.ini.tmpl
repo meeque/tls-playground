@@ -1,8 +1,8 @@
 
 # directories
-config-dir = acme/certbot/conf/
-work-dir = acme/certbot/lib/
-logs-dir = acme/certbot/log/
+config-dir = certbot/conf/
+work-dir = certbot/lib/
+logs-dir = certbot/log/
 
 # general behavior
 non-interactive = true
@@ -17,7 +17,7 @@ no-eff-email = true
 # certificate management
 #authenticator = manual
 authenticator = webroot
-webroot-path = acme/challenges/http-01/public/
+webroot-path = challenges/http-01/public/
 no-reuse-key = true
 no-delete-after-revoke = true
 
