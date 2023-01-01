@@ -863,7 +863,7 @@ function tp_util_template_clean {
 function tp_util_generate_hex_token {
     local input="$1"
     local size="${2:-16}"
-    echo "${input}" | sha256sum | { dd bs="${size}" count=1 2> /dev/null; } |  tr a-z A-Z
+    echo "${input}" | openssl dgst -sha256 -r | { dd bs="${size}" count=1 2> /dev/null; } |  tr a-z A-Z
 }
 
 
