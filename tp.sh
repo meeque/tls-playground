@@ -286,13 +286,13 @@ function tp_cert_clean {
 }
 
 function tp_cert_link {
-    source="$1"
-    target="$2"
+    local source="$1"
+    local target="$2"
 
-    tp_util_names "source_names" "${source}"
-    tp_util_names "target_names" "${target}"
-    echo "XXX source: ${source_names[cert_pem_path]}"
-    echo "XXX target: ${target_names[cert_pem_path]}"
+    local source_rel="$( realpath --relative-to "$( dirname "${target}" )" "${source}" )"
+    local target_rel="$( realpath --relative-to . "${target}" )"
+    tp_util_names "source_names" "${source_rel}"
+    tp_util_names "target_names" "${target_rel}"
 
     ln -sf "${source_names[cert_pem_path]}" "${target_names[cert_pem_path]}"
     echo "[TP] Linked new certificate into '${target_names[cert_pem_path]}'."
@@ -403,7 +403,7 @@ function tp_ca_sign {
     tp_cert_fingerprint "${new_names[cert_pem_path]}"
 
     echo
-    tp_cert_link "$( realpath --relative-to "${target_names[dir]}/" "${new_names[file_path]}" )" "$( realpath --relative-to . "${target_names[file_path]}" )"
+    tp_cert_link "${new_names[file_path]}" "${target_names[file_path]}"
 }
 
 function tp_ca_clean {
@@ -736,7 +736,6 @@ function tp_util_names {
     declare -A -g "${varname}"
     declare -n varref="${varname}"
 
-    # TODO nomalize dir path
     local dir="$( dirname "${file_path}" )"
     local file="$( basename "${file_path}" )"
     local name="$( echo "${file}" | sed -e 's/[.].*$//' )"
