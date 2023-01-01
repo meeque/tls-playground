@@ -52,12 +52,30 @@ function tp_main {
 
 function tp_main_env_global {
     export TP_BASE_DIR="$( realpath --relative-to '.' "$(dirname "$0")/" )"
+
+    if [[ -z "${TP_PASS}" ]]
+    then
+        local pass_file="${TP_BASE_DIR}/.tp.pass.txt"
+        if [[ ! -f "${pass_file}" ]]
+        then
+            echo "[TP] No passphrase specified in either variable TP_PASS or file '${pass_file}'!"
+            echo "[TP] Generating a new passphrase, since it may needed for protecting key-files later..."
+
+            touch "${pass_file}"
+            chmod og-rwx "${pass_file}"
+
+            echo
+            (
+                set -x
+                openssl rand -base64 -out "${pass_file}" 32
+            )
+            echo
+        fi
+        export TP_PASS="$(< "${pass_file}" )"
+    fi
 }
 
 function tp_main_env_defaults {
-    # TODO do not hard-code the passphrase. instead try to load it from a file, if the envar is empty. if the file is missing, generate a new passphrase and store it in the file
-    export TP_PASS="${TP_PASS:=1234}"
-
     # TODO move closer to commands that actually use these env-vars?
     # TODO validate CLI args, too? e.g. for file naming conventions and file existence?
     export TP_SERVER_DOMAIN="${TP_SERVER_DOMAIN:=localhost}"
