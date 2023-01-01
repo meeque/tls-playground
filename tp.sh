@@ -473,7 +473,7 @@ function tp_acme {
 function tp_acme_init {
     echo "[TP] Initializing ACME and Certbot..."
     tp_util_template "${TP_BASE_DIR}/acme/certbot/cli.ini.tmpl" TP_ACME_SERVER_URL TP_ACME_ACCOUNT_EMAIL
-    tp_server_nginx_init "${TP_BASE_DIR}/acme/challenges-nginx"
+    tp_server_nginx_init "${TP_BASE_DIR}/acme/challenges/http-01"
 }
 
 function tp_acme_account {
@@ -505,7 +505,7 @@ function tp_acme_challenges {
 
     case "${command}" in
         'run' | 'start' | 'reload' | 'stop' )
-            "tp_server_nginx_${command}" "${TP_BASE_DIR}/acme/challenges-nginx"
+            "tp_server_nginx_${command}" "${TP_BASE_DIR}/acme/challenges/http-01"
             ;;
         * )
             echo "[TP] Unsupported ACME challenges command '${command}'."
@@ -577,12 +577,13 @@ function tp_acme_revoke {
 }
 
 function tp_acme_clean {
+    echo "[TP] Cleaning transient files of nginx-based 'http-01' challenges server..."
+    tp_server_nginx_clean "${TP_BASE_DIR}/acme/challenges/http-01"
     echo "[TP] Cleaning transient ACME and Certbot files..."
     rm -f "${TP_BASE_DIR}/acme/certbot/cli.ini"
     find acme/certbot -mindepth 1 -type d -and -not -path '*/conf' -and -not -path '*/conf/accounts' | xargs rm -rf
     rm -rf "${TP_BASE_DIR}/acme/certbot/lib"
     rm -rf "${TP_BASE_DIR}/acme/certbot/log"
-    tp_server_nginx_clean "${TP_BASE_DIR}/acme/challenges-nginx"
 }
 
 function tp_acme_check_env {
