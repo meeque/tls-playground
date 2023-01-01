@@ -561,18 +561,61 @@ function tp_acme_sign {
 function tp_acme_revoke {
     local cert_file="$1"
 
-    # TODO also provide --key-path arg, if corresponding private key is available
-    #      this may be necessary after acme account changed (or if authorizations expired?)
+    if [[ -z "${cert_file}" ]]
+    then
+        echo "[TP] No certificate given to revoke! Specify the certificate (.cert.pem) file!"
+        return 1
+    fi
 
-    echo "[TP] Revoking certificate in '${cert_file}' with ACME..."
+    tp_util_names 'source_names' "${cert_file}"
+
+    if [[ "${source_names[suffix]}" != 'cert.pem' ]]
+    then
+        echo "[TP] Revoking given file '${cert_file}' is not supported! Specify a certificate (.cert.pem) file instead!"
+        return 1
+    fi
+    if [[ ! -f "${cert_file}" ]]
+    then
+        echo "[TP] Given certificate file '${cert_file}' does not exist!"
+        return 1
+    fi
+
+    tp_util_names 'rel_names' "$( realpath --relative-to "${TP_BASE_DIR}/acme/" "${source_names[file_path]}" )"
+
+    echo "[TP] Trying to revoke certificate in '${cert_file}', using existing ACME account..."
     echo
     (
+        cd "${TP_BASE_DIR}/acme/"
         set -x
         certbot \
-            --config "${TP_BASE_DIR}/acme/certbot/cli.ini" \
+            --config "certbot/cli.ini" \
             revoke \
-            --cert-path "${cert_file}" \
-    )
+            --cert-path "${rel_names[file_path]}" \
+    ) \
+    || \
+    {
+        echo
+        echo "[TP] Revoking certificate has failed! See above Certbot outputs."
+
+        [[ -f "${source_names[key_pem_path]}" ]]
+        echo "[TP] Re-trying to revoke certificate, using its private key in '${source_names[key_pem_path]}'..."
+        echo
+        (
+            cd "${TP_BASE_DIR}/acme/"
+            set -x
+            certbot \
+                --config "certbot/cli.ini" \
+                revoke \
+                --cert-path "${rel_names[file_path]}" \
+                --key-path "${rel_names[key_pem_path]}" \
+        ) \
+        || \
+        {
+            echo
+            echo "[TP] Revoking certificate has failed again! See above Certbot outputs."
+            return 1
+        }
+    }
     echo
     echo "[TP] Revoked certificate from '${cert_file}'."
 }
