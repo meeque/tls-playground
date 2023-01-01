@@ -51,8 +51,6 @@ function tp_main {
 }
 
 function tp_main_env_global {
-    # XXX export TP_BASE_DIR="$( cd "$(dirname "$0")"; pwd -P )"
-    # TODO use relative base-path wherever possible (maybe not in some config files)
     export TP_BASE_DIR="$( realpath --relative-to '.' "$(dirname "$0")/" )"
 }
 
@@ -287,6 +285,23 @@ function tp_cert_clean {
     )
 }
 
+function tp_cert_link {
+    source="$1"
+    target="$2"
+
+    tp_util_names "source_names" "${source}"
+    tp_util_names "target_names" "${target}"
+    echo "XXX source: ${source_names[cert_pem_path]}"
+    echo "XXX target: ${target_names[cert_pem_path]}"
+
+    ln -sf "${source_names[cert_pem_path]}" "${target_names[cert_pem_path]}"
+    echo "[TP] Linked new certificate into '${target_names[cert_pem_path]}'."
+    ln -sf "${source_names[chain_pem_path]}" "${target_names[chain_pem_path]}"
+    echo "[TP] Linked new certificate chain into '${target_names[chain_pem_path]}'."
+    ln -sf "${source_names[fullchain_pem_path]}" "${target_names[fullchain_pem_path]}"
+    echo "[TP] Linked new certificate full-chain into '${target_names[fullchain_pem_path]}'."
+}
+
 
 
 # TP CA sub-commands
@@ -359,21 +374,20 @@ function tp_ca_sign {
     fi
 
     tp_cert_request "${cert_config_or_csr}"
+
     tp_util_names 'target_names' "${cert_config_or_csr}"
     tp_util_names 'ca_names' "${TP_BASE_DIR}/ca/${ca_name}/ca-root.cert.pem"
-
-    local csr_file="$( realpath --relative-to "${TP_BASE_DIR}/ca/" "${target_names[csr_pem_path]}" )"
-    local ca_rel_path="$( realpath --relative-to "${target_names[dir]}/" "${TP_BASE_DIR}" )"
-
     local new_serial=$(<"${ca_names[dir]}/serial")
     tp_util_names 'new_names' "${TP_BASE_DIR}/ca/${ca_name}/newcerts/${new_serial}.pem"
+
+    local csr_pem_rel_path="$( realpath --relative-to "${TP_BASE_DIR}/ca/" "${target_names[csr_pem_path]}" )"
 
     echo "[TP] Signing CSR from '${target_names[csr_pem_path]}' with CA ${ca_name} at serial ${new_serial}..."
     echo
     (
         cd "${TP_BASE_DIR}/ca/"
         set -x
-        openssl ca -config 'ca.conf' -name "${ca_name}" -batch -passin env:TP_PASS -in "${csr_file}" -notext
+        openssl ca -config 'ca.conf' -name "${ca_name}" -batch -passin env:TP_PASS -in "${csr_pem_rel_path}" -notext
     )
     echo
     cat "${new_names[file_path]}" > "${new_names[cert_pem_path]}"
@@ -388,14 +402,8 @@ function tp_ca_sign {
     echo
     tp_cert_fingerprint "${new_names[cert_pem_path]}"
 
-    # TODO extract cert link behavior to a separate utility function? also needed for ACME certs
     echo
-    ln -sf "${ca_rel_path}/${new_names[cert_pem_path]}" "${target_names[cert_pem_path]}"
-    echo "[TP] Linked new certificate into '${target_names[cert_pem_path]}'."
-    ln -sf "${ca_rel_path}/${new_names[chain_pem_path]}" "${target_names[chain_pem_path]}"
-    echo "[TP] Linked new certificate chain into '${target_names[chain_pem_path]}'."
-    ln -sf "${ca_rel_path}/${new_names[fullchain_pem_path]}" "${target_names[fullchain_pem_path]}"
-    echo "[TP] Linked new certificate full-chain into '${target_names[fullchain_pem_path]}'."
+    tp_cert_link "$( realpath --relative-to "${target_names[dir]}/" "${new_names[file_path]}" )" "$( realpath --relative-to . "${target_names[file_path]}" )"
 }
 
 function tp_ca_clean {
