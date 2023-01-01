@@ -76,7 +76,6 @@ function tp_main_env_global {
 }
 
 function tp_main_env_defaults {
-    # TODO validate CLI args, too? e.g. for file naming conventions and file existence?
     export TP_SERVER_DOMAIN="${TP_SERVER_DOMAIN:=localhost}"
     export TP_SERVER_LISTEN_ADDRESS="${TP_SERVER_LISTEN_ADDRESS:=127.0.0.1}"
     export TP_SERVER_HTTP_PORT="${TP_SERVER_HTTP_PORT:=8080}"
@@ -151,29 +150,27 @@ function tp_cert_fingerprint {
 }
 
 function tp_cert_request {
-    local cert_config_or_csr="$1"
+    local cert_config="$1"
 
-    if [[ -z "${cert_config_or_csr}" ]]
+    if [[ -z "${cert_config}" ]]
     then
-        echo "[TP] No certificate config file name specified. Specify the config file for the CSR!"
+        echo "[TP] No certificate config file name specified. Specify the OpenSSL config file for the CSR!"
         return 1
     fi
 
-    tp_util_names 'names' "${cert_config_or_csr}"
+    tp_util_names 'names' "${cert_config}"
 
-    if [[ "${names[suffix]}" == 'csr.pem' ]]
+    if [[ "${names[suffix]}" != 'cert.conf' ]]
     then
-        # TODO check if the file actually exists
-        echo "[TP] CSR aleady exiss in '${cert_config_or_csr}'. Doing nothing."
-        return 0
-    elif [[ "${names[suffix]}" != 'cert.conf' ]]
+        echo "[TP] Creating a CSR from given file '${cert_config}' is not supported! Specify a certificate config (.cert.conf) file!"
+        return 1
+    fi
+    if [[ ! -f "${names[cert_conf_path]}" ]]
     then
-        echo "[TP] Creating a CSR from file '${cert_config_or_csr}' is not supported!"
-        echo "[TP] Specify a certificate configuration (.cert.conf) file!"
+        echo "[TP] Given certificate config file '${cert_config}' does not exist!"
         return 1
     fi
 
-    # TODO clean up chain and fullchain files? if they exist they wouldn't match the new key afterwards
     mkdir -p "${names[dir]}/private"
     chmod og-rwx "${names[dir]}/private"
 
@@ -193,16 +190,42 @@ function tp_cert_request {
     echo "[TP] New CSR in '${names[csr_pem_path]}'."
 }
 
+function tp_cert_request_if_missing {
+    local cert_config_or_csr="$1"
+
+    if [[ -z "${cert_config_or_csr}" ]]
+    then
+        echo "[TP] No file name specified. Specify an OpenSSL certificate config file or an existing CSR file!"
+        return 1
+    fi
+
+    tp_util_names 'names' "${cert_config_or_csr}"
+
+    if [[ "${names[suffix]}" == 'csr.pem' ]]
+    then
+        if [[ -f "${names[csr_pem_path]}" ]]
+        then
+            echo "[TP] CSR already exists in '${cert_config_or_csr}'. Skipping generation of a new one."
+            return 0
+        else
+            echo "[TP] CSR file '${cert_config_or_csr}' does not exist! Specify either an existing CSR file or a certificate config file!"
+            return 1
+        fi
+    fi
+
+    tp_cert_request "${names[cert_conf_path]}"
+}
+
 function tp_cert_selfsign {
     local cert_config_or_csr="$1"
 
     if [[ -z "${cert_config_or_csr}" ]]
     then
-        echo "[TP] Nothing to self-sign. Specify a certificate config file or a CSR!"
+        echo "[TP] Nothing to self-sign. Specify a certificate config file or a CSR file!"
         return 1
     fi
 
-    tp_cert_request "${cert_config_or_csr}"
+    tp_cert_request_if_missing "${cert_config_or_csr}"
     tp_util_names 'names' "${cert_config_or_csr}"
 
     echo "[TP] Signing CSR with it's own private key..."
@@ -370,13 +393,7 @@ function tp_ca_sign {
         return 1
     fi
 
-    if [[ -z "${cert_config_or_csr}" ]]
-    then
-        echo "[TP] Nothing to sign. Specify a certificate config file or a CSR!"
-        return 1
-    fi
-
-    tp_cert_request "${cert_config_or_csr}"
+    tp_cert_request_if_missing "${cert_config_or_csr}"
 
     tp_util_names 'target_names' "${cert_config_or_csr}"
     tp_util_names 'ca_names' "${TP_BASE_DIR}/ca/${ca_name}/ca-root.cert.pem"
@@ -510,7 +527,7 @@ function tp_acme_sign {
         return 1
     fi
 
-    tp_cert_request "${cert_config_or_csr}"
+    tp_cert_request_if_missing "${cert_config_or_csr}"
     tp_util_names 'names' "${cert_config_or_csr}"
 
     # clean old certificate files, because Certbot refuses to overwrite them
@@ -616,7 +633,7 @@ function tp_server_init {
         echo "[TP] No certificate issuer specified. Assuming 'selfsign'."
         local cert_issuer="selfsign"
     fi
-    if [[ ! "${cert_issuer}" =~ ^selfsign|ca|acme$ ]]
+    if [[ ! "${cert_issuer}" =~ ^(selfsign|ca|acme)$ ]]
     then
         echo "[TP] Unsupported certificate issuer '$cert_issuer'."
         return 1
