@@ -157,36 +157,36 @@ function tp_cert_request {
         return 1
     fi
 
-    tp_util_names 'names' "${cert_config}"
+    tp_util_files 'files' "${cert_config}"
 
-    if [[ "${names[suffix]}" != 'cert.conf' ]]
+    if [[ "${files[suffix]}" != 'cert.conf' ]]
     then
         echo "[TP] Creating a CSR from given file '${cert_config}' is not supported! Specify a certificate config (.cert.conf) file!"
         return 1
     fi
-    if [[ ! -f "${names[cert_conf_path]}" ]]
+    if [[ ! -f "${files[cert_conf_path]}" ]]
     then
         echo "[TP] Given certificate config file '${cert_config}' does not exist!"
         return 1
     fi
 
-    mkdir -p "${names[dir]}/private"
-    chmod og-rwx "${names[dir]}/private"
+    mkdir -p "${files[dir]}/private"
+    chmod og-rwx "${files[dir]}/private"
 
-    echo "[TP] Using OpenSSL certificate config file '${names[cert_conf_path]}':"
+    echo "[TP] Using OpenSSL certificate config file '${files[cert_conf_path]}':"
     echo
-    cat "${names[cert_conf_path]}"
+    cat "${files[cert_conf_path]}"
     echo
 
     echo "[TP] Generating key-pair and CSR..."
     echo
     (
         set -x
-        openssl req -new -config "${names[cert_conf_path]}" -newkey rsa:2048 -passout env:TP_PASS -keyout "${names[key_pem_path]}" -out "${names[csr_pem_path]}"
+        openssl req -new -config "${files[cert_conf_path]}" -newkey rsa:2048 -passout env:TP_PASS -keyout "${files[key_pem_path]}" -out "${files[csr_pem_path]}"
     )
     echo
-    echo "[TP] New private key in '${names[key_pem_path]}'."
-    echo "[TP] New CSR in '${names[csr_pem_path]}'."
+    echo "[TP] New private key in '${files[key_pem_path]}'."
+    echo "[TP] New CSR in '${files[csr_pem_path]}'."
 }
 
 function tp_cert_request_if_missing {
@@ -198,11 +198,11 @@ function tp_cert_request_if_missing {
         return 1
     fi
 
-    tp_util_names 'names' "${cert_config_or_csr}"
+    tp_util_files 'files' "${cert_config_or_csr}"
 
-    if [[ "${names[suffix]}" == 'csr.pem' ]]
+    if [[ "${files[suffix]}" == 'csr.pem' ]]
     then
-        if [[ -f "${names[csr_pem_path]}" ]]
+        if [[ -f "${files[csr_pem_path]}" ]]
         then
             echo "[TP] CSR already exists in '${cert_config_or_csr}'. Skipping generation of a new one."
             return 0
@@ -212,7 +212,7 @@ function tp_cert_request_if_missing {
         fi
     fi
 
-    tp_cert_request "${names[cert_conf_path]}"
+    tp_cert_request "${files[cert_conf_path]}"
 }
 
 function tp_cert_selfsign {
@@ -225,25 +225,25 @@ function tp_cert_selfsign {
     fi
 
     tp_cert_request_if_missing "${cert_config_or_csr}"
-    tp_util_names 'names' "${cert_config_or_csr}"
+    tp_util_files 'files' "${cert_config_or_csr}"
 
     echo "[TP] Signing CSR with it's own private key..."
     echo
     (
         set -x
-        openssl x509 -req -in "${names[csr_pem_path]}" -days 90 -signkey "${names[key_pem_path]}" -passin env:TP_PASS -out "${names[cert_pem_path]}"
+        openssl x509 -req -in "${files[csr_pem_path]}" -days 90 -signkey "${files[key_pem_path]}" -passin env:TP_PASS -out "${files[cert_pem_path]}"
     )
     echo
-    echo "[TP] New certificate in '${names[cert_pem_path]}'."
-    :> "${names[chain_pem_path]}"
-    echo "[TP] New (empty) certificate chain in '${names[chain_pem_path]}'."
-    cp "${names[cert_pem_path]}" "${names[fullchain_pem_path]}"
-    echo "[TP] New (single-entry) certificate full-chain in '${names[fullchain_pem_path]}'."
+    echo "[TP] New certificate in '${files[cert_pem_path]}'."
+    :> "${files[chain_pem_path]}"
+    echo "[TP] New (empty) certificate chain in '${files[chain_pem_path]}'."
+    cp "${files[cert_pem_path]}" "${files[fullchain_pem_path]}"
+    echo "[TP] New (single-entry) certificate full-chain in '${files[fullchain_pem_path]}'."
 
     echo
-    tp_cert_show "${names[cert_pem_path]}"
+    tp_cert_show "${files[cert_pem_path]}"
     echo
-    tp_cert_fingerprint "${names[cert_pem_path]}"
+    tp_cert_fingerprint "${files[cert_pem_path]}"
 }
 
 function tp_cert_pkcs8 {
@@ -316,15 +316,15 @@ function tp_cert_link {
 
     local source_rel="$( realpath --relative-to "$( dirname "${target}" )" "${source}" )"
     local target_rel="$( realpath --relative-to . "${target}" )"
-    tp_util_names "source_names" "${source_rel}"
-    tp_util_names "target_names" "${target_rel}"
+    tp_util_files "source_files" "${source_rel}"
+    tp_util_files "target_files" "${target_rel}"
 
-    ln -sf "${source_names[cert_pem_path]}" "${target_names[cert_pem_path]}"
-    echo "[TP] Linked new certificate into '${target_names[cert_pem_path]}'."
-    ln -sf "${source_names[chain_pem_path]}" "${target_names[chain_pem_path]}"
-    echo "[TP] Linked new certificate chain into '${target_names[chain_pem_path]}'."
-    ln -sf "${source_names[fullchain_pem_path]}" "${target_names[fullchain_pem_path]}"
-    echo "[TP] Linked new certificate full-chain into '${target_names[fullchain_pem_path]}'."
+    ln -sf "${source_files[cert_pem_path]}" "${target_files[cert_pem_path]}"
+    echo "[TP] Linked new certificate into '${target_files[cert_pem_path]}'."
+    ln -sf "${source_files[chain_pem_path]}" "${target_files[chain_pem_path]}"
+    echo "[TP] Linked new certificate chain into '${target_files[chain_pem_path]}'."
+    ln -sf "${source_files[fullchain_pem_path]}" "${target_files[fullchain_pem_path]}"
+    echo "[TP] Linked new certificate full-chain into '${target_files[fullchain_pem_path]}'."
 }
 
 
@@ -395,14 +395,14 @@ function tp_ca_sign {
 
     tp_cert_request_if_missing "${cert_config_or_csr}"
 
-    tp_util_names 'target_names' "${cert_config_or_csr}"
-    tp_util_names 'ca_names' "${TP_BASE_DIR}/ca/${ca_name}/ca-root.cert.pem"
-    local new_serial=$(<"${ca_names[dir]}/serial")
-    tp_util_names 'new_names' "${TP_BASE_DIR}/ca/${ca_name}/newcerts/${new_serial}.pem"
+    tp_util_files 'target_files' "${cert_config_or_csr}"
+    tp_util_files 'ca_files' "${TP_BASE_DIR}/ca/${ca_name}/ca-root.cert.pem"
+    local new_serial=$(<"${ca_files[dir]}/serial")
+    tp_util_files 'new_files' "${TP_BASE_DIR}/ca/${ca_name}/newcerts/${new_serial}.pem"
 
-    local csr_pem_rel_path="$( realpath --relative-to "${TP_BASE_DIR}/ca/" "${target_names[csr_pem_path]}" )"
+    local csr_pem_rel_path="$( realpath --relative-to "${TP_BASE_DIR}/ca/" "${target_files[csr_pem_path]}" )"
 
-    echo "[TP] Signing CSR from '${target_names[csr_pem_path]}' with CA ${ca_name} at serial ${new_serial}..."
+    echo "[TP] Signing CSR from '${target_files[csr_pem_path]}' with CA ${ca_name} at serial ${new_serial}..."
     echo
     (
         cd "${TP_BASE_DIR}/ca/"
@@ -410,20 +410,20 @@ function tp_ca_sign {
         openssl ca -config 'ca.conf' -name "${ca_name}" -batch -passin env:TP_PASS -in "${csr_pem_rel_path}" -notext
     )
     echo
-    cat "${new_names[file_path]}" > "${new_names[cert_pem_path]}"
-    echo "[TP] New certificate in '${new_names[cert_pem_path]}'."
-    cat "${ca_names[fullchain_pem_path]}" > "${new_names[chain_pem_path]}"
-    echo "[TP] New certificate chain in '${new_names[chain_pem_path]}'."
-    cat "${new_names[cert_pem_path]}" "${ca_names[fullchain_pem_path]}" > "${new_names[fullchain_pem_path]}"
-    echo "[TP] New certificate full-chain in '${new_names[fullchain_pem_path]}'."
+    cat "${new_files[file_path]}" > "${new_files[cert_pem_path]}"
+    echo "[TP] New certificate in '${new_files[cert_pem_path]}'."
+    cat "${ca_files[fullchain_pem_path]}" > "${new_files[chain_pem_path]}"
+    echo "[TP] New certificate chain in '${new_files[chain_pem_path]}'."
+    cat "${new_files[cert_pem_path]}" "${ca_files[fullchain_pem_path]}" > "${new_files[fullchain_pem_path]}"
+    echo "[TP] New certificate full-chain in '${new_files[fullchain_pem_path]}'."
 
     echo
-    tp_cert_show "${new_names[cert_pem_path]}"
+    tp_cert_show "${new_files[cert_pem_path]}"
     echo
-    tp_cert_fingerprint "${new_names[cert_pem_path]}"
+    tp_cert_fingerprint "${new_files[cert_pem_path]}"
 
     echo
-    tp_cert_link "${new_names[file_path]}" "${target_names[file_path]}"
+    tp_cert_link "${new_files[file_path]}" "${target_files[file_path]}"
 }
 
 function tp_ca_clean {
@@ -528,13 +528,13 @@ function tp_acme_sign {
     fi
 
     tp_cert_request_if_missing "${cert_config_or_csr}"
-    tp_util_names 'target_names' "${cert_config_or_csr}"
-    tp_util_names 'rel_names' "$( realpath --relative-to "${TP_BASE_DIR}/acme/" "${target_names[file_path]}" )"
+    tp_util_files 'target_files' "${cert_config_or_csr}"
+    tp_util_files 'rel_files' "$( realpath --relative-to "${TP_BASE_DIR}/acme/" "${target_files[file_path]}" )"
 
     # clean old certificate files, because Certbot refuses to overwrite them
-    rm -f "${target_names[cert_pem_path]}" "${target_names[chain_pem_path]}" "${target_names[fullchain_pem_path]}"
+    rm -f "${target_files[cert_pem_path]}" "${target_files[chain_pem_path]}" "${target_files[fullchain_pem_path]}"
 
-    echo "[TP] Signing CSR from '${target_names[csr_pem_path]}' with ACME..."
+    echo "[TP] Signing CSR from '${target_files[csr_pem_path]}' with ACME..."
     echo
     (
         cd "${TP_BASE_DIR}/acme/"
@@ -542,20 +542,20 @@ function tp_acme_sign {
         certbot \
             --config "certbot/cli.ini" \
             certonly \
-            --csr "${rel_names[csr_pem_path]}" \
-            --cert-path "${rel_names[cert_pem_path]}" \
-            --chain-path "${rel_names[chain_pem_path]}" \
-            --fullchain-path "${rel_names[fullchain_pem_path]}" \
+            --csr "${rel_files[csr_pem_path]}" \
+            --cert-path "${rel_files[cert_pem_path]}" \
+            --chain-path "${rel_files[chain_pem_path]}" \
+            --fullchain-path "${rel_files[fullchain_pem_path]}" \
     )
     echo
-    echo "[TP] New certificate in '${target_names[cert_pem_path]}'."
-    echo "[TP] New certificate chain in '${target_names[chain_pem_path]}'."
-    echo "[TP] New certificate full-chain in '${target_names[fullchain_pem_path]}'."
+    echo "[TP] New certificate in '${target_files[cert_pem_path]}'."
+    echo "[TP] New certificate chain in '${target_files[chain_pem_path]}'."
+    echo "[TP] New certificate full-chain in '${target_files[fullchain_pem_path]}'."
 
     echo
-    tp_cert_show "${target_names[cert_pem_path]}"
+    tp_cert_show "${target_files[cert_pem_path]}"
     echo
-    tp_cert_fingerprint "${target_names[cert_pem_path]}"
+    tp_cert_fingerprint "${target_files[cert_pem_path]}"
 }
 
 function tp_acme_revoke {
@@ -567,9 +567,9 @@ function tp_acme_revoke {
         return 1
     fi
 
-    tp_util_names 'source_names' "${cert_file}"
+    tp_util_files 'source_files' "${cert_file}"
 
-    if [[ "${source_names[suffix]}" != 'cert.pem' ]]
+    if [[ "${source_files[suffix]}" != 'cert.pem' ]]
     then
         echo "[TP] Revoking given file '${cert_file}' is not supported! Specify a certificate (.cert.pem) file instead!"
         return 1
@@ -580,7 +580,7 @@ function tp_acme_revoke {
         return 1
     fi
 
-    tp_util_names 'rel_names' "$( realpath --relative-to "${TP_BASE_DIR}/acme/" "${source_names[file_path]}" )"
+    tp_util_files 'rel_files' "$( realpath --relative-to "${TP_BASE_DIR}/acme/" "${source_files[file_path]}" )"
 
     echo "[TP] Trying to revoke certificate in '${cert_file}', using existing ACME account..."
     echo
@@ -590,15 +590,15 @@ function tp_acme_revoke {
         certbot \
             --config "certbot/cli.ini" \
             revoke \
-            --cert-path "${rel_names[file_path]}" \
+            --cert-path "${rel_files[file_path]}" \
     ) \
     || \
     {
         echo
         echo "[TP] Revoking certificate has failed! See above Certbot outputs."
 
-        [[ -f "${source_names[key_pem_path]}" ]]
-        echo "[TP] Re-trying to revoke certificate, using its private key in '${source_names[key_pem_path]}'..."
+        [[ -f "${source_files[key_pem_path]}" ]]
+        echo "[TP] Re-trying to revoke certificate, using its private key in '${source_files[key_pem_path]}'..."
         echo
         (
             cd "${TP_BASE_DIR}/acme/"
@@ -606,8 +606,8 @@ function tp_acme_revoke {
             certbot \
                 --config "certbot/cli.ini" \
                 revoke \
-                --cert-path "${rel_names[file_path]}" \
-                --key-path "${rel_names[key_pem_path]}" \
+                --cert-path "${rel_files[file_path]}" \
+                --key-path "${rel_files[key_pem_path]}" \
         ) \
         || \
         {
@@ -829,7 +829,7 @@ function tp_clean {
 
 # general TP utility functions
 
-function tp_util_names {
+function tp_util_files {
     local varname="$1"
     local file_path="$2"
 
@@ -861,7 +861,7 @@ function tp_util_names {
         [dir]="${dir}"
         [path]="${path}"
 
-        # file base names
+        # files (name + suffix)
         [cert_conf_file]="${name}.cert.conf"
         [key_pem_file]="${name}.key.pem"
         [csr_pem_file]="${name}.csr.pem"
@@ -869,7 +869,7 @@ function tp_util_names {
         [chain_pem_file]="${name}.chain.pem"
         [fullchain_pem_file]="${name}.fullchain.pem"
 
-        # file paths (dir + base name)
+        # file paths (dir + name + suffix)
         [file_path]="${file_path}"
         [cert_conf_path]="${path}.cert.conf"
         [key_pem_path]="${dir}/private/${name}.key.pem"
