@@ -184,8 +184,10 @@ function tp_cert_request {
         set -x
         openssl req -new -config "${files[cert_conf_path]}" -newkey rsa:2048 -passout env:TP_PASS -keyout "${files[key_pem_path]}" -out "${files[csr_pem_path]}"
     )
+    echo -n "${TP_PASS}" > "${files[key_pass_path]}"
     echo
     echo "[TP] New private key in '${files[key_pem_path]}'."
+    echo "[TP] Pass-phrase for new private key in '${files[key_pass_path]}'."
     echo "[TP] New CSR in '${files[csr_pem_path]}'."
 }
 
@@ -231,7 +233,7 @@ function tp_cert_selfsign {
     echo
     (
         set -x
-        openssl x509 -req -in "${files[csr_pem_path]}" -days 90 -signkey "${files[key_pem_path]}" -passin env:TP_PASS -out "${files[cert_pem_path]}"
+        openssl x509 -req -in "${files[csr_pem_path]}" -days 90 -signkey "${files[key_pem_path]}" -passin "file:${files[key_pass_path]}" -out "${files[cert_pem_path]}"
     )
     echo
     echo "[TP] New certificate in '${files[cert_pem_path]}'."
@@ -401,13 +403,14 @@ function tp_ca_sign {
     tp_util_files 'new_files' "${TP_BASE_DIR}/ca/${ca_name}/newcerts/${new_serial}.pem"
 
     local csr_pem_rel_path="$( realpath --relative-to "${TP_BASE_DIR}/ca/" "${target_files[csr_pem_path]}" )"
+    local key_pass_rel_path="$( realpath --relative-to "${TP_BASE_DIR}/ca/" "${ca_files[key_pass_path]}" )"
 
     echo "[TP] Signing CSR from '${target_files[csr_pem_path]}' with CA ${ca_name} at serial ${new_serial}..."
     echo
     (
         cd "${TP_BASE_DIR}/ca/"
         set -x
-        openssl ca -config 'ca.conf' -name "${ca_name}" -batch -passin env:TP_PASS -in "${csr_pem_rel_path}" -notext
+        openssl ca -config 'ca.conf' -name "${ca_name}" -batch -passin "file:${key_pass_rel_path}" -in "${csr_pem_rel_path}" -notext
     )
     echo
     cat "${new_files[file_path]}" > "${new_files[cert_pem_path]}"
@@ -851,7 +854,7 @@ function tp_util_files {
     local dir="$( dirname "${file_path}" )"
     local file="$( basename "${file_path}" )"
     local name="$( echo "${file}" | sed -e 's/[.].*$//' )"
-    local suffix="$( echo "${file}" | sed --regexp-extended -e 's/^[^.]*[.]?//' )"
+    local suffix="$( echo "${file}" | sed -E -e 's/^[^.]*[.]?//' )"
     local path="${dir}/${name}"
 
     varref=(
@@ -864,6 +867,7 @@ function tp_util_files {
         # files (name + suffix)
         [cert_conf_file]="${name}.cert.conf"
         [key_pem_file]="${name}.key.pem"
+        [key_pass_file]="${name}.key.pass.txt"
         [csr_pem_file]="${name}.csr.pem"
         [cert_pem_file]="${name}.cert.pem"
         [chain_pem_file]="${name}.chain.pem"
@@ -873,6 +877,7 @@ function tp_util_files {
         [file_path]="${file_path}"
         [cert_conf_path]="${path}.cert.conf"
         [key_pem_path]="${dir}/private/${name}.key.pem"
+        [key_pass_path]="${dir}/private/${name}.key.pass.txt"
         [csr_pem_path]="${path}.csr.pem"
         [cert_pem_path]="${path}.cert.pem"
         [chain_pem_path]="${path}.chain.pem"

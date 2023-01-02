@@ -6,6 +6,7 @@
 *.pem
 *.der
 *.pfx
+*.pass.txt
 
 /ca/**/db.txt
 /ca/**/db.txt.*
