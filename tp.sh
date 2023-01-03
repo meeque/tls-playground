@@ -192,20 +192,17 @@ function tp_cert_request_if_missing {
         return 0
     fi
 
-    tp_cert_request "${files[cert_conf_path]}"
+    tp_cert_request "${cert_config_or_csr}"
 }
 
 function tp_cert_selfsign {
     local cert_config_or_csr="$1"
 
-    if [[ -z "${cert_config_or_csr}" ]]
-    then
-        echo "[TP] Nothing to self-sign. Specify a certificate config file or a CSR file!"
-        return 1
-    fi
-
-    tp_cert_request_if_missing "${cert_config_or_csr}"
     tp_util_files 'files' "${cert_config_or_csr}"
+    tp_util_files_check 'files' 'file_path' "[TP] Nothing to self-sign. Specify a certificate config file or a CSR file!"
+
+    echo "[TP] Generating CSR for the self-signed certificate..."
+    tp_cert_request_if_missing "${cert_config_or_csr}"
 
     echo "[TP] Signing CSR with it's own private key..."
     echo
@@ -233,13 +230,11 @@ function tp_cert_selfsign {
 function tp_cert_pkcs8 {
     local key_file="$1"
 
-    if [[ -z "${key_file}" ]]
-    then
-        echo "[TP] No key file name specified. Specify the key file to convert to PKCS8!"
-        return 1
-    fi
-
     tp_util_files 'files' "${key_file}"
+    tp_util_files_check 'files' 'file_path' "[TP] No key file name specified. Specify the key file to convert to PKCS8!"
+    tp_util_files_check 'files' 'suffix=key.pem' "[TP] Converting file '${key_file}' to PKCS8 format is not supported! Specify a private key (.key.pem) file!"
+    tp_util_files_check 'files' 'file_stat' "[TP] Given private key file '${key_file}' does not exist!"
+
     local pkcs8_file="${files[path]}.key.pkcs8.der"
 
     echo "[TP] Converting private key '${key_file}' to PKCS8 format..."
@@ -258,13 +253,12 @@ function tp_cert_pkcs8 {
 function tp_cert_pkcs12 {
     local cert_file="$1"
 
-    if [[ -z "${cert_file}" ]]
-    then
-        echo "[TP] No certificate specified. Specify the certificate to bundled to PKCS12!"
-        return 1
-    fi
-
     tp_util_files 'files' "${cert_file}"
+    tp_util_files_check 'files' 'file_path' "[TP] No certificate specified. Specify the certificate file to bundle in PKCS12!"
+    tp_util_files_check 'files' 'suffix=cert.pem' "[TP] Bundling file '${cert_file}' in PKCS12 format is not supported! Specify a certificate (.cert.pem) file!"
+    tp_util_files_check 'files' 'file_stat' "[TP] Given certificate file '${cert_file}' does not exist!"
+    tp_util_files_check 'files' 'key_pem_stat' "[TP] Looked for matching private key file '${files[key_pem_path]}' for the given certificaate. But it does not exist!"
+
     local pkcs12_file="${files[dir]}/private/${files[name]}.pfx"
 
     # cannot use file directly
@@ -272,7 +266,7 @@ function tp_cert_pkcs12 {
     # with an env-var we can specify the same pass-phrase twice without this gimick
     export tp_passphrase="$(< "${files[key_pass_path]}" )"
 
-    echo "[TP] Bundling certificate '${cert_file}' and private key '${files[key_pem_path]}' to PKCS12..."
+    echo "[TP] Bundling certificate '${cert_file}' and private key '${files[key_pem_path]}' in PKCS12..."
     echo
     (
         set -x
