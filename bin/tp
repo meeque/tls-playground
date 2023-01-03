@@ -51,7 +51,7 @@ function tp_main {
 }
 
 function tp_main_env_global {
-    export TP_BASE_DIR="$( realpath --relative-to '.' "$(dirname "$0")/" )"
+    export TP_BASE_DIR="$( realpath --relative-to '.' "$(dirname "$0")/.." )"
 
     if [[ -z "${TP_PASS}" ]]
     then
