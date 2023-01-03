@@ -115,3 +115,13 @@ if ! shopt -oq posix; then
     . /etc/bash_completion
   fi
 fi
+
+# TLS Playground
+# add TP script to path
+tp_bin="$( realpath "$( dirname "${BASH_SOURCE}" )/bin" )"
+if [[ -d "${tp_bin}" &&  ":$PATH:" != *":${tp_bin}:"* ]]
+then
+    PATH="${tp_bin}:${PATH}"
+fi
+unset tp_bin
+
