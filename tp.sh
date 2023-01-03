@@ -182,24 +182,14 @@ function tp_cert_request {
 function tp_cert_request_if_missing {
     local cert_config_or_csr="$1"
 
-    if [[ -z "${cert_config_or_csr}" ]]
-    then
-        echo "[TP] No file name specified. Specify an OpenSSL certificate config file or an existing CSR file!"
-        return 1
-    fi
-
     tp_util_files 'files' "${cert_config_or_csr}"
+    tp_util_files_check 'files' 'file_path' "[TP] No file name specified. Specify an OpenSSL certificate config file or an existing CSR file!"
 
     if [[ "${files[suffix]}" == 'csr.pem' ]]
     then
-        if [[ -f "${files[csr_pem_path]}" ]]
-        then
-            echo "[TP] CSR already exists in '${cert_config_or_csr}'. Skipping generation of a new one."
-            return 0
-        else
-            echo "[TP] CSR file '${cert_config_or_csr}' does not exist! Specify either an existing CSR file or a certificate config file!"
-            return 1
-        fi
+        tp_util_files_check 'files' 'csr_pem_stat' "[TP] CSR file '${cert_config_or_csr}' does not exist! Specify either an existing CSR file or a certificate config file!"
+        echo "[TP] CSR already exists in '${cert_config_or_csr}'. Skipping generation of a new one."
+        return 0
     fi
 
     tp_cert_request "${files[cert_conf_path]}"
