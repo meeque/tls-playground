@@ -111,22 +111,46 @@ function tp_cert {
 }
 
 function tp_cert_show {
-    local cert_file="$1"
-    # TODO alternatively show CSRs and keys, based on naming conventions
+    local file="$1"
 
-    if [[ -z "${cert_file}" ]]
-    then
-        echo "[TP] No certificate specified. Specify the certificate file to show!"
-        return 1
-    fi
+    tp_util_files 'files' "${file}"
+    tp_util_files_check 'files' 'file_path' "[TP] No file given. Specify a key, csr, or certificate file to show!"
+    tp_util_files_check 'files' 'file_stat' "[TP] Given file '${file}' does not exist!"
 
-    echo "[TP] Showing contents of certificate in '${cert_file}'..."
-    echo
-    (
-        set -x
-        openssl x509 -in "${cert_file}" -noout -text
-    )
-    echo
+    case "${files[suffix]}" in
+        'cert.pem' )
+            echo "[TP] Showing contents of certificate in '${file}'..."
+            echo
+            (
+                set -x
+                openssl x509 -in "${file}" -noout -text
+            )
+            echo
+            ;;
+        'csr.pem' )
+            echo "[TP] Showing contents of CSR in '${file}'..."
+            echo
+            (
+                set -x
+                openssl req -in "${file}" -noout -text
+            )
+            echo
+            ;;
+        'key.pem' )
+            echo "[TP] Showing contents of private key in '${file}'..."
+            echo
+            (
+                set -x
+                openssl rsa -in "${file}" -passin "file:${files[key_pass_path]}" -noout -text
+            )
+            echo
+            echo "[TP] Attention! If anyone has seen this, you should stop using this key and corresponding certificates!"
+            ;;
+        * )
+            echo "[TP] Sorry, don't know how to show contents of files with suffix '.${files[suffix]}'!"
+            return 1
+            ;;
+    esac
 }
 
 function tp_cert_fingerprint {
@@ -153,7 +177,7 @@ function tp_cert_request {
 
     tp_util_files 'files' "${cert_config}"
     tp_util_files_check 'files' 'file_path' "[TP] No certificate config file name specified. Specify the OpenSSL config file for the CSR!"
-    tp_util_files_check 'files' 'suffix=cert.conf' "[TP] Creating a CSR from given file '${cert_config}' is not supported! Specify a certificate config (.cert.conf) file!"
+    tp_util_files 'files' "${cert_config}""[TP] Creating a CSR from given file '${cert_config}' is not supported! Specify a certificate config (.cert.conf) file!"
     tp_util_files_check 'files' 'cert_conf_stat' "[TP] Given certificate config file '${cert_config}' does not exist!"
 
     mkdir -p "${files[dir]}/private"
