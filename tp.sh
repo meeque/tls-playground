@@ -151,24 +151,10 @@ function tp_cert_fingerprint {
 function tp_cert_request {
     local cert_config="$1"
 
-    if [[ -z "${cert_config}" ]]
-    then
-        echo "[TP] No certificate config file name specified. Specify the OpenSSL config file for the CSR!"
-        return 1
-    fi
-
     tp_util_files 'files' "${cert_config}"
-
-    if [[ "${files[suffix]}" != 'cert.conf' ]]
-    then
-        echo "[TP] Creating a CSR from given file '${cert_config}' is not supported! Specify a certificate config (.cert.conf) file!"
-        return 1
-    fi
-    if [[ ! -f "${files[cert_conf_path]}" ]]
-    then
-        echo "[TP] Given certificate config file '${cert_config}' does not exist!"
-        return 1
-    fi
+    tp_util_files_check 'files' 'file_path' "[TP] No certificate config file name specified. Specify the OpenSSL config file for the CSR!"
+    tp_util_files_check 'files' 'suffix=cert.conf' "[TP] Creating a CSR from given file '${cert_config}' is not supported! Specify a certificate config (.cert.conf) file!"
+    tp_util_files_check 'files' 'cert_conf_stat' "[TP] Given certificate config file '${cert_config}' does not exist!"
 
     mkdir -p "${files[dir]}/private"
     chmod og-rwx "${files[dir]}/private"
@@ -851,20 +837,14 @@ function tp_util_files {
     local varname="$1"
     local file_path="$2"
 
-    if [[ -z "${varname}" ]]
-    then
-        echo "[TP] No variable name given to store file naming information!"
-        return 1
-    fi
-
-    if [[ -z "${file_path}" ]]
-    then
-        echo "[TP] No file path given to extract naming information from!"
-        return 1
-    fi
+    # fail, if varname is missing
+    [[ -n "${varname}" ]]
 
     declare -A -g "${varname}"
-    declare -n varref="${varname}"
+    local -n varref="${varname}"
+
+    # succeed, but leave variable empty, if file path is missing
+    [[ -n "${file_path}" ]] || return 0
 
     local dir="$( dirname "${file_path}" )"
     local file="$( basename "${file_path}" )"
@@ -897,7 +877,56 @@ function tp_util_files {
         [cert_pem_path]="${path}.cert.pem"
         [chain_pem_path]="${path}.chain.pem"
         [fullchain_pem_path]="${path}.fullchain.pem"
+
+        # file statuses
+        [file_stat]="$( tp_util_files_stat "${file_path}" )"
+        [cert_conf_stat]="$( tp_util_files_stat "${path}.cert.conf" )"
+        [key_pem_stat]="$( tp_util_files_stat "${dir}/private/${name}.key.pem" )"
+        [key_pass_stat]="$( tp_util_files_stat "${dir}/private/${name}.key.pass.txt" )"
+        [csr_pem_stat]="$( tp_util_files_stat "${path}.csr.pem" )"
+        [cert_pem_stat]="$( tp_util_files_stat "${path}.cert.pem" )"
+        [chain_pem_stat]="$( tp_util_files_stat "${path}.chain.pem" )"
+        [fullchain_pem_stat]="$( tp_util_files_stat "${path}.fullchain.pem" )"
     )
+}
+
+function tp_util_files_stat {
+    local file_path="$1"
+    if [[ -f "${file_path}" ]]
+    then
+        echo 'f'
+    elif [[ -d "${file_path}" ]]
+    then
+        echo 'd'
+    elif [[ -e "${file_path}" ]]
+    then
+        echo 'e'
+    fi
+}
+
+function tp_util_files_check {
+    local varname="$1"
+    local check="$2"
+    local message="$3"
+
+    local check_name="$( echo "${check}" | sed -E -e 's/=.*$//' )"
+    local check_value="$( echo "${check}" | sed -E -e 's/^[^=]+(=|$)//' )"
+
+    local -n varref="${varname}"
+    local actual_value="${varref["${check_name}"]}"
+
+    if [[ -n "${check_value}" ]]
+    then
+        # check for value match, if a check value was given
+        [[ "${actual_value}" == "${check_value}" ]] && return 0 || true
+    else
+        # check for non-empty, if no check value was given
+        [[ -n "${actual_value}" ]] && return 0 || true
+
+    fi
+
+    echo "${message}"
+    return 1
 }
 
 function tp_util_template {
