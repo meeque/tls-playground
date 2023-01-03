@@ -522,7 +522,9 @@ function tp_acme_sign {
         return 1
     fi
 
+    echo "[TP] Generating CSR for the new certificate..."
     tp_cert_request_if_missing "${cert_config_or_csr}"
+
     tp_util_files 'target_files' "${cert_config_or_csr}"
     tp_util_files 'rel_files' "$( realpath --relative-to "${TP_BASE_DIR}/acme/" "${target_files[file_path]}" )"
 
