@@ -182,7 +182,9 @@ function tp_cert_request {
     echo
     (
         set -x
-        openssl req -new -config "${files[cert_conf_path]}" -newkey rsa:2048 -passout env:TP_PASS -keyout "${files[key_pem_path]}" -out "${files[csr_pem_path]}"
+        openssl req \
+            -new -config "${files[cert_conf_path]}" -newkey 'rsa:2048' \
+            -passout env:TP_PASS -keyout "${files[key_pem_path]}" -out "${files[csr_pem_path]}" \
     )
     echo -n "${TP_PASS}" > "${files[key_pass_path]}"
     echo
@@ -233,7 +235,11 @@ function tp_cert_selfsign {
     echo
     (
         set -x
-        openssl x509 -req -in "${files[csr_pem_path]}" -days 90 -signkey "${files[key_pem_path]}" -passin "file:${files[key_pass_path]}" -out "${files[cert_pem_path]}"
+        openssl x509 \
+            -days '90' \
+            -req -in "${files[csr_pem_path]}" \
+            -signkey "${files[key_pem_path]}" -passin "file:${files[key_pass_path]}" \
+            -out "${files[cert_pem_path]}" \
     )
     echo
     echo "[TP] New certificate in '${files[cert_pem_path]}'."
@@ -257,14 +263,17 @@ function tp_cert_pkcs8 {
         return 1
     fi
 
-    local key_name="$( echo "${key_file}" | sed -e 's/[.]pem$//' )"
-    local pkcs8_file="${key_name}-pkcs8.der"
+    tp_util_files 'files' "${key_file}"
+    local pkcs8_file="${files[path]}.key.pkcs8.der"
 
     echo "[TP] Converting private key '${key_file}' to PKCS8 format..."
     echo
     (
         set -x
-        openssl pkcs8 -topk8 -in "${key_file}" -passin env:TP_PASS -outform DER -out "${pkcs8_file}" -nocrypt
+        openssl pkcs8 \
+            -topk8 -nocrypt \
+            -in "${key_file}" -passin "file:${files[path]}.key.pass.txt" \
+            -outform 'DER' -out "${pkcs8_file}" \
     )
     echo
     echo "[TP] PKCS8 private key in '${pkcs8_file}'."
@@ -279,18 +288,24 @@ function tp_cert_pkcs12 {
         return 1
     fi
 
-    local cert_file_path="$(dirname ${cert_file})"
-    local cert_name="$(basename ${cert_file})"
-    local cert_name="$( echo "${cert_name}" | sed -e 's/[.]cert[.]pem$//' )"
-    local key_file="${cert_file_path}/private/${cert_name}.key.pem"
-    local pkcs12_file="${cert_file_path}/private/${cert_name}.pfx"
+    tp_util_files 'files' "${cert_file}"
+    local pkcs12_file="${files[dir]}/private/${files[name]}.pfx"
 
-    echo "[TP] Bundling certificate '${cert_file}' and private key '${key_file}' to PKCS12..."
+    # cannot use file directly
+    # when the same file is used for both -passin and -passout, openssl will expect 2 passords in it
+    # with an env-var we can specify the same pass-phrase twice without this gimick
+    export tp_passphrase="$(< "${files[key_pass_path]}" )"
+
+    echo "[TP] Bundling certificate '${cert_file}' and private key '${files[key_pem_path]}' to PKCS12..."
     echo
     (
         set -x
-        openssl pkcs12 -export -in "${cert_file}" -inkey "${key_file}" -passin env:TP_PASS -out "${pkcs12_file}" -aes256 -passout env:TP_PASS
+        openssl pkcs12 \
+            -export \
+            -in "${cert_file}" -inkey "${files[key_pem_path]}" -passin "env:tp_passphrase" \
+            -out "${pkcs12_file}" -passout "env:tp_passphrase" \
     )
+    unset tp_passphrase
     echo
     echo "[TP] PKCS12 bundle in '${pkcs12_file}'."
 }
@@ -308,7 +323,7 @@ function tp_cert_clean {
         cd "${path}"
         find . -type f -and '(' -name '*.pem' -or -name '*.der' -or -name '*.pfx' ')' | xargs rm -f
         find . -type l -and '(' -name '*.pem' -or -name '*.der' -or -name '*.pfx' ')' | xargs rm -f
-        find . -type d -and -empty -and -name 'private' | xargs rm -f
+        find . -type d -and -empty -and -name 'private' | xargs rm -rf
     )
 }
 
@@ -399,7 +414,7 @@ function tp_ca_sign {
 
     tp_util_files 'target_files' "${cert_config_or_csr}"
     tp_util_files 'ca_files' "${TP_BASE_DIR}/ca/${ca_name}/ca-root.cert.pem"
-    local new_serial=$(<"${ca_files[dir]}/serial")
+    local new_serial="$(< "${ca_files[dir]}/serial" )"
     tp_util_files 'new_files' "${TP_BASE_DIR}/ca/${ca_name}/newcerts/${new_serial}.pem"
 
     local csr_pem_rel_path="$( realpath --relative-to "${TP_BASE_DIR}/ca/" "${target_files[csr_pem_path]}" )"
