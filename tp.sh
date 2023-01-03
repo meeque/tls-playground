@@ -293,8 +293,8 @@ function tp_cert_clean {
     echo "[TP] Cleaning up certificates and related files in '${path}'..."
     (
         cd "${path}"
-        find . -type f -and '(' -name '*.pem' -or -name '*.der' -or -name '*.pfx' ')' | xargs rm -f
-        find . -type l -and '(' -name '*.pem' -or -name '*.der' -or -name '*.pfx' ')' | xargs rm -f
+        find . -type f -and '(' -name '*.pem' -or -name '*.der' -or -name '*.pfx' -or -name '*.pass.txt' ')' | xargs rm -f
+        find . -type l -and '(' -name '*.pem' -or -name '*.der' -or -name '*.pfx' -or -name '*.pass.txt' ')' | xargs rm -f
         find . -type d -and -empty -and -name 'private' | xargs rm -rf
     )
 }
