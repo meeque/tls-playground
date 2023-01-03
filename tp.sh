@@ -234,6 +234,7 @@ function tp_cert_pkcs8 {
     tp_util_files_check 'files' 'file_path' "[TP] No key file name specified. Specify the key file to convert to PKCS8!"
     tp_util_files_check 'files' 'suffix=key.pem' "[TP] Converting file '${key_file}' to PKCS8 format is not supported! Specify a private key (.key.pem) file!"
     tp_util_files_check 'files' 'file_stat' "[TP] Given private key file '${key_file}' does not exist!"
+    tp_util_files_check 'files' 'key_pass_stat' "[TP] Looked for matching pass-phrase file '${files[key_pass_path]}' for the given private key! But it does not exist!"
 
     local pkcs8_file="${files[path]}.key.pkcs8.der"
 
@@ -243,7 +244,7 @@ function tp_cert_pkcs8 {
         set -x
         openssl pkcs8 \
             -topk8 -nocrypt \
-            -in "${key_file}" -passin "file:${files[path]}.key.pass.txt" \
+            -in "${key_file}" -passin "file:${files[key_pass_path]}" \
             -outform 'DER' -out "${pkcs8_file}" \
     )
     echo
@@ -257,7 +258,8 @@ function tp_cert_pkcs12 {
     tp_util_files_check 'files' 'file_path' "[TP] No certificate specified. Specify the certificate file to bundle in PKCS12!"
     tp_util_files_check 'files' 'suffix=cert.pem' "[TP] Bundling file '${cert_file}' in PKCS12 format is not supported! Specify a certificate (.cert.pem) file!"
     tp_util_files_check 'files' 'file_stat' "[TP] Given certificate file '${cert_file}' does not exist!"
-    tp_util_files_check 'files' 'key_pem_stat' "[TP] Looked for matching private key file '${files[key_pem_path]}' for the given certificaate. But it does not exist!"
+    tp_util_files_check 'files' 'key_pem_stat' "[TP] Looked for matching private key file '${files[key_pem_path]}' for the given certificate. But it does not exist!"
+    tp_util_files_check 'files' 'key_pass_stat' "[TP] Looked for matching private key paass-phrase file '${files[key_pass_path]}' for the given certificate. But it does not exist!"
 
     local pkcs12_file="${files[dir]}/private/${files[name]}.pfx"
 
@@ -380,10 +382,15 @@ function tp_ca_sign {
         return 1
     fi
 
+    tp_util_files 'ca_files' "${TP_BASE_DIR}/ca/${ca_name}/ca-root.cert.pem"
+    tp_util_files_check 'ca_files' 'file_stat' "[TP] Could not find root certificate of CA ${ca_name} in '${ca_files[file_path]}'! Initialize the CA first!"
+    tp_util_files_check 'ca_files' 'key_pem_stat' "[TP] Could not find private key of CA ${ca_name} in '${ca_files[key_pem_path]}'! Initialize the CA first!"
+    tp_util_files_check 'ca_files' 'key_pass_stat' "[TP] Could not find private key pass-phrase of CA ${ca_name} in '${ca_files[key_pass_path]}'! Initialize the CA first!"
+
+    echo "[TP] Generating CSR for the new certificate..."
     tp_cert_request_if_missing "${cert_config_or_csr}"
 
     tp_util_files 'target_files' "${cert_config_or_csr}"
-    tp_util_files 'ca_files' "${TP_BASE_DIR}/ca/${ca_name}/ca-root.cert.pem"
     local new_serial="$(< "${ca_files[dir]}/serial" )"
     tp_util_files 'new_files' "${TP_BASE_DIR}/ca/${ca_name}/newcerts/${new_serial}.pem"
 
@@ -830,7 +837,8 @@ function tp_util_files {
     # succeed, but leave variable empty, if file path is missing
     [[ -n "${file_path}" ]] || return 0
 
-    local dir="$( dirname "${file_path}" )"
+    # if given file-path is in a 'private' direcotry, use the parent directory instead
+    local dir="$( dirname "${file_path}" | sed -E -e 's/(^|[/])private$//' )"
     local file="$( basename "${file_path}" )"
     local name="$( echo "${file}" | sed -e 's/[.].*$//' )"
     local suffix="$( echo "${file}" | sed -E -e 's/^[^.]*[.]?//' )"
