@@ -718,10 +718,22 @@ function tp_server {
 }
 
 function tp_server_init {
-    local cert_issuer="$1"
+    local server_name="$1"
+    local cert_issuer="$2"
 
-    echo "[TP] Initializing nginx-based demo server..."
-    tp_server_nginx_init "${TP_BASE_DIR}/server/nginx-simple"
+    if [[ -z "${server_name}" ]]
+    then
+        echo "[TP] No demo server name specified. Proceeding to initialize all demo servers..."
+        for server_name in $( tp_server_list )
+        do
+            echo
+            tp_server_init "${server_name}"
+        done
+        return $?
+    fi
+
+    echo "[TP] Initializing demo server '${server_name}'..."
+    tp_server_nginx_init "${TP_BASE_DIR}/server/${server_name}"
 
     echo "[TP] Creating server certificates for nginx-based demo server..."
     if [[ -z "${cert_issuer}" ]]
@@ -734,7 +746,7 @@ function tp_server_init {
         echo "[TP] Unsupported certificate issuer '$cert_issuer'."
         return 1
     fi
-    for config_file in $( find "${TP_BASE_DIR}/server/nginx-simple" -path '*/tls/*' -name 'server*.cert.conf' | sort )
+    for config_file in $( find "${TP_BASE_DIR}/server/${server_name}" -path '*/tls/*' -name 'server*.cert.conf' | sort )
     do
         "tp_server_cert_${cert_issuer}" "${config_file}"
     done
@@ -772,9 +784,21 @@ function tp_server_init {
 }
 
 function tp_server_clean {
-    echo "[TP] Cleaning transient files of nginx-based demo server..."
-    tp_server_nginx_clean "${TP_BASE_DIR}/server/nginx-simple"
-    tp_cert_clean "${TP_BASE_DIR}/server/nginx-simple"
+    local server_name="$1"
+
+    if [[ -z "${server_name}" ]]
+    then
+        echo "[TP] No demo server name specified. Proceeding to clean all demo servers..."
+        for server_name in $( find "${TP_BASE_DIR}/server" -mindepth 1 -maxdepth 1 -type d  -exec basename '{}' ';' | sort )
+        do
+            tp_server_clean "${server_name}"
+        done
+        return $?
+    fi
+
+    echo "[TP] Cleaning transient files of demo server '${server_name}'..."
+    tp_server_nginx_clean "${TP_BASE_DIR}/server/${server_name}"
+    tp_cert_clean "${TP_BASE_DIR}/server/${server_name}"
 }
 
 function tp_server_check_env {
@@ -866,6 +890,10 @@ function tp_server_nginx_clean {
     done
 
     rm -rf "${server_dir}/var"
+}
+
+function tp_server_list {
+    find "${TP_BASE_DIR}/server" -mindepth 1 -maxdepth 1 -type d  -exec basename '{}' ';' | sort
 }
 
 
