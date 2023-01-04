@@ -718,12 +718,28 @@ function tp_server {
     shift || true
 
     case "${command}" in
+
         'init' | 'clean' )
             "tp_server_${command}" "$@"
             ;;
+
         'run' | 'start' | 'reload' | 'stop' )
-            "tp_server_nginx_${command}" "${TP_BASE_DIR}/server/nginx-simple"
+            local server_name="$1"
+            shift || true
+            if [[ -z "${server_name}" ]]
+            then
+                echo "[TP] Failed to ${command} demo server! No demo server name specified!"
+                return 1
+            fi
+            local server_dir="${TP_BASE_DIR}/server/${server_name}"
+            if [[ ! -d "${server_dir}" ]]
+            then
+                echo "[TP] Failed to ${command} demo server '${server_name}'! Could not find expected demo server directory '${server_dir}'!"
+                return 1
+            fi
+            "tp_server_nginx_${command}" "${server_dir}"
             ;;
+
         * )
             echo "[TP] Unsupported demo server command '${command}'."
             return 1
