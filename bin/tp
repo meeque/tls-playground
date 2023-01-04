@@ -727,7 +727,7 @@ function tp_server_init {
         for server_name in $( tp_server_list )
         do
             echo
-            tp_server_init "${server_name}"
+            tp_server_init "${server_name}" "${cert_issuer}"
         done
         return $?
     fi
