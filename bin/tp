@@ -438,7 +438,8 @@ function tp_ca_sign {
     then
         echo "[TP] No CA name specified. Specify the CA to sign with!"
         return 1
-    elif [[ ! -d "${TP_BASE_DIR}/ca/${ca_name}" ]]
+    fi
+    if [[ ! -d "${TP_BASE_DIR}/ca/${ca_name}" ]]
     then
         echo "[TP] CA with name '${ca_name}' does not exist!"
         echo "[TP] Try one of the following instead:"
@@ -766,6 +767,8 @@ function tp_server_init {
     if [[ ! -d "${server_dir}" ]]
     then
         echo "[TP] Failed to initialize demo server '${server_name}'! Could not find expected demo server directory '${server_dir}'!"
+        echo "[TP] Try one of the following instead:"
+        tp_server_list
         return 1
     fi
 
@@ -826,7 +829,7 @@ function tp_server_clean {
     if [[ -z "${server_name}" ]]
     then
         echo "[TP] No demo server name specified. Proceeding to clean all demo servers..."
-        for server_name in $( find "${TP_BASE_DIR}/server" -mindepth 1 -maxdepth 1 -type d  -exec basename '{}' ';' | sort )
+        for server_name in $( tp_server_list )
         do
             tp_server_clean "${server_name}"
         done
