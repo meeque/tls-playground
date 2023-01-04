@@ -406,12 +406,19 @@ function tp_ca_init {
         return $?
     fi
 
+    local ca_dir="${TP_BASE_DIR}/ca/${ca_name}"
+    if [[ ! -d "${ca_dir}" ]]
+    then
+        echo "[TP] Failed to initialize CA '${ca_name}'! Could not find expected CA directory '${ca_dir}'!"
+        return 1
+    fi
+
     tp_ca_clean "${ca_name}"
 
     local serial="$( tp_util_generate_hex_token "tls-playground-ca-${ca_name}" 8 )00000001"
     echo "[TP] Creating scaffolding for CA '${ca_name}' with initial certificate serial number '${serial}'..."
     (
-        cd "${TP_BASE_DIR}/ca/${ca_name}"
+        cd "${ca_dir}"
         mkdir 'newcerts'
         mkdir 'private'
         chmod go-rwx 'private'
@@ -420,7 +427,7 @@ function tp_ca_init {
     )
 
     echo "[TP] Preparing root certificate for CA '${ca_name}'..."
-    tp_cert_selfsign "${TP_BASE_DIR}/ca/${ca_name}/ca-root.cert.conf"
+    tp_cert_selfsign "${ca_dir}/ca-root.cert.conf"
 }
 
 function tp_ca_sign {
@@ -491,9 +498,16 @@ function tp_ca_clean {
         return $?
     fi
 
+    local ca_dir="${TP_BASE_DIR}/ca/${ca_name}"
+    if [[ ! -d "${ca_dir}" ]]
+    then
+        echo "[TP] Failed to clean up CA '${ca_name}'! Could not find expected CA directory '${ca_dir}'!"
+        return 1
+    fi
+
     echo "[TP] Cleaning transient files of CA '${ca_name}'..."
     (
-        cd "${TP_BASE_DIR}/ca/${ca_name}"
+        cd "${ca_dir}"
         find . -type d -and '(' -name 'newcerts' -or -name 'private' ')' | xargs rm -rf
         find . -type f -and -not '(' -name '*.conf' -or -name '*.md' ')' | xargs rm -f
     )
@@ -732,10 +746,17 @@ function tp_server_init {
         return $?
     fi
 
-    echo "[TP] Initializing demo server '${server_name}'..."
-    tp_server_nginx_init "${TP_BASE_DIR}/server/${server_name}"
+    local server_dir="${TP_BASE_DIR}/server/${server_name}"
+    if [[ ! -d "${server_dir}" ]]
+    then
+        echo "[TP] Failed to initialize demo server '${server_name}'! Could not find expected demo server directory '${server_dir}'!"
+        return 1
+    fi
 
-    echo "[TP] Creating server certificates for nginx-based demo server..."
+    echo "[TP] Initializing demo server '${server_name}'..."
+    tp_server_nginx_init "${server_dir}"
+
+    echo "[TP] Creating server certificates for demo server '${server_name}'..."
     if [[ -z "${cert_issuer}" ]]
     then
         echo "[TP] No certificate issuer specified. Assuming 'selfsign'."
@@ -746,7 +767,7 @@ function tp_server_init {
         echo "[TP] Unsupported certificate issuer '$cert_issuer'."
         return 1
     fi
-    for config_file in $( find "${TP_BASE_DIR}/server/${server_name}" -path '*/tls/*' -name 'server*.cert.conf' | sort )
+    for config_file in $( find "${server_dir}" -path '*/tls/*' -name 'server*.cert.conf' | sort )
     do
         "tp_server_cert_${cert_issuer}" "${config_file}"
     done
@@ -796,9 +817,16 @@ function tp_server_clean {
         return $?
     fi
 
+    local server_dir="${TP_BASE_DIR}/server/${server_name}"
+    if [[ ! -d "${server_dir}" ]]
+    then
+        echo "[TP] Failed to clean up demo server '${server_name}'! Could not find expected demo server directory '${server_dir}'!"
+        return 1
+    fi
+
     echo "[TP] Cleaning transient files of demo server '${server_name}'..."
-    tp_server_nginx_clean "${TP_BASE_DIR}/server/${server_name}"
-    tp_cert_clean "${TP_BASE_DIR}/server/${server_name}"
+    tp_server_nginx_clean "${server_dir}"
+    tp_cert_clean "${server_dir}"
 }
 
 function tp_server_check_env {
