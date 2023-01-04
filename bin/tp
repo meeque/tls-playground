@@ -708,7 +708,7 @@ function tp_server {
             "tp_server_${command}" "$@"
             ;;
         'run' | 'start' | 'reload' | 'stop' )
-            "tp_server_nginx_${command}" "${TP_BASE_DIR}/server-nginx"
+            "tp_server_nginx_${command}" "${TP_BASE_DIR}/server/nginx"
             ;;
         * )
             echo "[TP] Unsupported demo server command '${command}'."
@@ -721,7 +721,7 @@ function tp_server_init {
     local cert_issuer="$1"
 
     echo "[TP] Initializing nginx-based demo server..."
-    tp_server_nginx_init "${TP_BASE_DIR}/server-nginx"
+    tp_server_nginx_init "${TP_BASE_DIR}/server/nginx"
 
     echo "[TP] Creating server certificates for nginx-based demo server..."
     if [[ -z "${cert_issuer}" ]]
@@ -734,14 +734,14 @@ function tp_server_init {
         echo "[TP] Unsupported certificate issuer '$cert_issuer'."
         return 1
     fi
-    for config_file in $( find "${TP_BASE_DIR}/server-nginx" -path '*/tls/*' -name 'server*.cert.conf' | sort )
+    for config_file in $( find "${TP_BASE_DIR}/server/nginx" -path '*/tls/*' -name 'server*.cert.conf' | sort )
     do
         "tp_server_cert_${cert_issuer}" "${config_file}"
     done
 
     echo
     echo "[TP] Configuring trusted CAs for client certificates that the nginx-based demo server accepts..."
-    local trusted_certs_file="${TP_BASE_DIR}/server-nginx/servers/server2/tls/trusted-clients-cas.certs.pem"
+    local trusted_certs_file="${TP_BASE_DIR}/server/nginx/servers/server2/tls/trusted-clients-cas.certs.pem"
     :> "${trusted_certs_file}"
 
     for ca_name in $( find "${TP_BASE_DIR}/ca" -mindepth 1 -maxdepth 1 -type d  -exec basename '{}' ';' | sort )
@@ -762,7 +762,7 @@ function tp_server_init {
     then
         echo
         echo "[TP] Looks like no trusted CA certificates are available. Using self-signed fallback certificate instead..."
-        local fallback_cert_path="${TP_BASE_DIR}/server-nginx/servers/server2/tls/trusted-clients-fallback"
+        local fallback_cert_path="${TP_BASE_DIR}/server/nginx/servers/server2/tls/trusted-clients-fallback"
         tp_cert_selfsign "${fallback_cert_path}.cert.conf"
         echo
         echo "[TP] Adding self-signed fallback certificate to trusted clients CAs file '${trusted_certs_file}'..."
@@ -772,8 +772,8 @@ function tp_server_init {
 
 function tp_server_clean {
     echo "[TP] Cleaning transient files of nginx-based demo server..."
-    tp_server_nginx_clean "${TP_BASE_DIR}/server-nginx"
-    tp_cert_clean "${TP_BASE_DIR}/server-nginx"
+    tp_server_nginx_clean "${TP_BASE_DIR}/server/nginx"
+    tp_cert_clean "${TP_BASE_DIR}/server/nginx"
 }
 
 function tp_server_check_env {
