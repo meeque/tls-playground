@@ -144,7 +144,10 @@ function tp_cert_show {
                 openssl rsa -in "${file}" -passin "file:${files[key_pass_path]}" -noout -text
             )
             echo
-            echo "[TP] Attention! If anyone has seen this, you should stop using this key and corresponding certificates!"
+            echo "[TP] ***************************************************************************************"
+            echo "[TP] Attention:" 
+            echo "[TP] If anyone has seen this, you should stop using this key and corresponding certificates!"
+            echo "[TP] ***************************************************************************************"
             ;;
         * )
             echo "[TP] Sorry, don't know how to show contents of files with suffix '.${files[suffix]}'!"
@@ -154,22 +157,52 @@ function tp_cert_show {
 }
 
 function tp_cert_fingerprint {
-    local cert_file="$1"
-    # TODO alternatively calculate fingerprints of CSRs and keys, based on naming conventions?
+    local file="$1"
 
-    if [[ -z "${cert_file}" ]]
-    then
-        echo "[TP] No certificate specified. Specify the certificate file whose fingerprint to calculate!"
-        return 1
-    fi
+    tp_util_files 'files' "${file}"
+    tp_util_files_check 'files' 'file_path' "[TP] No file given. Specify a key, csr, or certificate whose fingerprint to calculate!"
+    tp_util_files_check 'files' 'file_stat' "[TP] Given file '${file}' does not exist!"
 
-    echo "[TP] Calculating fingerprint of certificate in '${cert_file}'..."
-    echo
-    (
-        set -x
-        openssl x509 -in "${cert_file}" -noout -fingerprint -sha256
-    )
-    echo
+    case "${files[suffix]}" in
+        'cert.pem' )
+            echo "[TP] Calculating fingerprint of certificate in '${file}'..."
+            echo
+            (
+                set -x
+                openssl x509 -in "${file}" -noout -fingerprint -sha256
+            )
+            echo
+            ;;
+        'csr.pem' )
+            echo "[TP] Calculating fingerprint of CSR in '${file}'..."
+            echo
+            (
+                set -x
+                openssl req -in ${file} -outform DER | openssl dgst -sha256 | tr 'a-z' 'A-Z'
+            )
+            echo
+            ;;
+        'key.pem' )
+            echo "[TP] Calculating fingerprint of private key in '${file}'..."
+            echo
+            (
+                set -x
+                openssl rsa -in ${file} -passin "file:${files[key_pass_path]}" -outform DER | openssl dgst -sha256 | tr 'a-z' 'A-Z'
+            )
+            echo
+            ;;
+        * )
+            echo "[TP] Not sure how to caculate fingerprints of files with suffix '.${files[suffix]}'!"
+            echo "[TP] Will just calculate checksum of the file as-is..."
+            echo
+            (
+                set -x
+                cat "${file}" | openssl dgst -sha256
+            )
+            echo
+            return 0
+            ;;
+    esac
 }
 
 function tp_cert_request {
