@@ -1,31 +1,30 @@
 server {
 
-  # This part of the SSL configuration is usually specific to each virtual server, if multiple are present.
-  # Thus we put it into the server context.
+    # This part of the SSL configuration is usually specific to each virtual server, if multiple are present.
+    # Thus we put it into the server context.
 
-  # listen on the default HTTPS port and enable SSL
-  listen ${TP_SERVER_LISTEN_ADDRESS}:${TP_SERVER_HTTPS_PORT} ssl;
+    # listen on the default HTTPS port and enable SSL
+    listen ${TP_SERVER_LISTEN_ADDRESS}:${TP_SERVER_HTTPS_PORT} ssl default_server;
 
-  # the server name (should match the server name in the certificate below)
-  server_name server1.tls-playground.${TP_SERVER_DOMAIN};
-  server_name server1a.tls-playground.${TP_SERVER_DOMAIN}
-  server_name server1b.tls-playground.${TP_SERVER_DOMAIN};
+    # the server name (should match the server name in the certificate below)
+    server_name tls-playground.${TP_SERVER_DOMAIN};
+    server_name server1.tls-playground.${TP_SERVER_DOMAIN};
+    server_name server1a.tls-playground.${TP_SERVER_DOMAIN}
+    server_name server1b.tls-playground.${TP_SERVER_DOMAIN};
 
-  # server certificate (including full certificate chain up to the root certificate)
-  ssl_certificate        servers/server1/tls/server.fullchain.pem;
+    # server certificate and its private key
+    ssl_certificate        virtual/server1/tls/server.fullchain.pem;
+    ssl_certificate_key    virtual/server1/tls/private/server.key.pem;
+    ssl_password_file      virtual/server1/tls/private/server.key.pass.txt;
 
-  # the corresponding private key (password protected)
-  ssl_certificate_key    servers/server1/tls/private/server.key.pem;
-  ssl_password_file      servers/server1/tls/private/server.key.pass.txt;
+    # enable OCSP stapling (based on the OCSP responder given in the server certificate)
+    #ssl_stapling on;
+    #ssl_stapling_verify on;
+    #ssl_stapling_responder http://127.0.0.1:9999/;
 
-  # enable OCSP stapling (based on the OCSP responder given in the server certificate)
-  #ssl_stapling on;
-  #ssl_stapling_verify on;
-  #ssl_stapling_responder http://127.0.0.1:9999/;
+    # enable HSTS (HTTP Strict Transport Security)
+    add_header Strict-Transport-Security "max-age=15768000; includeSubdomains;";
 
-  # enable HSTS (HTTP Strict Transport Security)
-  add_header Strict-Transport-Security "max-age=15768000; includeSubdomains;";
-
-  # ...
-  root servers/server1/public;
+    # ...
+    root virtual/server1/public;
 }

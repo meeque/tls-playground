@@ -1,29 +1,27 @@
 server {
 
-  # This part of the SSL configuration is usually specific to each virtual server, if multiple are present.
-  # Thus we put it into the server context.
+    # This part of the SSL configuration is usually specific to each virtual server, if multiple are present.
+    # Thus we put it into the server context.
 
-  # listen on the default HTTPS port and enable SSL
-  listen ${TP_SERVER_LISTEN_ADDRESS}:${TP_SERVER_HTTPS_PORT} ssl;
+    # listen on the default HTTPS port and enable SSL
+    listen ${TP_SERVER_LISTEN_ADDRESS}:${TP_SERVER_HTTPS_PORT} ssl;
 
-  # the server name (should match the server name in the certificate below)
-  server_name server2.tls-playground.${TP_SERVER_DOMAIN};
+    # the server name (should match the server name in the certificate below)
+    server_name server2.tls-playground.${TP_SERVER_DOMAIN};
 
-  # server certificate (including full certificate chain up to the root certificate)
-  ssl_certificate        servers/server2/tls/server.fullchain.pem;
+    # server certificate and its private key
+    ssl_certificate        virtual/server2/tls/server.fullchain.pem;
+    ssl_certificate_key    virtual/server2/tls/private/server.key.pem;
+    ssl_password_file      virtual/server2/tls/private/server.key.pass.txt;
 
-  # the corresponding private key (password protected)
-  ssl_certificate_key    servers/server2/tls/private/server.key.pem;
-  ssl_password_file      servers/server2/tls/private/server.key.pass.txt;
+    # enforce client certificates
+    ssl_verify_client on;
+    ssl_client_certificate   virtual/server2/tls/trusted-clients-cas.certs.pem;
 
-  # enforce client certificates
-  ssl_verify_client on;
-  ssl_client_certificate   servers/server2/tls/trusted-clients-cas.certs.pem;
+    # enable HSTS (HTTP Strict Transport Security)
+    add_header Strict-Transport-Security "max-age=15768000; includeSubdomains;";
 
-  # enable HSTS (HTTP Strict Transport Security)
-  add_header Strict-Transport-Security "max-age=15768000; includeSubdomains;";
-
-  # ...
-  root servers/server2/public;
-  ssi on;
+    # ...
+    root virtual/server2/public;
+    ssi on;
 }
