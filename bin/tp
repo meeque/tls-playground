@@ -51,7 +51,7 @@ function tp_main {
 }
 
 function tp_main_env_global {
-    export TP_BASE_DIR="$( realpath --relative-to '.' "$(dirname "$0")/" )"
+    export TP_BASE_DIR="$( realpath --relative-to '.' "$(dirname "$0")/.." )"
 
     if [[ -z "${TP_PASS}" ]]
     then
@@ -111,64 +111,107 @@ function tp_cert {
 }
 
 function tp_cert_show {
-    local cert_file="$1"
-    # TODO alternatively show CSRs and keys, based on naming conventions
+    local file="$1"
 
-    if [[ -z "${cert_file}" ]]
-    then
-        echo "[TP] No certificate specified. Specify the certificate file to show!"
-        return 1
-    fi
+    tp_util_files 'files' "${file}"
+    tp_util_files_check 'files' 'file_path' "[TP] No file given. Specify a key, csr, or certificate file to show!"
+    tp_util_files_check 'files' 'file_stat' "[TP] Given file '${file}' does not exist!"
 
-    echo "[TP] Showing contents of certificate in '${cert_file}'..."
-    echo
-    (
-        set -x
-        openssl x509 -in "${cert_file}" -noout -text
-    )
-    echo
+    case "${files[suffix]}" in
+        'cert.pem' )
+            echo "[TP] Showing contents of certificate in '${file}'..."
+            echo
+            (
+                set -x
+                openssl x509 -in "${file}" -noout -text
+            )
+            echo
+            ;;
+        'csr.pem' )
+            echo "[TP] Showing contents of CSR in '${file}'..."
+            echo
+            (
+                set -x
+                openssl req -in "${file}" -noout -text
+            )
+            echo
+            ;;
+        'key.pem' )
+            echo "[TP] Showing contents of private key in '${file}'..."
+            echo
+            (
+                set -x
+                openssl rsa -in "${file}" -passin "file:${files[key_pass_path]}" -noout -text
+            )
+            echo
+            echo "[TP] ***************************************************************************************"
+            echo "[TP] Attention:" 
+            echo "[TP] If anyone has seen this, you should stop using this key and corresponding certificates!"
+            echo "[TP] ***************************************************************************************"
+            ;;
+        * )
+            echo "[TP] Sorry, don't know how to show contents of files with suffix '.${files[suffix]}'!"
+            return 1
+            ;;
+    esac
 }
 
 function tp_cert_fingerprint {
-    local cert_file="$1"
-    # TODO alternatively calculate fingerprints of CSRs and keys, based on naming conventions?
+    local file="$1"
 
-    if [[ -z "${cert_file}" ]]
-    then
-        echo "[TP] No certificate specified. Specify the certificate file whose fingerprint to calculate!"
-        return 1
-    fi
+    tp_util_files 'files' "${file}"
+    tp_util_files_check 'files' 'file_path' "[TP] No file given. Specify a key, csr, or certificate whose fingerprint to calculate!"
+    tp_util_files_check 'files' 'file_stat' "[TP] Given file '${file}' does not exist!"
 
-    echo "[TP] Calculating fingerprint of certificate in '${cert_file}'..."
-    echo
-    (
-        set -x
-        openssl x509 -in "${cert_file}" -noout -fingerprint -sha256
-    )
-    echo
+    case "${files[suffix]}" in
+        'cert.pem' )
+            echo "[TP] Calculating fingerprint of certificate in '${file}'..."
+            echo
+            (
+                set -x
+                openssl x509 -in "${file}" -noout -fingerprint -sha256
+            )
+            echo
+            ;;
+        'csr.pem' )
+            echo "[TP] Calculating fingerprint of CSR in '${file}'..."
+            echo
+            (
+                set -x
+                openssl req -in ${file} -outform DER | openssl dgst -sha256 | tr 'a-z' 'A-Z'
+            )
+            echo
+            ;;
+        'key.pem' )
+            echo "[TP] Calculating fingerprint of private key in '${file}'..."
+            echo
+            (
+                set -x
+                openssl rsa -in ${file} -passin "file:${files[key_pass_path]}" -outform DER | openssl dgst -sha256 | tr 'a-z' 'A-Z'
+            )
+            echo
+            ;;
+        * )
+            echo "[TP] Not sure how to caculate fingerprints of files with suffix '.${files[suffix]}'!"
+            echo "[TP] Will just calculate checksum of the file as-is..."
+            echo
+            (
+                set -x
+                cat "${file}" | openssl dgst -sha256
+            )
+            echo
+            return 0
+            ;;
+    esac
 }
 
 function tp_cert_request {
     local cert_config="$1"
 
-    if [[ -z "${cert_config}" ]]
-    then
-        echo "[TP] No certificate config file name specified. Specify the OpenSSL config file for the CSR!"
-        return 1
-    fi
-
     tp_util_files 'files' "${cert_config}"
-
-    if [[ "${files[suffix]}" != 'cert.conf' ]]
-    then
-        echo "[TP] Creating a CSR from given file '${cert_config}' is not supported! Specify a certificate config (.cert.conf) file!"
-        return 1
-    fi
-    if [[ ! -f "${files[cert_conf_path]}" ]]
-    then
-        echo "[TP] Given certificate config file '${cert_config}' does not exist!"
-        return 1
-    fi
+    tp_util_files_check 'files' 'file_path' "[TP] No certificate config file name specified. Specify the OpenSSL config file for the CSR!"
+    tp_util_files 'files' "${cert_config}" "[TP] Creating a CSR from given file '${cert_config}' is not supported! Specify a certificate config (.cert.conf) file!"
+    tp_util_files_check 'files' 'cert_conf_stat' "[TP] Given certificate config file '${cert_config}' does not exist!"
 
     mkdir -p "${files[dir]}/private"
     chmod og-rwx "${files[dir]}/private"
@@ -182,7 +225,9 @@ function tp_cert_request {
     echo
     (
         set -x
-        openssl req -new -config "${files[cert_conf_path]}" -newkey rsa:2048 -passout env:TP_PASS -keyout "${files[key_pem_path]}" -out "${files[csr_pem_path]}"
+        openssl req \
+            -new -config "${files[cert_conf_path]}" -newkey 'rsa:2048' \
+            -passout env:TP_PASS -keyout "${files[key_pem_path]}" -out "${files[csr_pem_path]}" \
     )
     echo -n "${TP_PASS}" > "${files[key_pass_path]}"
     echo
@@ -194,46 +239,37 @@ function tp_cert_request {
 function tp_cert_request_if_missing {
     local cert_config_or_csr="$1"
 
-    if [[ -z "${cert_config_or_csr}" ]]
-    then
-        echo "[TP] No file name specified. Specify an OpenSSL certificate config file or an existing CSR file!"
-        return 1
-    fi
-
     tp_util_files 'files' "${cert_config_or_csr}"
+    tp_util_files_check 'files' 'file_path' "[TP] No file name specified. Specify an OpenSSL certificate config file or an existing CSR file!"
 
     if [[ "${files[suffix]}" == 'csr.pem' ]]
     then
-        if [[ -f "${files[csr_pem_path]}" ]]
-        then
-            echo "[TP] CSR already exists in '${cert_config_or_csr}'. Skipping generation of a new one."
-            return 0
-        else
-            echo "[TP] CSR file '${cert_config_or_csr}' does not exist! Specify either an existing CSR file or a certificate config file!"
-            return 1
-        fi
+        tp_util_files_check 'files' 'csr_pem_stat' "[TP] CSR file '${cert_config_or_csr}' does not exist! Specify either an existing CSR file or a certificate config file!"
+        echo "[TP] CSR already exists in '${cert_config_or_csr}'. Skipping generation of a new one."
+        return 0
     fi
 
-    tp_cert_request "${files[cert_conf_path]}"
+    tp_cert_request "${cert_config_or_csr}"
 }
 
 function tp_cert_selfsign {
     local cert_config_or_csr="$1"
 
-    if [[ -z "${cert_config_or_csr}" ]]
-    then
-        echo "[TP] Nothing to self-sign. Specify a certificate config file or a CSR file!"
-        return 1
-    fi
-
-    tp_cert_request_if_missing "${cert_config_or_csr}"
     tp_util_files 'files' "${cert_config_or_csr}"
+    tp_util_files_check 'files' 'file_path' "[TP] Nothing to self-sign. Specify a certificate config file or a CSR file!"
+
+    echo "[TP] Generating CSR for the self-signed certificate..."
+    tp_cert_request_if_missing "${cert_config_or_csr}"
 
     echo "[TP] Signing CSR with it's own private key..."
     echo
     (
         set -x
-        openssl x509 -req -in "${files[csr_pem_path]}" -days 90 -signkey "${files[key_pem_path]}" -passin "file:${files[key_pass_path]}" -out "${files[cert_pem_path]}"
+        openssl x509 \
+            -days '90' \
+            -req -in "${files[csr_pem_path]}" \
+            -signkey "${files[key_pem_path]}" -passin "file:${files[key_pass_path]}" \
+            -out "${files[cert_pem_path]}" \
     )
     echo
     echo "[TP] New certificate in '${files[cert_pem_path]}'."
@@ -251,20 +287,22 @@ function tp_cert_selfsign {
 function tp_cert_pkcs8 {
     local key_file="$1"
 
-    if [[ -z "${key_file}" ]]
-    then
-        echo "[TP] No key file name specified. Specify the key file to convert to PKCS8!"
-        return 1
-    fi
+    tp_util_files 'files' "${key_file}"
+    tp_util_files_check 'files' 'file_path' "[TP] No key file name specified. Specify the key file to convert to PKCS8!"
+    tp_util_files_check 'files' 'suffix=key.pem' "[TP] Converting file '${key_file}' to PKCS8 format is not supported! Specify a private key (.key.pem) file!"
+    tp_util_files_check 'files' 'file_stat' "[TP] Given private key file '${key_file}' does not exist!"
+    tp_util_files_check 'files' 'key_pass_stat' "[TP] Looked for matching pass-phrase file '${files[key_pass_path]}' for the given private key! But it does not exist!"
 
-    local key_name="$( echo "${key_file}" | sed -e 's/[.]pem$//' )"
-    local pkcs8_file="${key_name}-pkcs8.der"
+    local pkcs8_file="${files[path]}.key.pkcs8.der"
 
     echo "[TP] Converting private key '${key_file}' to PKCS8 format..."
     echo
     (
         set -x
-        openssl pkcs8 -topk8 -in "${key_file}" -passin env:TP_PASS -outform DER -out "${pkcs8_file}" -nocrypt
+        openssl pkcs8 \
+            -topk8 -nocrypt \
+            -in "${key_file}" -passin "file:${files[key_pass_path]}" \
+            -outform 'DER' -out "${pkcs8_file}" \
     )
     echo
     echo "[TP] PKCS8 private key in '${pkcs8_file}'."
@@ -273,24 +311,30 @@ function tp_cert_pkcs8 {
 function tp_cert_pkcs12 {
     local cert_file="$1"
 
-    if [[ -z "${cert_file}" ]]
-    then
-        echo "[TP] No certificate specified. Specify the certificate to bundled to PKCS12!"
-        return 1
-    fi
+    tp_util_files 'files' "${cert_file}"
+    tp_util_files_check 'files' 'file_path' "[TP] No certificate specified. Specify the certificate file to bundle in PKCS12!"
+    tp_util_files_check 'files' 'suffix=cert.pem' "[TP] Bundling file '${cert_file}' in PKCS12 format is not supported! Specify a certificate (.cert.pem) file!"
+    tp_util_files_check 'files' 'file_stat' "[TP] Given certificate file '${cert_file}' does not exist!"
+    tp_util_files_check 'files' 'key_pem_stat' "[TP] Looked for matching private key file '${files[key_pem_path]}' for the given certificate. But it does not exist!"
+    tp_util_files_check 'files' 'key_pass_stat' "[TP] Looked for matching private key paass-phrase file '${files[key_pass_path]}' for the given certificate. But it does not exist!"
 
-    local cert_file_path="$(dirname ${cert_file})"
-    local cert_name="$(basename ${cert_file})"
-    local cert_name="$( echo "${cert_name}" | sed -e 's/[.]cert[.]pem$//' )"
-    local key_file="${cert_file_path}/private/${cert_name}.key.pem"
-    local pkcs12_file="${cert_file_path}/private/${cert_name}.pfx"
+    local pkcs12_file="${files[dir]}/private/${files[name]}.pfx"
 
-    echo "[TP] Bundling certificate '${cert_file}' and private key '${key_file}' to PKCS12..."
+    # cannot use file directly
+    # when the same file is used for both -passin and -passout, openssl will expect 2 passords in it
+    # with an env-var we can specify the same pass-phrase twice without this gimick
+    export tp_passphrase="$(< "${files[key_pass_path]}" )"
+
+    echo "[TP] Bundling certificate '${cert_file}' and private key '${files[key_pem_path]}' in PKCS12..."
     echo
     (
         set -x
-        openssl pkcs12 -export -in "${cert_file}" -inkey "${key_file}" -passin env:TP_PASS -out "${pkcs12_file}" -aes256 -passout env:TP_PASS
+        openssl pkcs12 \
+            -export \
+            -in "${cert_file}" -inkey "${files[key_pem_path]}" -passin "env:tp_passphrase" \
+            -out "${pkcs12_file}" -passout "env:tp_passphrase" \
     )
+    unset tp_passphrase
     echo
     echo "[TP] PKCS12 bundle in '${pkcs12_file}'."
 }
@@ -306,9 +350,9 @@ function tp_cert_clean {
     echo "[TP] Cleaning up certificates and related files in '${path}'..."
     (
         cd "${path}"
-        find . -type f -and '(' -name '*.pem' -or -name '*.der' -or -name '*.pfx' ')' | xargs rm -f
-        find . -type l -and '(' -name '*.pem' -or -name '*.der' -or -name '*.pfx' ')' | xargs rm -f
-        find . -type d -and -empty -and -name 'private' | xargs rm -f
+        find . -type f -and '(' -name '*.pem' -or -name '*.der' -or -name '*.pfx' -or -name '*.pass.txt' ')' | xargs rm -f
+        find . -type l -and '(' -name '*.pem' -or -name '*.der' -or -name '*.pfx' -or -name '*.pass.txt' ')' | xargs rm -f
+        find . -type d -and -empty -and -name 'private' | xargs rm -rf
     )
 }
 
@@ -395,11 +439,16 @@ function tp_ca_sign {
         return 1
     fi
 
+    tp_util_files 'ca_files' "${TP_BASE_DIR}/ca/${ca_name}/ca-root.cert.pem"
+    tp_util_files_check 'ca_files' 'file_stat' "[TP] Could not find root certificate of CA ${ca_name} in '${ca_files[file_path]}'! Initialize the CA first!"
+    tp_util_files_check 'ca_files' 'key_pem_stat' "[TP] Could not find private key of CA ${ca_name} in '${ca_files[key_pem_path]}'! Initialize the CA first!"
+    tp_util_files_check 'ca_files' 'key_pass_stat' "[TP] Could not find private key pass-phrase of CA ${ca_name} in '${ca_files[key_pass_path]}'! Initialize the CA first!"
+
+    echo "[TP] Generating CSR for the new certificate..."
     tp_cert_request_if_missing "${cert_config_or_csr}"
 
     tp_util_files 'target_files' "${cert_config_or_csr}"
-    tp_util_files 'ca_files' "${TP_BASE_DIR}/ca/${ca_name}/ca-root.cert.pem"
-    local new_serial=$(<"${ca_files[dir]}/serial")
+    local new_serial="$(< "${ca_files[dir]}/serial" )"
     tp_util_files 'new_files' "${TP_BASE_DIR}/ca/${ca_name}/newcerts/${new_serial}.pem"
 
     local csr_pem_rel_path="$( realpath --relative-to "${TP_BASE_DIR}/ca/" "${target_files[csr_pem_path]}" )"
@@ -530,7 +579,9 @@ function tp_acme_sign {
         return 1
     fi
 
+    echo "[TP] Generating CSR for the new certificate..."
     tp_cert_request_if_missing "${cert_config_or_csr}"
+
     tp_util_files 'target_files' "${cert_config_or_csr}"
     tp_util_files 'rel_files' "$( realpath --relative-to "${TP_BASE_DIR}/acme/" "${target_files[file_path]}" )"
 
@@ -836,22 +887,17 @@ function tp_util_files {
     local varname="$1"
     local file_path="$2"
 
-    if [[ -z "${varname}" ]]
-    then
-        echo "[TP] No variable name given to store file naming information!"
-        return 1
-    fi
-
-    if [[ -z "${file_path}" ]]
-    then
-        echo "[TP] No file path given to extract naming information from!"
-        return 1
-    fi
+    # fail, if varname is missing
+    [[ -n "${varname}" ]]
 
     declare -A -g "${varname}"
-    declare -n varref="${varname}"
+    local -n varref="${varname}"
 
-    local dir="$( dirname "${file_path}" )"
+    # succeed, but leave variable empty, if file path is missing
+    [[ -n "${file_path}" ]] || return 0
+
+    # if given file-path is in a 'private' direcotry, use the parent directory instead
+    local dir="$( dirname "${file_path}" | sed -E -e 's/(^|[/])private$//' )"
     local file="$( basename "${file_path}" )"
     local name="$( echo "${file}" | sed -e 's/[.].*$//' )"
     local suffix="$( echo "${file}" | sed -E -e 's/^[^.]*[.]?//' )"
@@ -882,7 +928,56 @@ function tp_util_files {
         [cert_pem_path]="${path}.cert.pem"
         [chain_pem_path]="${path}.chain.pem"
         [fullchain_pem_path]="${path}.fullchain.pem"
+
+        # file statuses
+        [file_stat]="$( tp_util_files_stat "${file_path}" )"
+        [cert_conf_stat]="$( tp_util_files_stat "${path}.cert.conf" )"
+        [key_pem_stat]="$( tp_util_files_stat "${dir}/private/${name}.key.pem" )"
+        [key_pass_stat]="$( tp_util_files_stat "${dir}/private/${name}.key.pass.txt" )"
+        [csr_pem_stat]="$( tp_util_files_stat "${path}.csr.pem" )"
+        [cert_pem_stat]="$( tp_util_files_stat "${path}.cert.pem" )"
+        [chain_pem_stat]="$( tp_util_files_stat "${path}.chain.pem" )"
+        [fullchain_pem_stat]="$( tp_util_files_stat "${path}.fullchain.pem" )"
     )
+}
+
+function tp_util_files_stat {
+    local file_path="$1"
+    if [[ -f "${file_path}" ]]
+    then
+        echo 'f'
+    elif [[ -d "${file_path}" ]]
+    then
+        echo 'd'
+    elif [[ -e "${file_path}" ]]
+    then
+        echo 'e'
+    fi
+}
+
+function tp_util_files_check {
+    local varname="$1"
+    local check="$2"
+    local message="$3"
+
+    local check_name="$( echo "${check}" | sed -E -e 's/=.*$//' )"
+    local check_value="$( echo "${check}" | sed -E -e 's/^[^=]+(=|$)//' )"
+
+    local -n varref="${varname}"
+    local actual_value="${varref["${check_name}"]}"
+
+    if [[ -n "${check_value}" ]]
+    then
+        # check for value match, if a check value was given
+        [[ "${actual_value}" == "${check_value}" ]] && return 0 || true
+    else
+        # check for non-empty, if no check value was given
+        [[ -n "${actual_value}" ]] && return 0 || true
+
+    fi
+
+    echo "${message}"
+    return 1
 }
 
 function tp_util_template {
