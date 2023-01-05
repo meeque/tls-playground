@@ -1066,7 +1066,7 @@ function tp_util_run_hook {
     local hook_script="$1"
     local hook_name="${2:-"hook script '${hook_script}'"}"
 
-    # fail, if hook script is missing
+    # fail, if hook script name is missing
     [[ -n "${hook_script}" ]]
 
     # succeed, but do nothing, if hook script file does not exist
