@@ -51,11 +51,11 @@ function tp_main {
 }
 
 function tp_main_env_global {
-    TP_BASE_DIR="$( realpath --relative-to '.' "$(dirname "$0")/.." )"
+    tp_base_dir="$( realpath --relative-to '.' "$(dirname "$0")/.." )"
 
     if [[ -z "${TP_PASS}" ]]
     then
-        local pass_file="${TP_BASE_DIR}/.tp.pass.txt"
+        local pass_file="${tp_base_dir}/.tp.pass.txt"
         if [[ ! -f "${pass_file}" ]]
         then
             echo "[TP] No passphrase specified in either variable TP_PASS or file '${pass_file}'!"
@@ -343,7 +343,7 @@ function tp_cert_clean {
 
     if [[ -z "${path}" ]]
     then
-        local path="${TP_BASE_DIR}"
+        local path="${tp_base_dir}"
     fi
 
     echo "[TP] Cleaning up certificates and related files in '${path}'..."
@@ -405,7 +405,7 @@ function tp_ca_init {
         return $?
     fi
 
-    local ca_dir="${TP_BASE_DIR}/ca/${ca_name}"
+    local ca_dir="${tp_base_dir}/ca/${ca_name}"
     if [[ ! -d "${ca_dir}" ]]
     then
         echo "[TP] Failed to initialize CA '${ca_name}'! Could not find expected CA directory '${ca_dir}'!"
@@ -438,7 +438,7 @@ function tp_ca_sign {
         echo "[TP] No CA name specified. Specify the CA to sign with!"
         return 1
     fi
-    if [[ ! -d "${TP_BASE_DIR}/ca/${ca_name}" ]]
+    if [[ ! -d "${tp_base_dir}/ca/${ca_name}" ]]
     then
         echo "[TP] CA with name '${ca_name}' does not exist!"
         echo "[TP] Try one of the following instead:"
@@ -446,7 +446,7 @@ function tp_ca_sign {
         return 1
     fi
 
-    tp_util_files 'ca_files' "${TP_BASE_DIR}/ca/${ca_name}/ca-root.cert.pem"
+    tp_util_files 'ca_files' "${tp_base_dir}/ca/${ca_name}/ca-root.cert.pem"
     tp_util_files_check 'ca_files' 'file_stat' "[TP] Could not find root certificate of CA ${ca_name} in '${ca_files[file_path]}'! Initialize the CA first!"
     tp_util_files_check 'ca_files' 'key_pem_stat' "[TP] Could not find private key of CA ${ca_name} in '${ca_files[key_pem_path]}'! Initialize the CA first!"
     tp_util_files_check 'ca_files' 'key_pass_stat' "[TP] Could not find private key pass-phrase of CA ${ca_name} in '${ca_files[key_pass_path]}'! Initialize the CA first!"
@@ -456,15 +456,15 @@ function tp_ca_sign {
 
     tp_util_files 'target_files' "${cert_config_or_csr}"
     local new_serial="$(< "${ca_files[dir]}/serial" )"
-    tp_util_files 'new_files' "${TP_BASE_DIR}/ca/${ca_name}/newcerts/${new_serial}.pem"
+    tp_util_files 'new_files' "${tp_base_dir}/ca/${ca_name}/newcerts/${new_serial}.pem"
 
-    local csr_pem_rel_path="$( realpath --relative-to "${TP_BASE_DIR}/ca/" "${target_files[csr_pem_path]}" )"
-    local key_pass_rel_path="$( realpath --relative-to "${TP_BASE_DIR}/ca/" "${ca_files[key_pass_path]}" )"
+    local csr_pem_rel_path="$( realpath --relative-to "${tp_base_dir}/ca/" "${target_files[csr_pem_path]}" )"
+    local key_pass_rel_path="$( realpath --relative-to "${tp_base_dir}/ca/" "${ca_files[key_pass_path]}" )"
 
     echo "[TP] Signing CSR from '${target_files[csr_pem_path]}' with CA ${ca_name} at serial ${new_serial}..."
     echo
     (
-        cd "${TP_BASE_DIR}/ca/"
+        cd "${tp_base_dir}/ca/"
         set -x
         openssl ca -config 'ca.conf' -name "${ca_name}" -batch -passin "file:${key_pass_rel_path}" -in "${csr_pem_rel_path}" -notext
     )
@@ -491,14 +491,14 @@ function tp_ca_clean {
     if [[ -z "${ca_name}" ]]
     then
         echo "[TP] No CA name specified. Proceeding to clean all CAs..."
-        for ca_name in $( find "${TP_BASE_DIR}/ca" -mindepth 1 -maxdepth 1 -type d  -exec basename '{}' ';' | sort )
+        for ca_name in $( find "${tp_base_dir}/ca" -mindepth 1 -maxdepth 1 -type d  -exec basename '{}' ';' | sort )
         do
             tp_ca_clean "${ca_name}"
         done
         return $?
     fi
 
-    local ca_dir="${TP_BASE_DIR}/ca/${ca_name}"
+    local ca_dir="${tp_base_dir}/ca/${ca_name}"
     if [[ ! -d "${ca_dir}" ]]
     then
         echo "[TP] Failed to clean up CA '${ca_name}'! Could not find expected CA directory '${ca_dir}'!"
@@ -514,7 +514,7 @@ function tp_ca_clean {
 }
 
 function tp_ca_list {
-    find "${TP_BASE_DIR}/ca" -mindepth 1 -maxdepth 1 -type d  -exec basename '{}' ';' | sort
+    find "${tp_base_dir}/ca" -mindepth 1 -maxdepth 1 -type d  -exec basename '{}' ';' | sort
 }
 
 
@@ -538,8 +538,8 @@ function tp_acme {
 
 function tp_acme_init {
     echo "[TP] Initializing ACME and Certbot..."
-    tp_util_template "${TP_BASE_DIR}/acme/certbot/cli.ini.tmpl" TP_ACME_SERVER_URL TP_ACME_ACCOUNT_EMAIL
-    tp_server_nginx_init "${TP_BASE_DIR}/acme/challenges/http-01"
+    tp_util_template "${tp_base_dir}/acme/certbot/cli.ini.tmpl" TP_ACME_SERVER_URL TP_ACME_ACCOUNT_EMAIL
+    tp_server_nginx_init "${tp_base_dir}/acme/challenges/http-01"
 }
 
 function tp_acme_account {
@@ -558,11 +558,11 @@ function tp_acme_account {
 }
 
 function tp_acme_account_register {
-     certbot --config "${TP_BASE_DIR}/acme/certbot/cli.ini" register
+     certbot --config "${tp_base_dir}/acme/certbot/cli.ini" register
 }
 
 function tp_acme_account_unregister {
-     certbot --config "${TP_BASE_DIR}/acme/certbot/cli.ini" unregister
+     certbot --config "${tp_base_dir}/acme/certbot/cli.ini" unregister
 }
 
 function tp_acme_challenges {
@@ -571,7 +571,7 @@ function tp_acme_challenges {
 
     case "${command}" in
         'run' | 'start' | 'reload' | 'stop' )
-            "tp_server_nginx_${command}" "${TP_BASE_DIR}/acme/challenges/http-01"
+            "tp_server_nginx_${command}" "${tp_base_dir}/acme/challenges/http-01"
             ;;
         * )
             echo "[TP] Unsupported ACME challenges command '${command}'."
@@ -597,7 +597,7 @@ function tp_acme_sign {
     tp_cert_request_if_missing "${cert_config_or_csr}"
 
     tp_util_files 'target_files' "${cert_config_or_csr}"
-    tp_util_files 'rel_files' "$( realpath --relative-to "${TP_BASE_DIR}/acme/" "${target_files[file_path]}" )"
+    tp_util_files 'rel_files' "$( realpath --relative-to "${tp_base_dir}/acme/" "${target_files[file_path]}" )"
 
     # clean old certificate files, because Certbot refuses to overwrite them
     rm -f "${target_files[cert_pem_path]}" "${target_files[chain_pem_path]}" "${target_files[fullchain_pem_path]}"
@@ -605,7 +605,7 @@ function tp_acme_sign {
     echo "[TP] Signing CSR from '${target_files[csr_pem_path]}' with ACME..."
     echo
     (
-        cd "${TP_BASE_DIR}/acme/"
+        cd "${tp_base_dir}/acme/"
         set -x
         certbot \
             --config "certbot/cli.ini" \
@@ -648,12 +648,12 @@ function tp_acme_revoke {
         return 1
     fi
 
-    tp_util_files 'rel_files' "$( realpath --relative-to "${TP_BASE_DIR}/acme/" "${source_files[file_path]}" )"
+    tp_util_files 'rel_files' "$( realpath --relative-to "${tp_base_dir}/acme/" "${source_files[file_path]}" )"
 
     echo "[TP] Trying to revoke certificate in '${cert_file}', using existing ACME account..."
     echo
     (
-        cd "${TP_BASE_DIR}/acme/"
+        cd "${tp_base_dir}/acme/"
         set -x
         certbot \
             --config "certbot/cli.ini" \
@@ -669,7 +669,7 @@ function tp_acme_revoke {
         echo "[TP] Re-trying to revoke certificate, using its private key in '${source_files[key_pem_path]}'..."
         echo
         (
-            cd "${TP_BASE_DIR}/acme/"
+            cd "${tp_base_dir}/acme/"
             set -x
             certbot \
                 --config "certbot/cli.ini" \
@@ -690,12 +690,12 @@ function tp_acme_revoke {
 
 function tp_acme_clean {
     echo "[TP] Cleaning transient files of nginx-based 'http-01' challenges server..."
-    tp_server_nginx_clean "${TP_BASE_DIR}/acme/challenges/http-01"
+    tp_server_nginx_clean "${tp_base_dir}/acme/challenges/http-01"
     echo "[TP] Cleaning transient ACME and Certbot files..."
-    rm -f "${TP_BASE_DIR}/acme/certbot/cli.ini"
+    rm -f "${tp_base_dir}/acme/certbot/cli.ini"
     find acme/certbot -mindepth 1 -type d -and -not -path '*/conf' -and -not -path '*/conf/accounts' | xargs rm -rf
-    rm -rf "${TP_BASE_DIR}/acme/certbot/lib"
-    rm -rf "${TP_BASE_DIR}/acme/certbot/log"
+    rm -rf "${tp_base_dir}/acme/certbot/lib"
+    rm -rf "${tp_base_dir}/acme/certbot/log"
 }
 
 function tp_acme_check_env {
@@ -731,7 +731,7 @@ function tp_server {
                 echo "[TP] Failed to ${command} demo server! No demo server name specified!"
                 return 1
             fi
-            local server_dir="${TP_BASE_DIR}/server/${server_name}"
+            local server_dir="${tp_base_dir}/server/${server_name}"
             if [[ ! -d "${server_dir}" ]]
             then
                 echo "[TP] Failed to ${command} demo server '${server_name}'! Could not find expected demo server directory '${server_dir}'!"
@@ -762,7 +762,7 @@ function tp_server_init {
         return $?
     fi
 
-    local server_dir="${TP_BASE_DIR}/server/${server_name}"
+    local server_dir="${tp_base_dir}/server/${server_name}"
     if [[ ! -d "${server_dir}" ]]
     then
         echo "[TP] Failed to initialize demo server '${server_name}'! Could not find expected demo server directory '${server_dir}'!"
@@ -806,7 +806,7 @@ function tp_server_clean {
         return $?
     fi
 
-    local server_dir="${TP_BASE_DIR}/server/${server_name}"
+    local server_dir="${tp_base_dir}/server/${server_name}"
     if [[ ! -d "${server_dir}" ]]
     then
         echo "[TP] Failed to clean up demo server '${server_name}'! Could not find expected demo server directory '${server_dir}'!"
@@ -910,7 +910,7 @@ function tp_server_nginx_clean {
 }
 
 function tp_server_list {
-    find "${TP_BASE_DIR}/server" -mindepth 1 -maxdepth 1 -type d  -exec basename '{}' ';' | sort
+    find "${tp_base_dir}/server" -mindepth 1 -maxdepth 1 -type d  -exec basename '{}' ';' | sort
 }
 
 
