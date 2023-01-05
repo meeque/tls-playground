@@ -21,7 +21,7 @@ function tp_main {
     do
         case "$1" in
             -c|--ca)
-                export TP_CA="$2"
+                TP_CA="$2"
                 shift
                 ;;
             --)
@@ -51,7 +51,7 @@ function tp_main {
 }
 
 function tp_main_env_global {
-    export TP_BASE_DIR="$( realpath --relative-to '.' "$(dirname "$0")/.." )"
+    TP_BASE_DIR="$( realpath --relative-to '.' "$(dirname "$0")/.." )"
 
     if [[ -z "${TP_PASS}" ]]
     then
@@ -71,17 +71,17 @@ function tp_main_env_global {
             )
             echo
         fi
-        export TP_PASS="$(< "${pass_file}" )"
+        TP_PASS="$(< "${pass_file}" )"
     fi
 }
 
 function tp_main_env_defaults {
-    export TP_SERVER_DOMAIN="${TP_SERVER_DOMAIN:=localhost}"
-    export TP_SERVER_LISTEN_ADDRESS="${TP_SERVER_LISTEN_ADDRESS:=127.0.0.1}"
-    export TP_SERVER_HTTP_PORT="${TP_SERVER_HTTP_PORT:=8080}"
-    export TP_SERVER_HTTPS_PORT="${TP_SERVER_HTTPS_PORT:=8443}"
-    export TP_ACME_SERVER_URL="${TP_ACME_SERVER_URL:=https://acme-staging-v02.api.letsencrypt.org/directory}"
-    export TP_ACME_ACCOUNT_EMAIL="${TP_ACME_ACCOUNT_EMAIL:=webmaster@tls-playground.example}"
+    TP_SERVER_DOMAIN="${TP_SERVER_DOMAIN:=localhost}"
+    TP_SERVER_LISTEN_ADDRESS="${TP_SERVER_LISTEN_ADDRESS:=127.0.0.1}"
+    TP_SERVER_HTTP_PORT="${TP_SERVER_HTTP_PORT:=8080}"
+    TP_SERVER_HTTPS_PORT="${TP_SERVER_HTTPS_PORT:=8443}"
+    TP_ACME_SERVER_URL="${TP_ACME_SERVER_URL:=https://acme-staging-v02.api.letsencrypt.org/directory}"
+    TP_ACME_ACCOUNT_EMAIL="${TP_ACME_ACCOUNT_EMAIL:=webmaster@tls-playground.example}"
 }
 
 function tp_main_env_check {
@@ -215,6 +215,7 @@ function tp_cert_request {
 
     mkdir -p "${files[dir]}/private"
     chmod og-rwx "${files[dir]}/private"
+    echo -n "${TP_PASS}" > "${files[key_pass_path]}"
 
     echo "[TP] Using OpenSSL certificate config file '${files[cert_conf_path]}':"
     echo
@@ -227,9 +228,8 @@ function tp_cert_request {
         set -x
         openssl req \
             -new -config "${files[cert_conf_path]}" -newkey 'rsa:2048' \
-            -passout env:TP_PASS -keyout "${files[key_pem_path]}" -out "${files[csr_pem_path]}" \
+            -passout "file:${files[key_pass_path]}" -keyout "${files[key_pem_path]}" -out "${files[csr_pem_path]}" \
     )
-    echo -n "${TP_PASS}" > "${files[key_pass_path]}"
     echo
     echo "[TP] New private key in '${files[key_pem_path]}'."
     echo "[TP] Pass-phrase for new private key in '${files[key_pass_path]}'."
@@ -320,10 +320,10 @@ function tp_cert_pkcs12 {
 
     local pkcs12_file="${files[dir]}/private/${files[name]}.pfx"
 
-    # cannot use file directly
+    # cannot use pssphrase file directly
     # when the same file is used for both -passin and -passout, openssl will expect 2 passords in it
     # with an env-var we can specify the same pass-phrase twice without this gimick
-    export tp_passphrase="$(< "${files[key_pass_path]}" )"
+    local -x TP_PASS="$(< "${files[key_pass_path]}" )"
 
     echo "[TP] Bundling certificate '${cert_file}' and private key '${files[key_pem_path]}' in PKCS12..."
     echo
@@ -331,10 +331,9 @@ function tp_cert_pkcs12 {
         set -x
         openssl pkcs12 \
             -export \
-            -in "${cert_file}" -inkey "${files[key_pem_path]}" -passin "env:tp_passphrase" \
-            -out "${pkcs12_file}" -passout "env:tp_passphrase" \
+            -in "${cert_file}" -inkey "${files[key_pem_path]}" -passin "env:TP_PASS" \
+            -out "${pkcs12_file}" -passout "env:TP_PASS" \
     )
-    unset tp_passphrase
     echo
     echo "[TP] PKCS12 bundle in '${pkcs12_file}'."
 }
