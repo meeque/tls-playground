@@ -791,36 +791,7 @@ function tp_server_init {
         "tp_server_cert_${cert_issuer}" "${config_file}"
     done
 
-    # TODO move all the server-specific stuff into a separate init hook script
-    echo
-    echo "[TP] Configuring trusted CAs for client certificates that the nginx-based demo server accepts..."
-    local trusted_certs_file="${TP_BASE_DIR}/server/nginx-complex/virtual/server2/tls/trusted-clients-cas.certs.pem"
-    :> "${trusted_certs_file}"
-
-    for ca_name in $( find "${TP_BASE_DIR}/ca" -mindepth 1 -maxdepth 1 -type d  -exec basename '{}' ';' | sort )
-    do
-        local ca_root_cert="${TP_BASE_DIR}/ca/${ca_name}/ca-root.cert.pem"
-        if [[ -f "${ca_root_cert}" ]]
-        then
-            echo "[TP] Adding root certificate of CA '${ca_name}' to trusted clients CAs file '${trusted_certs_file}'..."
-            cat "${ca_root_cert}" >> "${trusted_certs_file}"
-        else
-            echo "[TP] Looks like CA '${ca_name}' is not initialized. Omitting it from trusted CAs file!"
-        fi
-    done
-
-    # trusted certs file may still be empty, if TLS Playground CAs have not been initialized yet
-    # if so, install a self-signed fallback cert, because nginx does not accept an empty trusted certs file
-    if [[ ! -s ${trusted_certs_file} ]]
-    then
-        echo
-        echo "[TP] Looks like no trusted CA certificates are available. Using self-signed fallback certificate instead..."
-        local fallback_cert_path="${TP_BASE_DIR}/server/nginx-complex/virtual/server2/tls/trusted-clients-fallback"
-        tp_cert_selfsign "${fallback_cert_path}.cert.conf"
-        echo
-        echo "[TP] Adding self-signed fallback certificate to trusted clients CAs file '${trusted_certs_file}'..."
-        cat "${fallback_cert_path}.cert.pem" > "${trusted_certs_file}"
-    fi
+    tp_util_run_hook "${server_dir}/tp-init-hook.sh" "init hook for server '${server_name}'"
 }
 
 function tp_server_clean {
@@ -1089,6 +1060,26 @@ function tp_util_generate_hex_token {
     local input="$1"
     local size="${2:-16}"
     echo "${input}" | openssl dgst -sha256 -r | { dd bs="${size}" count=1 2> /dev/null; } |  tr a-z A-Z
+}
+
+function tp_util_run_hook {
+    local hook_script="$1"
+    local hook_name="${2:-"hook script '${hook_script}'"}"
+
+    # fail, if hook script is missing
+    [[ -n "${hook_script}" ]]
+
+    # succeed, but do nothing, if hook script file does not exist
+    [[ -f "${hook_script}" ]] || return 0
+
+     # run the hook script in a sub-shell
+    echo "[TP] Running ${hook_name}..."
+    echo
+    (
+        . ${hook_script}
+    )
+    echo
+    echo "[TP] Done running ${hook_name}."
 }
 
 
