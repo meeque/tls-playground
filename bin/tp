@@ -611,7 +611,7 @@ function tp_acme_sign {
 
     # calculate next serial number in archive dir
     local new_serial=0
-    local serials=( $( find "${tp_base_dir}/acme/certbot/custom/archive" -name '*.cert.pem' -exec basename '{}' ';' | sed -e 's/[.].*$//' | sort ) )
+    local serials=( $( find "${tp_base_dir}/acme/certbot/custom/archive" -regex '.*/[0-9]+[.a-zA-Z0-9]+[.]pem' -exec basename '{}' ';' | sed -e 's/[.].*$//' | sort --unique ) )
     if [[ "${#serials[@]}" != 0 ]]
     then
         new_serial="${serials[-1]}"
