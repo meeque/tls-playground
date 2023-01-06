@@ -1064,7 +1064,10 @@ function tp_util_template {
     done
 
     echo -n "[TP] Generating file ${target_file} from template... "
-    cat "${template_file}" | envsubst "${var_names_string}" > "${target_file}"
+    (
+        export "${var_names_array[@]}"
+        cat "${template_file}" | envsubst "${var_names_string}" > "${target_file}"
+    )
     echo "done."
 }
 
