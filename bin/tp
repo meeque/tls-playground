@@ -706,7 +706,7 @@ function tp_acme_clean {
     tp_server_nginx_clean "${tp_base_dir}/acme/challenges/http-01"
     echo "[TP] Cleaning transient ACME and Certbot files..."
     rm -f "${tp_base_dir}/acme/certbot/cli.ini"
-    find acme/certbot -mindepth 1 -type d -and -not -path '*/conf' -and -not -path '*/conf/accounts/*' | xargs rm -rf
+    find acme/certbot -mindepth 1 -type d -and -not '(' -path '*/conf' -or -path '*/conf/accounts' -or -path '*/conf/accounts/*' ')' | xargs rm -rf
     rm -rf "${tp_base_dir}/acme/certbot/lib"
     rm -rf "${tp_base_dir}/acme/certbot/log"
     rm -rf "${tp_base_dir}/acme/challenges/http-01/public/.well-known"
