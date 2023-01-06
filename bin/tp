@@ -7,13 +7,18 @@ set -e -o pipefail
 
 function tp_main {
 
+    # setup base directory relative to the location of this script
+    tp_base_dir="$( realpath --relative-to '.' "$(dirname "$0")/.." )"
+
     # setup environment
     tp_main_env_global
     tp_main_env_defaults
     tp_main_env_check
 
+    tp_main_arg_defaults
+
     # parse arguments
-    local tp_arguments="$( getopt --options 'c:' --longoptions 'ca:' --name 'tp.sh' -- "$@" )"
+    local tp_arguments="$( getopt --options 'ca' --longoptions 'ca,acme' --name 'tp' -- "$@" )"
     eval set -- ${tp_arguments}
 
     # process arguments
@@ -21,8 +26,10 @@ function tp_main {
     do
         case "$1" in
             -c|--ca)
-                TP_CA="$2"
-                shift
+                tp_cert_provider='ca'
+                ;;
+            -a|--acme)
+                tp_cert_provider='acme'
                 ;;
             --)
                 shift
@@ -51,8 +58,6 @@ function tp_main {
 }
 
 function tp_main_env_global {
-    tp_base_dir="$( realpath --relative-to '.' "$(dirname "$0")/.." )"
-
     if [[ -z "${TP_PASS}" ]]
     then
         local pass_file="${tp_base_dir}/.tp.pass.txt"
@@ -89,6 +94,10 @@ function tp_main_env_check {
     tp_server_check_env || status=1
     tp_acme_check_env || status=1
     return "${status}"
+}
+
+function tp_main_arg_defaults {
+    tp_cert_provider='selfsign'
 }
 
 
@@ -400,7 +409,7 @@ function tp_ca_init {
         for ca_name in $( tp_ca_list )
         do
             echo
-            tp_ca_init "${ca_name}"
+            tp_ca_init "${ca_name}" "$@"
         done
         return $?
     fi
@@ -548,7 +557,7 @@ function tp_acme_account {
 
     case "${command}" in
         'register' | 'unregister' )
-            "tp_acme_account_${command}"
+            "tp_acme_account_${command}" "$@"
             ;;
         * )
             echo "[TP] Unsupported ACME account command '${command}'."
@@ -571,7 +580,7 @@ function tp_acme_challenges {
 
     case "${command}" in
         'run' | 'start' | 'reload' | 'stop' )
-            "tp_server_nginx_${command}" "${tp_base_dir}/acme/challenges/http-01"
+            "tp_server_nginx_${command}" "${tp_base_dir}/acme/challenges/http-01" "$@"
             ;;
         * )
             echo "[TP] Unsupported ACME challenges command '${command}'."
@@ -737,7 +746,7 @@ function tp_server {
                 echo "[TP] Failed to ${command} demo server '${server_name}'! Could not find expected demo server directory '${server_dir}'!"
                 return 1
             fi
-            "tp_server_nginx_${command}" "${server_dir}"
+            "tp_server_nginx_${command}" "${server_dir}" "$@"
             ;;
 
         * )
@@ -749,7 +758,7 @@ function tp_server {
 
 function tp_server_init {
     local server_name="$1"
-    local cert_issuer="$2"
+    shift || true
 
     if [[ -z "${server_name}" ]]
     then
@@ -757,7 +766,7 @@ function tp_server_init {
         for server_name in $( tp_server_list )
         do
             echo
-            tp_server_init "${server_name}" "${cert_issuer}"
+            tp_server_init "${server_name}" "$@"
         done
         return $?
     fi
@@ -772,25 +781,16 @@ function tp_server_init {
     fi
 
     echo "[TP] Initializing demo server '${server_name}'..."
-    tp_server_nginx_init "${server_dir}"
+    tp_server_nginx_init "${server_dir}" "$@"
 
-    echo "[TP] Creating server certificates for demo server '${server_name}'..."
-    if [[ -z "${cert_issuer}" ]]
-    then
-        echo "[TP] No certificate issuer specified. Assuming 'selfsign'."
-        local cert_issuer="selfsign"
-    fi
-    if [[ ! "${cert_issuer}" =~ ^(selfsign|ca|acme)$ ]]
-    then
-        echo "[TP] Unsupported certificate issuer '$cert_issuer'."
-        return 1
-    fi
+    echo
+    echo "[TP] Creating server certificates for demo server '${server_name}' using certificate provider '${tp_cert_provider}'..."
     for config_file in $( find "${server_dir}" -path '*/tls/*' -name 'server*.cert.conf' | sort )
     do
-        "tp_server_cert_${cert_issuer}" "${config_file}"
+        "tp_server_cert_${tp_cert_provider}" "${config_file}" "$@"
     done
 
-    tp_util_run_hook "${server_dir}/tp-init-hook.sh" "init hook for server '${server_name}'"
+    tp_util_run_hook "${server_dir}/tp-init-hook.sh" "init hook for server '${server_name}'" "$@"
 }
 
 function tp_server_clean {
@@ -834,18 +834,16 @@ function tp_server_check_env {
 }
 
 function tp_server_cert_selfsign {
-    local config_file="$1"
-    tp_cert_selfsign "${config_file}"
+    tp_cert_selfsign "$@"
 }
 
 function tp_server_cert_ca {
-    local config_file="$1"
-    tp_ca_sign ca1 "${config_file}"
+    # TODO make the ca configurable!
+    tp_ca_sign ca1 "$@"
 }
 
 function tp_server_cert_acme {
-    local config_file="$1"
-    tp_acme_sign "${config_file}"
+    tp_acme_sign "$@"
 }
 
 function tp_server_nginx_init {
