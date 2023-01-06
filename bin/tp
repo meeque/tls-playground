@@ -615,7 +615,7 @@ function tp_acme_sign {
     tp_util_files 'archive_files' "$( realpath --relative-to "." "${tp_base_dir}/acme/${archive_files_rel[file_path]}" )"
 
     # clean old certificate files, because Certbot refuses to overwrite them
-    rm -f "${target_files[cert_pem_path]}" "${target_files[chain_pem_path]}" "${target_files[fullchain_pem_path]}"
+    rm -f "${archive_files[cert_pem_path]}" "${archive_files[chain_pem_path]}" "${archive_files[fullchain_pem_path]}"
 
     echo "[TP] Signing CSR from '${target_files[csr_pem_path]}' with ACME..."
     echo
