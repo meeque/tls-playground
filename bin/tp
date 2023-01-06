@@ -610,8 +610,9 @@ function tp_acme_sign {
     tp_cert_request_if_missing "${cert_config_or_csr}"
 
     tp_util_files 'target_files' "${cert_config_or_csr}"
-    tp_util_files 'rel_files' "$( realpath --relative-to "${tp_base_dir}/acme/" "${target_files[file_path]}" )"
-    tp_util_files 'archive_files' 'certbot/custom/achive'
+    tp_util_files 'target_files_rel' "$( realpath --relative-to "${tp_base_dir}/acme/" "${target_files[file_path]}" )"
+    tp_util_files 'archive_files_rel' "certbot/custom/archive/${target_files[name]}"
+    tp_util_files 'archive_files' "$( realpath --relative-to "." "${tp_base_dir}/acme/${archive_files_rel[file_path]}" )"
 
     # clean old certificate files, because Certbot refuses to overwrite them
     rm -f "${target_files[cert_pem_path]}" "${target_files[chain_pem_path]}" "${target_files[fullchain_pem_path]}"
@@ -625,10 +626,10 @@ function tp_acme_sign {
             --config "certbot/cli.ini" \
             certonly \
             "${tp_acme_certbot_opts[@]}" \
-            --csr "${rel_files[csr_pem_path]}" \
-            --cert-path "${archive_files[cert_pem_path]}" \
-            --chain-path "${archive_files[chain_pem_path]}" \
-            --fullchain-path "${archive_files[fullchain_pem_path]}" \
+            --csr "${target_files_rel[csr_pem_path]}" \
+            --cert-path "${archive_files_rel[cert_pem_path]}" \
+            --chain-path "${archive_files_rel[chain_pem_path]}" \
+            --fullchain-path "${archive_files_rel[fullchain_pem_path]}" \
     )
     echo
     echo "[TP] New certificate in '${archive_files[cert_pem_path]}'."
