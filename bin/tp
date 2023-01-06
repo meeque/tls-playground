@@ -610,6 +610,7 @@ function tp_acme_sign {
 
     tp_util_files 'target_files' "${cert_config_or_csr}"
     tp_util_files 'rel_files' "$( realpath --relative-to "${tp_base_dir}/acme/" "${target_files[file_path]}" )"
+    tp_util_files 'archive_files' 'certbot/custom/achive'
 
     # clean old certificate files, because Certbot refuses to overwrite them
     rm -f "${target_files[cert_pem_path]}" "${target_files[chain_pem_path]}" "${target_files[fullchain_pem_path]}"
@@ -624,19 +625,22 @@ function tp_acme_sign {
             certonly \
             "${tp_acme_certbot_opts[@]}" \
             --csr "${rel_files[csr_pem_path]}" \
-            --cert-path "${rel_files[cert_pem_path]}" \
-            --chain-path "${rel_files[chain_pem_path]}" \
-            --fullchain-path "${rel_files[fullchain_pem_path]}" \
+            --cert-path "${archive_files[cert_pem_path]}" \
+            --chain-path "${archive_files[chain_pem_path]}" \
+            --fullchain-path "${archive_files[fullchain_pem_path]}" \
     )
     echo
-    echo "[TP] New certificate in '${target_files[cert_pem_path]}'."
-    echo "[TP] New certificate chain in '${target_files[chain_pem_path]}'."
-    echo "[TP] New certificate full-chain in '${target_files[fullchain_pem_path]}'."
+    echo "[TP] New certificate in '${archive_files[cert_pem_path]}'."
+    echo "[TP] New certificate chain in '${archive_files[chain_pem_path]}'."
+    echo "[TP] New certificate full-chain in '${archive_files[fullchain_pem_path]}'."
 
     echo
-    tp_cert_show "${target_files[cert_pem_path]}"
+    tp_cert_show "${archive_files[cert_pem_path]}"
     echo
-    tp_cert_fingerprint "${target_files[cert_pem_path]}"
+    tp_cert_fingerprint "${archive_files[cert_pem_path]}"
+
+    echo
+    tp_cert_link "${archive_files[file_path]}" "${target_files[file_path]}"
 }
 
 function tp_acme_revoke {
