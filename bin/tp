@@ -609,9 +609,19 @@ function tp_acme_sign {
     echo "[TP] Generating CSR for the new certificate..."
     tp_cert_request_if_missing "${cert_config_or_csr}"
 
+    # calculate next serial number in archive dir
+    local new_serial=0
+    local serials=( $( find "${tp_base_dir}/acme/certbot/custom/archive" -name '*.cert.pem' -exec basename '{}' ';' | sed -e 's/[.].*$//' | sort ) )
+    if [[ "${#serials[@]}" != 0 ]]
+    then
+        new_serial="${serials[-1]}"
+    fi
+    (( ++new_serial ))
+    new_serial="$( printf '%08d' "${new_serial}" )"
+
     tp_util_files 'target_files' "${cert_config_or_csr}"
     tp_util_files 'target_files_rel' "$( realpath --relative-to "${tp_base_dir}/acme/" "${target_files[file_path]}" )"
-    tp_util_files 'archive_files_rel' "certbot/custom/archive/${target_files[name]}"
+    tp_util_files 'archive_files_rel' "certbot/custom/archive/${new_serial}.cert.pem"
     tp_util_files 'archive_files' "$( realpath --relative-to "." "${tp_base_dir}/acme/${archive_files_rel[file_path]}" )"
 
     # clean old certificate files, because Certbot refuses to overwrite them
