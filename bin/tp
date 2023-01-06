@@ -162,7 +162,7 @@ function tp_cert_show {
             )
             echo
             echo "[TP] ***************************************************************************************"
-            echo "[TP] Attention:" 
+            echo "[TP] Attention:"
             echo "[TP] If anyone has seen this, you should stop using this key and corresponding certificates!"
             echo "[TP] ***************************************************************************************"
             ;;
@@ -634,7 +634,8 @@ function tp_acme_sign {
     local serials=( $( find "${tp_base_dir}/acme/certbot/custom/archive" -regex '.*/[0-9]+[.a-zA-Z0-9]+[.]pem' -exec basename '{}' ';' | sed -e 's/[.].*$//' | sort --unique ) )
     if [[ "${#serials[@]}" != 0 ]]
     then
-        new_serial="${serials[-1]}"
+        # pick highest number and strip leading zeros, so bash does not assume it's octal
+        new_serial="$( echo "${serials[-1]}" | sed -E -e 's/^0+//' )"
     fi
     (( ++new_serial ))
     new_serial="$( printf '%08d' "${new_serial}" )"
