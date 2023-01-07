@@ -653,6 +653,9 @@ function tp_acme_sign_domains {
         certbot_domain_args+=( '--domain' "${domain}" )
     done
 
+    mkdir -p "${target_files[dir]}/private"
+    chmod 'og-rwx' "${target_files[dir]}/private"
+
     echo "[TP] Signing domains from OpenSSL certificate config file '${target_files[cert_conf_path]}' with ACME..."
     echo
     (
@@ -836,7 +839,7 @@ function tp_acme_certbot_cert_link {
     local source_rel="$( realpath --relative-to "$( dirname "${target}" )" "${source}/" )"
     tp_util_files 'target_files' "${cert_config}"
 
-    ln -sf "${source_rel}/privkey.pem" "${target_files[key_pem_path]}"
+    ln -sf "../${source_rel}/privkey.pem" "${target_files[key_pem_path]}"
     echo "[TP] Linked new private key into '${target_files[key_pem_path]}'."
     ln -sf "${source_rel}/cert.pem" "${target_files[cert_pem_path]}"
     echo "[TP] Linked new certificate into '${target_files[cert_pem_path]}'."
