@@ -643,13 +643,13 @@ function tp_acme_sign_domains {
 
     local domains=( $( tp_cert_get_domains_from_config "${target_files[cert_conf_path]}" ) )
     local certbot_lineage="${domains[0]}"
+    local certbot_live_dir="${tp_base_dir}/acme/certbot/conf/live/${certbot_lineage}"
+
     local certbot_domain_args=()
     for domain in "${domains[@]}"
     do
         certbot_domain_args+=( '--domain' "${domain}" )
     done
-
-    local certbot_live_dir="${tp_base_dir}/acme/certbot/conf/live/${certbot_lineage}"
 
     echo "[TP] Signing domains from OpenSSL certificate config file '${target_files[cert_conf_path]}' with ACME..."
     echo
@@ -679,24 +679,24 @@ function tp_acme_sign_domains {
 
 function tp_acme_sign_csr {
     local cert_config_or_csr="$1"
-
+f
     echo "[TP] Generating CSR for the new certificate..."
     tp_cert_request_if_missing "${cert_config_or_csr}"
 
-    # calculate next serial number in archive dir
-    local new_serial=0
-    local serials=( $( find "${tp_base_dir}/acme/certbot/custom/archive" -regex '.*/[0-9]+[.a-zA-Z0-9]+[.]pem' -exec basename '{}' ';' | sed -e 's/[.].*$//' | sort --unique ) )
-    if [[ "${#serials[@]}" != 0 ]]
+    # calculate next cert number in archive dir
+    local new_cert_number=0
+    local cert_numbers=( $( find "${tp_base_dir}/acme/certbot/custom/archive" -regex '.*/[0-9]+[.a-zA-Z0-9]+[.]pem' -exec basename '{}' ';' | sed -e 's/[.].*$//' | sort --unique ) )
+    if [[ "${#cert_numbers[@]}" != 0 ]]
     then
         # pick highest number and strip leading zeros, so bash doesn't assume it's octal
-        new_serial="$( echo "${serials[-1]}" | sed -E -e 's/^0+//' )"
+        new_cert_number="$( echo "${cert_numbers[-1]}" | sed -E -e 's/^0+//' )"
     fi
-    (( ++new_serial ))
-    new_serial="$( printf '%08d' "${new_serial}" )"
+    (( ++new_cert_number ))
+    new_cert_number="$( printf '%08d' "${new_cert_number}" )"
 
     tp_util_files 'target_files' "${cert_config_or_csr}"
     tp_util_files 'target_files_rel' "$( realpath --relative-to "${tp_base_dir}/acme/" "${target_files[file_path]}" )"
-    tp_util_files 'archive_files_rel' "certbot/custom/archive/${new_serial}.cert.pem"
+    tp_util_files 'archive_files_rel' "certbot/custom/archive/${new_cert_number}.cert.pem"
     tp_util_files 'archive_files' "$( realpath --relative-to "." "${tp_base_dir}/acme/${archive_files_rel[file_path]}" )"
 
     echo "[TP] Signing CSR from '${target_files[csr_pem_path]}' with ACME..."
