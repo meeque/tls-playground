@@ -663,11 +663,6 @@ function tp_acme_sign_domains {
     echo "[TP] New certificate chain in '${certbot_live_dir}/chain.pem'."
     echo "[TP] New certificate full-chain in '${certbot_live_dir}/fullchain.pem'."
 
-    echo
-    tp_cert_show "${certbot_live_dir}/cert.pem"
-    echo
-    tp_cert_fingerprint "${certbot_live_dir}/cert.pem"
-
     local certbot_live_dir_rel="$( realpath --relative-to "$( dirname "${cert_config}" )" "${certbot_live_dir}/" )"
     tp_util_files 'target_files' "${cert_config}"
     echo
@@ -679,6 +674,11 @@ function tp_acme_sign_domains {
     echo "[TP] Linked new certificate chain into '${target_files[chain_pem_path]}'."
     ln -sf "${certbot_live_dir_rel}/fullchain.pem" "${target_files[fullchain_pem_path]}"
     echo "[TP] Linked new certificate full-chain into '${target_files[fullchain_pem_path]}'."
+
+    echo
+    tp_cert_show "${target_files[cert_pem_path]}"
+    echo
+    tp_cert_fingerprint "${target_files[cert_pem_path]}"
 }
 
 function tp_acme_sign_csr {
