@@ -638,8 +638,10 @@ function tp_acme_sign {
 function tp_acme_sign_domains {
     local cert_config="$1"
 
-    # TODO check that config file exists and domains are not empty
-    local domains=( $( tp_cert_get_domains_from_config "${cert_config}" ) )
+    tp_util_files 'files' "${cert_config}"
+    tp_util_files_check 'files' 'cert_conf_stat' "[TP] Given certificate config file '${cert_config}' does not exist!"
+
+    local domains=( $( tp_cert_get_domains_from_config "${files[cert_conf_path]}" ) )
     local certbot_lineage="${domains[0]}"
     local certbot_domain_args=()
     for domain in "${domains[@]}"
@@ -649,7 +651,7 @@ function tp_acme_sign_domains {
 
     local certbot_live_dir="${tp_base_dir}/acme/certbot/conf/live/${certbot_lineage}"
 
-    echo "[TP] Signing domains from OpenSSL certificate config file '${cert_config}' with ACME..."
+    echo "[TP] Signing domains from OpenSSL certificate config file '${files[cert_conf_path]}' with ACME..."
     echo
     (
         cd "${tp_base_dir}/acme/"
@@ -667,13 +669,12 @@ function tp_acme_sign_domains {
     echo "[TP] New certificate full-chain in '${certbot_live_dir}/fullchain.pem'."
 
     echo
-    tp_util_files 'target_files' "${cert_config}"
-    tp_acme_certbot_cert_link "${certbot_live_dir}" "${cert_config}"
+    tp_acme_certbot_cert_link "${certbot_live_dir}" "${files[cert_conf_path]}"
 
     echo
-    tp_cert_show "${target_files[cert_pem_path]}"
+    tp_cert_show "${files[cert_pem_path]}"
     echo
-    tp_cert_fingerprint "${target_files[cert_pem_path]}"
+    tp_cert_fingerprint "${files[cert_pem_path]}"
 }
 
 function tp_acme_sign_csr {
