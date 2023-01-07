@@ -453,7 +453,7 @@ function tp_ca_init {
     echo "[TP] Creating scaffolding for CA '${ca_name}' with initial certificate serial number '${serial}'..."
     (
         cd "${ca_dir}"
-        mkdir 'newcerts'
+        mkdir 'archive'
         mkdir 'private'
         chmod 'go-rwx' 'private'
         touch db.txt
@@ -490,7 +490,7 @@ function tp_ca_sign {
     tp_cert_request_if_missing "${cert_config_or_csr}"
 
     local new_serial="$(< "${ca_files[dir]}/serial" )"
-    tp_util_files 'new_files' "${ca_files[dir]}/newcerts/${new_serial}.pem"
+    tp_util_files 'new_files' "${ca_files[dir]}/archive/${new_serial}.pem"
 
     tp_util_files 'target_files' "${cert_config_or_csr}"
     local csr_pem_rel_path="$( realpath --relative-to "${ca_files[dir]}" "${target_files[csr_pem_path]}" )"
@@ -544,7 +544,7 @@ function tp_ca_clean {
     echo "[TP] Cleaning transient files of CA '${ca_name}'..."
     (
         cd "${ca_dir}"
-        find . -type d -and '(' -name 'newcerts' -or -name 'private' ')' | xargs rm -rf
+        find . -type d -and '(' -name 'archive' -or -name 'private' ')' | xargs rm -rf
         find . -type f -and -not '(' -name '*.conf' -or -name '*.md' ')' | xargs rm -f
     )
 }
@@ -808,6 +808,7 @@ function tp_acme_clean {
     tp_server_nginx_clean "${tp_base_dir}/acme/challenges/http-01"
     echo "[TP] Cleaning transient ACME and Certbot files..."
     rm -f "${tp_base_dir}/acme/certbot/cli.ini"
+    # TODO also exclude archive dirs from clean-up
     find acme/certbot -mindepth 1 -type d -and -not '(' -path '*/conf' -or -path '*/conf/accounts' -or -path '*/conf/accounts/*' ')' | xargs rm -rf
     rm -rf "${tp_base_dir}/acme/certbot/lib"
     rm -rf "${tp_base_dir}/acme/certbot/log"
