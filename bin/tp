@@ -247,7 +247,7 @@ function tp_cert_request {
     (
         set -x
         openssl req \
-            -new -config "${files[cert_conf_path]}" -newkey 'rsa:2048' \
+            -new -config "${files[cert_conf_path]}" \
             -passout "file:${files[key_pass_path]}" -keyout "${files[key_pem_path]}" -out "${files[csr_pem_path]}" \
     )
     echo
@@ -982,7 +982,7 @@ function tp_server_cert_selfsign {
 }
 
 function tp_server_cert_ca {
-    tp_ca_sign "${tp_cert_provider_opt:-ca1}" "$@"
+    tp_ca_sign "${tp_cert_provider_opt:-ca4servers}" "$@"
 }
 
 function tp_server_cert_acme {
