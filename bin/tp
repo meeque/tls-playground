@@ -644,14 +644,7 @@ function tp_acme_sign_domains {
         certbot_domain_args+=( '--domain' "${domain}" )
     done
 
-    # Certbot uses slighly different naming conventions than the rest of the TLS playground
-    local certbot_live_dir="${tp_base_dir}/acme/certbot/conf/live/${certbot_lineage}/"
-    local certbot_live_files=(
-        [key_pem_path]="${certbot_live_dir}/privkey.pem"
-        [cert_pem_path]="${certbot_live_dir}/cert.pem"
-        [chain_pem_path]="${certbot_live_dir}/chain.pem"
-        [fullchain_pem_path]="${certbot_live_dir}/fullchain.pem"
-    )
+    local certbot_live_dir="${tp_base_dir}/acme/certbot/conf/live/${certbot_lineage}"
 
     echo "[TP] Signing domains from OpenSSL certificate config file '${cert_config}' with ACME..."
     echo
@@ -665,10 +658,27 @@ function tp_acme_sign_domains {
             "${certbot_domain_args[@]}" \
     )
     echo
-    echo "[TP] New private key in '${certbot_live_files[key_pem_path]}'."
-    echo "[TP] New certificate in '${certbot_live_files[cert_pem_path]}'."
-    echo "[TP] New certificate chain in '${certbot_live_files[chain_pem_path]}'."
-    echo "[TP] New certificate full-chain in '${certbot_live_files[fullchain_pem_path]}'."
+    echo "[TP] New private key in '${certbot_live_dir}/privkey.pem'."
+    echo "[TP] New certificate in '${certbot_live_dir}/cert.pem'."
+    echo "[TP] New certificate chain in '${certbot_live_dir}/chain.pem'."
+    echo "[TP] New certificate full-chain in '${certbot_live_dir}/fullchain.pem'."
+
+    echo
+    tp_cert_show "${certbot_live_dir}/cert.pem"
+    echo
+    tp_cert_fingerprint "${certbot_live_dir}/cert.pem"
+
+    local certbot_live_dir_rel="$( realpath --relative-to "$( dirname "${cert_config}" )" "${certbot_live_dir}/" )"
+    tp_util_files 'target_files' "${cert_config}"
+    echo
+    ln -sf "${certbot_live_dir_rel}/privkey.pem" "${target_files[key_pem_path]}"
+    echo "[TP] Linked new private key into '${target_files[key_pem_path]}'."
+    ln -sf "${certbot_live_dir_rel}/cert.pem" "${target_files[cert_pem_path]}"
+    echo "[TP] Linked new certificate into '${target_files[cert_pem_path]}'."
+    ln -sf "${certbot_live_dir_rel}/chain.pem" "${target_files[chain_pem_path]}"
+    echo "[TP] Linked new certificate chain into '${target_files[chain_pem_path]}'."
+    ln -sf "${certbot_live_dir_rel}/fullchain.pem" "${target_files[fullchain_pem_path]}"
+    echo "[TP] Linked new certificate full-chain into '${target_files[fullchain_pem_path]}'."
 }
 
 function tp_acme_sign_csr {
