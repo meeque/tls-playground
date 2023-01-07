@@ -394,6 +394,7 @@ function tp_cert_link {
     local source="$1"
     local target="$2"
 
+    # TODO use ln built-in relative linking capabilities, if more elegant
     local source_rel="$( realpath --relative-to "$( dirname "${target}" )" "${source}" )"
     local target_rel="$( realpath --relative-to . "${target}" )"
     tp_util_files "source_files" "${source_rel}"
@@ -813,15 +814,20 @@ function tp_acme_revoke {
 }
 
 function tp_acme_clean {
-    echo "[TP] Cleaning transient files of nginx-based 'http-01' challenges server..."
-    tp_server_nginx_clean "${tp_base_dir}/acme/challenges/http-01"
     echo "[TP] Cleaning transient ACME and Certbot files..."
     rm -f "${tp_base_dir}/acme/certbot/cli.ini"
-    # TODO also exclude archive dirs from clean-up
-    find acme/certbot -mindepth 1 -type d -and -not '(' -path '*/conf' -or -path '*/conf/accounts' -or -path '*/conf/accounts/*' ')' | xargs rm -rf
-    rm -rf "${tp_base_dir}/acme/certbot/lib"
-    rm -rf "${tp_base_dir}/acme/certbot/log"
+    find acme/certbot -mindepth 1 -type d -and \
+        -not '(' \
+            -path '*/conf' \
+            -or -path '*/conf/accounts' -or -path '*/conf/accounts/*' \
+            -or -path '*/conf/archive' -or -path '*/conf/archive/*' \
+            -or -path '*/custom/archive' -or -path '*/custom/archive/*' \
+        ')' \
+        | xargs rm -rf
+
+    echo "[TP] Cleaning transient files of nginx-based 'http-01' challenges server..."
     rm -rf "${tp_base_dir}/acme/challenges/http-01/public/.well-known"
+    tp_server_nginx_clean "${tp_base_dir}/acme/challenges/http-01"
 }
 
 function tp_acme_check_env {
