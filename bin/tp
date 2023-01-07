@@ -655,6 +655,9 @@ function tp_acme_sign_domains {
 
     mkdir -p "${target_files[dir]}/private"
     chmod 'og-rwx' "${target_files[dir]}/private"
+    # servers may be configured to require the private key pass-phrase, but Certbot generates private keys without pass-phrase
+    # so create an empty pass-phrase file, which most servers tolerate
+    :> "${target_files[key_pass_path]}"
 
     echo "[TP] Signing domains from OpenSSL certificate config file '${target_files[cert_conf_path]}' with ACME..."
     echo
