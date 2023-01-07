@@ -18,7 +18,7 @@ function tp_main {
     tp_main_arg_defaults
 
     # parse arguments
-    local tp_arguments="$( getopt --options 'camr' --longoptions 'ca,acme,manual,request,csr' --name 'tp' -- "$@" )"
+    local tp_arguments="$( getopt --options 'c::amr' --longoptions 'ca::,acme,manual,request,csr' --name 'tp' -- "$@" )"
     eval set -- ${tp_arguments}
 
     # process arguments
@@ -27,6 +27,8 @@ function tp_main {
         case "$1" in
             -c | --ca )
                 tp_cert_provider='ca'
+                shift
+                tp_cert_provider_opt="${1}"
                 ;;
             -a | --acme )
                 tp_cert_provider='acme'
@@ -104,6 +106,7 @@ function tp_main_env_check {
 
 function tp_main_arg_defaults {
     tp_cert_provider='selfsign'
+    tp_cert_provider_opt=''
     tp_acme_certbot_opts=( '--webroot' '--non-interactive' )
     tp_acme_certbot_custom_csr=''
 }
@@ -979,8 +982,7 @@ function tp_server_cert_selfsign {
 }
 
 function tp_server_cert_ca {
-    # TODO make the ca configurable!
-    tp_ca_sign ca1 "$@"
+    tp_ca_sign "${tp_cert_provider_opt:-ca1}" "$@"
 }
 
 function tp_server_cert_acme {
