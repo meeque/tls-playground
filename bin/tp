@@ -442,10 +442,12 @@ function tp_ca_init {
     if [[ ! -d "${ca_dir}" ]]
     then
         echo "[TP] Failed to initialize CA '${ca_name}'! Could not find expected CA directory '${ca_dir}'!"
+        echo "[TP] Omit the CA name to initialize all ot them. Or, try one of the following instead:"
+        tp_ca_list
         return 1
     fi
 
-    tp_ca_clean "${ca_name}"
+    tp_ca_clean "$@"
 
     local serial="$( tp_util_generate_hex_token "tls-playground-ca-${ca_name}" 8 )00000001"
     echo "[TP] Creating scaffolding for CA '${ca_name}' with initial certificate serial number '${serial}'..."
@@ -487,19 +489,18 @@ function tp_ca_sign {
     echo "[TP] Generating CSR for the new certificate..."
     tp_cert_request_if_missing "${cert_config_or_csr}"
 
-    tp_util_files 'target_files' "${cert_config_or_csr}"
     local new_serial="$(< "${ca_files[dir]}/serial" )"
-    tp_util_files 'new_files' "${tp_base_dir}/ca/${ca_name}/newcerts/${new_serial}.pem"
+    tp_util_files 'new_files' "${ca_files[dir]}/newcerts/${new_serial}.pem"
 
-    local csr_pem_rel_path="$( realpath --relative-to "${tp_base_dir}/ca/" "${target_files[csr_pem_path]}" )"
-    local key_pass_rel_path="$( realpath --relative-to "${tp_base_dir}/ca/" "${ca_files[key_pass_path]}" )"
+    tp_util_files 'target_files' "${cert_config_or_csr}"
+    local csr_pem_rel_path="$( realpath --relative-to "${ca_files[dir]}" "${target_files[csr_pem_path]}" )"
 
     echo "[TP] Signing CSR from '${target_files[csr_pem_path]}' with CA ${ca_name} at serial ${new_serial}..."
     echo
     (
-        cd "${tp_base_dir}/ca/"
+        cd "${ca_files[dir]}"
         set -x
-        openssl ca -config 'ca.conf' -name "${ca_name}" -batch -passin "file:${key_pass_rel_path}" -in "${csr_pem_rel_path}" -notext
+        openssl ca -config 'ca.conf' -batch -passin "file:private/ca-root.key.pass.txt" -in "${csr_pem_rel_path}" -notext
     )
     echo
     cat "${new_files[file_path]}" > "${new_files[cert_pem_path]}"
@@ -535,6 +536,8 @@ function tp_ca_clean {
     if [[ ! -d "${ca_dir}" ]]
     then
         echo "[TP] Failed to clean up CA '${ca_name}'! Could not find expected CA directory '${ca_dir}'!"
+        echo "[TP] Omit the CA name to clean up all ot them. Or, try one of the following instead:"
+        tp_ca_list
         return 1
     fi
 
