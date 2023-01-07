@@ -679,7 +679,7 @@ function tp_acme_sign_domains {
 
 function tp_acme_sign_csr {
     local cert_config_or_csr="$1"
-f
+
     echo "[TP] Generating CSR for the new certificate..."
     tp_cert_request_if_missing "${cert_config_or_csr}"
 
