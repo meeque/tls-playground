@@ -559,7 +559,7 @@ function tp_acme {
     shift || true
 
     case "${command}" in
-        'init' | 'account' | 'challenges' | 'sign' | 'revoke' | 'clean' )
+        'init' | 'account' | 'challenges' | 'sign' | 'renew' | 'revoke' | 'clean' )
             "tp_acme_${command}" "$@"
             ;;
         * )
@@ -721,6 +721,21 @@ function tp_acme_sign_csr {
     tp_cert_show "${archive_files[cert_pem_path]}"
     echo
     tp_cert_fingerprint "${archive_files[cert_pem_path]}"
+}
+
+function tp_acme_renew {
+    echo "[TP] Renewing all certificates that Certbot manages in a lineage..."
+    echo
+    (
+        cd "${tp_base_dir}/acme/"
+        set -x
+        certbot \
+            --config "certbot/cli.ini" \
+            renew \
+    )
+    echo
+    echo "[TP] Certbot certificate renewal done."
+    echo "[TP] No need to adjust any certificate links. The new certs are available at the same place in Certbot's live directory at '${tp_base_dir}/acme/certbot/conf/live/${certbot_lineage}'."
 }
 
 function tp_acme_revoke {
