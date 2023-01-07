@@ -262,6 +262,8 @@ function tp_cert_request_if_missing {
     if [[ "${files[suffix]}" == 'csr.pem' ]]
     then
         tp_util_files_check 'files' 'csr_pem_stat' "[TP] CSR file '${cert_config_or_csr}' does not exist! Specify either an existing CSR file or a certificate config file!"
+        tp_util_files_check 'files' 'key_pem_stat' "[TP] The given CSR exists, but could not find associated private key file in '${key_pem_path}'! You may need to clean up and start from scratch."
+        tp_util_files_check 'files' 'key_pass_stat' "[TP] The given CSR exists, but could not find associated private key pass-hprase file in '${key_pass_path}'! You may need to clean up and start from scratch."
         echo "[TP] CSR already exists in '${cert_config_or_csr}'. Skipping generation of a new one."
         return 0
     fi
