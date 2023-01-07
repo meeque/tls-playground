@@ -821,6 +821,7 @@ function tp_acme_clean {
             -path '*/conf' \
             -or -path '*/conf/accounts' -or -path '*/conf/accounts/*' \
             -or -path '*/conf/archive' -or -path '*/conf/archive/*' \
+            -or -path '*/custom' \
             -or -path '*/custom/archive' -or -path '*/custom/archive/*' \
         ')' \
         | xargs rm -rf
