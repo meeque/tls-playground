@@ -663,17 +663,9 @@ function tp_acme_sign_domains {
     echo "[TP] New certificate chain in '${certbot_live_dir}/chain.pem'."
     echo "[TP] New certificate full-chain in '${certbot_live_dir}/fullchain.pem'."
 
-    local certbot_live_dir_rel="$( realpath --relative-to "$( dirname "${cert_config}" )" "${certbot_live_dir}/" )"
-    tp_util_files 'target_files' "${cert_config}"
     echo
-    ln -sf "${certbot_live_dir_rel}/privkey.pem" "${target_files[key_pem_path]}"
-    echo "[TP] Linked new private key into '${target_files[key_pem_path]}'."
-    ln -sf "${certbot_live_dir_rel}/cert.pem" "${target_files[cert_pem_path]}"
-    echo "[TP] Linked new certificate into '${target_files[cert_pem_path]}'."
-    ln -sf "${certbot_live_dir_rel}/chain.pem" "${target_files[chain_pem_path]}"
-    echo "[TP] Linked new certificate chain into '${target_files[chain_pem_path]}'."
-    ln -sf "${certbot_live_dir_rel}/fullchain.pem" "${target_files[fullchain_pem_path]}"
-    echo "[TP] Linked new certificate full-chain into '${target_files[fullchain_pem_path]}'."
+    tp_util_files 'target_files' "${cert_config}"
+    tp_acme_certbot_cert_link "${certbot_live_dir}" "${cert_config}"
 
     echo
     tp_cert_show "${target_files[cert_pem_path]}"
@@ -813,6 +805,23 @@ function tp_acme_check_env {
         || { status=1; echo "[TP] Variable TP_ACME_ACCOUNT_EMAIL with value '${TP_ACME_ACCOUNT_EMAIL}' does not look like an email address!"; }
 
     return "${status}"
+}
+
+function tp_acme_certbot_cert_link {
+    local source="$1"
+    local target="$2"
+
+    local source_rel="$( realpath --relative-to "$( dirname "${target}" )" "${source}/" )"
+    tp_util_files 'target_files' "${cert_config}"
+
+    ln -sf "${source}/privkey.pem" "${target_files[key_pem_path]}"
+    echo "[TP] Linked new private key into '${target_files[key_pem_path]}'."
+    ln -sf "${source}/cert.pem" "${target_files[cert_pem_path]}"
+    echo "[TP] Linked new certificate into '${target_files[cert_pem_path]}'."
+    ln -sf "${source}/chain.pem" "${target_files[chain_pem_path]}"
+    echo "[TP] Linked new certificate chain into '${target_files[chain_pem_path]}'."
+    ln -sf "${source}/fullchain.pem" "${target_files[fullchain_pem_path]}"
+    echo "[TP] Linked new certificate full-chain into '${target_files[fullchain_pem_path]}'."
 }
 
 
