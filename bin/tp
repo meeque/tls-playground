@@ -490,7 +490,7 @@ function tp_ca_sign {
     tp_cert_request_if_missing "${cert_config_or_csr}"
 
     local new_serial="$(< "${ca_files[dir]}/serial" )"
-    tp_util_files 'new_files' "${ca_files[dir]}/archive/${new_serial}.pem"
+    tp_util_files 'archive_files' "${ca_files[dir]}/archive/${new_serial}.pem"
 
     tp_util_files 'target_files' "${cert_config_or_csr}"
     local csr_pem_rel_path="$( realpath --relative-to "${ca_files[dir]}" "${target_files[csr_pem_path]}" )"
@@ -503,15 +503,15 @@ function tp_ca_sign {
         openssl ca -config 'ca.conf' -batch -passin "file:private/ca-root.key.pass.txt" -in "${csr_pem_rel_path}" -notext
     )
     echo
-    cat "${new_files[file_path]}" > "${new_files[cert_pem_path]}"
-    echo "[TP] New certificate in '${new_files[cert_pem_path]}'."
-    cat "${ca_files[fullchain_pem_path]}" > "${new_files[chain_pem_path]}"
-    echo "[TP] New certificate chain in '${new_files[chain_pem_path]}'."
-    cat "${new_files[cert_pem_path]}" "${ca_files[fullchain_pem_path]}" > "${new_files[fullchain_pem_path]}"
-    echo "[TP] New certificate full-chain in '${new_files[fullchain_pem_path]}'."
+    cat "${archive_files[file_path]}" > "${archive_files[cert_pem_path]}"
+    echo "[TP] New certificate in '${archive_files[cert_pem_path]}'."
+    cat "${ca_files[fullchain_pem_path]}" > "${archive_files[chain_pem_path]}"
+    echo "[TP] New certificate chain in '${archive_files[chain_pem_path]}'."
+    cat "${archive_files[cert_pem_path]}" "${ca_files[fullchain_pem_path]}" > "${archive_files[fullchain_pem_path]}"
+    echo "[TP] New certificate full-chain in '${archive_files[fullchain_pem_path]}'."
 
     echo
-    tp_cert_link "${new_files[file_path]}" "${target_files[file_path]}"
+    tp_cert_link "${archive_files[file_path]}" "${target_files[file_path]}"
 
     echo
     tp_cert_show "${target_files[cert_pem_path]}"
