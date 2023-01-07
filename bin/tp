@@ -510,12 +510,12 @@ function tp_ca_sign {
     echo "[TP] New certificate full-chain in '${new_files[fullchain_pem_path]}'."
 
     echo
+    tp_cert_link "${new_files[file_path]}" "${target_files[file_path]}"
+
+    echo
     tp_cert_show "${new_files[cert_pem_path]}"
     echo
     tp_cert_fingerprint "${new_files[cert_pem_path]}"
-
-    echo
-    tp_cert_link "${new_files[file_path]}" "${target_files[file_path]}"
 }
 
 function tp_ca_clean {
@@ -723,12 +723,12 @@ function tp_acme_sign_csr {
     echo "[TP] New certificate full-chain in '${archive_files[fullchain_pem_path]}'."
 
     echo
+    tp_cert_link "${archive_files[file_path]}" "${target_files[file_path]}"
+
+    echo
     tp_cert_show "${archive_files[cert_pem_path]}"
     echo
     tp_cert_fingerprint "${archive_files[cert_pem_path]}"
-
-    echo
-    tp_cert_link "${archive_files[file_path]}" "${target_files[file_path]}"
 }
 
 function tp_acme_revoke {
