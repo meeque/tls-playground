@@ -1,13 +1,16 @@
 [ req ]
-encrypt_key = yes
-default_md = sha256
+
 prompt = no
 utf8 = yes
+default_bits = 4096
+default_md = sha384
+encrypt_key = yes
 
 distinguished_name = req_distinguished_name
 req_extensions = req_extensions
 
 [ req_distinguished_name ]
+
 C = DE
 ST = Bavaria
 L = Munich
@@ -15,5 +18,6 @@ O  = TLS Playground
 CN = server2.tls-playground.${TP_SERVER_DOMAIN}
 
 [ req_extensions ]
+
 basicConstraints=CA:FALSE
 subjectKeyIdentifier = hash

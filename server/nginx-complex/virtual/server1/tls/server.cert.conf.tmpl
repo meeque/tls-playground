@@ -1,13 +1,16 @@
 [ req ]
-encrypt_key = yes
-default_md = sha256
+
 prompt = no
 utf8 = yes
+default_bits = 2048
+default_md = sha256
+encrypt_key = yes
 
 distinguished_name = req_distinguished_name
 req_extensions = req_extensions
 
 [ req_distinguished_name ]
+
 C = DE
 ST = Bavaria
 L = Munich
@@ -15,9 +18,11 @@ O  = TLS Playground
 CN = server1.tls-playground.${TP_SERVER_DOMAIN}
 
 [ req_extensions ]
+
 subjectAltName=@alt_names
 
 [ alt_names ]
+
 DNS.1 = tls-playground.${TP_SERVER_DOMAIN}
 DNS.2 = server1.tls-playground.${TP_SERVER_DOMAIN}
 DNS.3 = server1a.tls-playground.${TP_SERVER_DOMAIN}
