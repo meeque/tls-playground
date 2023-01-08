@@ -18,13 +18,16 @@ function tp_main {
     tp_main_arg_defaults
 
     # parse arguments
-    local tp_arguments="$( getopt --options 'c::amr' --longoptions 'ca::,acme,manual,request,csr' --name 'tp' -- "$@" )"
+    local tp_arguments="$( getopt --options 'sc::amr' --longoptions 'step,ca::,acme,manual,request,csr' --name 'tp' -- "$@" )"
     eval set -- ${tp_arguments}
 
     # process arguments
     while true
     do
         case "$1" in
+            -s | --step )
+                tp_step='true'
+                ;;
             -c | --ca )
                 tp_cert_provider='ca'
                 shift
@@ -77,12 +80,10 @@ function tp_main_env_global {
             touch "${pass_file}"
             chmod 'og-rwx' "${pass_file}"
 
-            echo
-            (
-                set -x
+            tp_util_run \
                 openssl rand -base64 -out "${pass_file}" 32
-            )
-            echo
+
+            echo "[TP] Stoed new passphrase in file '${pass_file}'."
         fi
         TP_PASS="$(< "${pass_file}" )"
     fi
@@ -105,6 +106,7 @@ function tp_main_env_check {
 }
 
 function tp_main_arg_defaults {
+    tp_step=''
     tp_cert_provider='selfsign'
     tp_cert_provider_opt=''
     tp_acme_certbot_opts=( '--webroot' '--non-interactive' )
@@ -138,32 +140,21 @@ function tp_cert_show {
     tp_util_files_check 'files' 'file_stat' "[TP] Given file '${file}' does not exist!"
 
     case "${files[suffix]}" in
-        'cert.pem' )
+        'cert.pem' | 'pem' )
             echo "[TP] Showing contents of certificate in '${file}'..."
-            echo
-            (
-                set -x
+            tp_util_run \
                 openssl x509 -in "${file}" -noout -text
-            )
-            echo
             ;;
         'csr.pem' )
             echo "[TP] Showing contents of CSR in '${file}'..."
-            echo
-            (
-                set -x
+            tp_util_run \
                 openssl req -in "${file}" -noout -text
-            )
-            echo
             ;;
         'key.pem' )
             echo "[TP] Showing contents of private key in '${file}'..."
-            echo
-            (
-                set -x
+            tp_util_run \
                 openssl rsa -in "${file}" -passin "file:${files[key_pass_path]}" -noout -text
-            )
-            echo
+
             echo "[TP] ***************************************************************************************"
             echo "[TP] Attention:"
             echo "[TP] If anyone has seen this, you should stop using this key and corresponding certificates!"
@@ -184,43 +175,25 @@ function tp_cert_fingerprint {
     tp_util_files_check 'files' 'file_stat' "[TP] Given file '${file}' does not exist!"
 
     case "${files[suffix]}" in
-        'cert.pem' )
+        'cert.pem' | 'pem' )
             echo "[TP] Calculating fingerprint of certificate in '${file}'..."
-            echo
-            (
-                set -x
+            tp_util_run \
                 openssl x509 -in "${file}" -noout -fingerprint -sha256
-            )
-            echo
             ;;
         'csr.pem' )
             echo "[TP] Calculating fingerprint of CSR in '${file}'..."
-            echo
-            (
-                set -x
+            tp_util_run \
                 openssl req -in ${file} -outform DER | openssl dgst -sha256 | tr 'a-z' 'A-Z'
-            )
-            echo
             ;;
         'key.pem' )
             echo "[TP] Calculating fingerprint of private key in '${file}'..."
-            echo
-            (
-                set -x
+            tp_util_run \
                 openssl rsa -in ${file} -passin "file:${files[key_pass_path]}" -outform DER | openssl dgst -sha256 | tr 'a-z' 'A-Z'
-            )
-            echo
             ;;
         * )
             echo "[TP] Not sure how to caculate fingerprints of files with suffix '.${files[suffix]}'!"
             echo "[TP] Will just calculate checksum of the file as-is..."
-            echo
-            (
-                set -x
-                cat "${file}" | openssl dgst -sha256
-            )
-            echo
-            return 0
+            cat "${file}" | tp_util_run openssl dgst -sha256
             ;;
     esac
 }
@@ -243,14 +216,12 @@ function tp_cert_request {
     echo
 
     echo "[TP] Generating key-pair and CSR..."
-    echo
-    (
-        set -x
+
+    tp_util_run \
         openssl req \
             -new -config "${files[cert_conf_path]}" \
-            -passout "file:${files[key_pass_path]}" -keyout "${files[key_pem_path]}" -out "${files[csr_pem_path]}" \
-    )
-    echo
+            -passout "file:${files[key_pass_path]}" -keyout "${files[key_pem_path]}" -out "${files[csr_pem_path]}"
+
     echo "[TP] New private key in '${files[key_pem_path]}'."
     echo "[TP] Pass-phrase for new private key in '${files[key_pass_path]}'."
     echo "[TP] New CSR in '${files[csr_pem_path]}'."
@@ -284,16 +255,14 @@ function tp_cert_selfsign {
     tp_cert_request_if_missing "${cert_config_or_csr}"
 
     echo "[TP] Signing CSR with it's own private key..."
-    echo
-    (
-        set -x
+
+    tp_util_run \
         openssl x509 \
             -days '90' \
             -req -in "${files[csr_pem_path]}" \
             -signkey "${files[key_pem_path]}" -passin "file:${files[key_pass_path]}" \
-            -out "${files[cert_pem_path]}" \
-    )
-    echo
+            -out "${files[cert_pem_path]}"
+
     echo "[TP] New certificate in '${files[cert_pem_path]}'."
     :> "${files[chain_pem_path]}"
     echo "[TP] New (empty) certificate chain in '${files[chain_pem_path]}'."
@@ -318,15 +287,13 @@ function tp_cert_pkcs8 {
     local pkcs8_file="${files[path]}.key.pkcs8.der"
 
     echo "[TP] Converting private key '${key_file}' to PKCS8 format..."
-    echo
-    (
-        set -x
+
+    tp_util_run \
         openssl pkcs8 \
             -topk8 -nocrypt \
             -in "${key_file}" -passin "file:${files[key_pass_path]}" \
-            -outform 'DER' -out "${pkcs8_file}" \
-    )
-    echo
+            -outform 'DER' -out "${pkcs8_file}"
+
     echo "[TP] PKCS8 private key in '${pkcs8_file}'."
 }
 
@@ -348,15 +315,13 @@ function tp_cert_pkcs12 {
     local -x TP_PASS="$(< "${files[key_pass_path]}" )"
 
     echo "[TP] Bundling certificate '${cert_file}' and private key '${files[key_pem_path]}' in PKCS12..."
-    echo
-    (
-        set -x
+
+    tp_util_run \
         openssl pkcs12 \
             -export \
             -in "${cert_file}" -inkey "${files[key_pem_path]}" -passin "env:TP_PASS" \
-            -out "${pkcs12_file}" -passout "env:TP_PASS" \
-    )
-    echo
+            -out "${pkcs12_file}" -passout "env:TP_PASS"
+
     echo "[TP] PKCS12 bundle in '${pkcs12_file}'."
 }
 
@@ -502,13 +467,17 @@ function tp_ca_sign {
     local csr_pem_rel_path="$( realpath --relative-to "${ca_files[dir]}" "${target_files[csr_pem_path]}" )"
 
     echo "[TP] Signing CSR from '${target_files[csr_pem_path]}' with CA ${ca_name} at serial ${new_serial}..."
-    echo
+
     (
         cd "${ca_files[dir]}"
-        set -x
-        openssl ca -config 'ca.conf' -batch -passin "file:private/ca-root.key.pass.txt" -in "${csr_pem_rel_path}" -notext
+        tp_util_run \
+            openssl ca \
+                -batch -notext \
+                -config 'ca.conf' \
+                -passin "file:private/ca-root.key.pass.txt" \
+                -in "${csr_pem_rel_path}"
     )
-    echo
+
     cat "${archive_files[file_path]}" > "${archive_files[cert_pem_path]}"
     echo "[TP] New certificate in '${archive_files[cert_pem_path]}'."
     cat "${ca_files[fullchain_pem_path]}" > "${archive_files[chain_pem_path]}"
@@ -664,17 +633,16 @@ function tp_acme_sign_domains {
     :> "${target_files[key_pass_path]}"
 
     echo "[TP] Signing domains from OpenSSL certificate config file '${target_files[cert_conf_path]}' with ACME..."
-    echo
+
     (
         cd "${tp_base_dir}/acme/"
-        set -x
-        certbot \
-            --config "certbot/cli.ini" \
-            certonly \
-            "${tp_acme_certbot_opts[@]}" \
-            "${certbot_domain_args[@]}" \
+        tp_util_run \
+            certbot certonly \
+                --config "certbot/cli.ini" \
+                "${tp_acme_certbot_opts[@]}" \
+                "${certbot_domain_args[@]}"
     )
-    echo
+
     echo "[TP] New private key in '${certbot_live_dir}/privkey.pem'."
     echo "[TP] New certificate in '${certbot_live_dir}/cert.pem'."
     echo "[TP] New certificate chain in '${certbot_live_dir}/chain.pem'."
@@ -712,20 +680,19 @@ function tp_acme_sign_csr {
     tp_util_files 'archive_files' "$( realpath --relative-to "." "${tp_base_dir}/acme/${archive_files_rel[file_path]}" )"
 
     echo "[TP] Signing CSR from '${target_files[csr_pem_path]}' with ACME..."
-    echo
+
     (
         cd "${tp_base_dir}/acme/"
-        set -x
-        certbot \
-            --config "certbot/cli.ini" \
-            certonly \
-            "${tp_acme_certbot_opts[@]}" \
-            --csr "${target_files_rel[csr_pem_path]}" \
-            --cert-path "${archive_files_rel[cert_pem_path]}" \
-            --chain-path "${archive_files_rel[chain_pem_path]}" \
-            --fullchain-path "${archive_files_rel[fullchain_pem_path]}" \
+        tp_util_run \
+            certbot certonly \
+                --config "certbot/cli.ini" \
+                "${tp_acme_certbot_opts[@]}" \
+                --csr "${target_files_rel[csr_pem_path]}" \
+                --cert-path "${archive_files_rel[cert_pem_path]}" \
+                --chain-path "${archive_files_rel[chain_pem_path]}" \
+                --fullchain-path "${archive_files_rel[fullchain_pem_path]}"
     )
-    echo
+
     echo "[TP] New certificate in '${archive_files[cert_pem_path]}'."
     echo "[TP] New certificate chain in '${archive_files[chain_pem_path]}'."
     echo "[TP] New certificate full-chain in '${archive_files[fullchain_pem_path]}'."
@@ -741,15 +708,14 @@ function tp_acme_sign_csr {
 
 function tp_acme_renew {
     echo "[TP] Renewing all certificates that Certbot manages in a lineage..."
-    echo
+
     (
         cd "${tp_base_dir}/acme/"
-        set -x
-        certbot \
-            --config "certbot/cli.ini" \
-            renew \
+        tp_util_run \
+            certbot renew \
+                --config "certbot/cli.ini"
     )
-    echo
+
     echo "[TP] Certbot certificate renewal done."
     echo "[TP] No need to adjust any certificate links. The new certs are available at the same place in Certbot's live directory at '${tp_base_dir}/acme/certbot/conf/live/${certbot_lineage}'."
 }
@@ -782,11 +748,10 @@ function tp_acme_revoke {
     echo
     (
         cd "${tp_base_dir}/acme/"
-        set -x
-        certbot \
-            --config "certbot/cli.ini" \
-            revoke \
-            --cert-path "${rel_files[file_path]}" \
+        tp_util_run \
+            certbot revoke\
+                --config "certbot/cli.ini" \
+                --cert-path "${rel_files[file_path]}"
     ) \
     || \
     {
@@ -798,12 +763,11 @@ function tp_acme_revoke {
         echo
         (
             cd "${tp_base_dir}/acme/"
-            set -x
-            certbot \
-                --config "certbot/cli.ini" \
-                revoke \
-                --cert-path "${rel_files[file_path]}" \
-                --key-path "${rel_files[key_pem_path]}" \
+            tp_util_run \
+                certbot revoke \
+                    --config "certbot/cli.ini" \
+                    --cert-path "${rel_files[file_path]}" \
+                    --key-path "${rel_files[key_pem_path]}"
         ) \
         || \
         {
@@ -1069,6 +1033,31 @@ function tp_clean {
 
 
 # general TP utility functions
+
+function tp_util_run {
+    if [[ -n "${tp_step}" ]]
+    then
+        echo "[TP] Preparing to run command, hit any key to continue!"
+    fi
+
+    echo
+    echo '$' "${@@Q}"
+
+    if [[ -n "${tp_step}" ]]
+    then
+        read -s -n 1
+    fi
+
+    echo
+    "$@"
+    echo
+
+    if [[ -n "${tp_step}" ]]
+    then
+        echo "[TP] Successully finished runing command, hit any key to continue!"
+        read -s -n 1
+    fi
+}
 
 function tp_util_files {
     local varname="$1"
