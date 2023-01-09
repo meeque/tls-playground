@@ -1049,8 +1049,7 @@ function tp_util_run {
     fi
 
     echo
-    echo "${dir_rel}"'$' "${@@Q}"
-    # TODO the ${@@Q} puts everything in single quotes - instead iterate over args, and only quote them, if necessary
+    echo "${dir_rel}"'$'$( tp_util_quote "$@" )
 
     if [[ -n "${tp_step}" ]]
     then
@@ -1066,6 +1065,18 @@ function tp_util_run {
         echo "[TP] Successully finished runing command, hit any key to continue!"
         read -s -n 1
     fi
+}
+
+function tp_util_quote {
+    for array_member in "$@"
+    do
+        if [[ "${array_member}" =~ ^[-_=+a-zA-Z0-9]+$ ]]
+        then
+            echo -n " ${array_member}"
+        else
+            echo -n " ${array_member@Q}"
+        fi
+    done
 }
 
 function tp_util_files {
