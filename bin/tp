@@ -1037,11 +1037,13 @@ function tp_clean {
 function tp_util_run {
     if [[ -n "${tp_step}" ]]
     then
+        # TODO mention CWD, if it's not the same where TP has been invoked
         echo "[TP] Preparing to run command, hit any key to continue!"
     fi
 
     echo
     echo '$' "${@@Q}"
+    # TODO the ${@@Q} puts everything in single quotes - instead iterate over args, and only quote them, if necessary
 
     if [[ -n "${tp_step}" ]]
     then
