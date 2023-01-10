@@ -1066,13 +1066,24 @@ function tp_util_run {
         dir_rel=''
     fi
 
+    local prompt='$'
+    if [[ "$( id --user )" == '0' ]]
+    then
+        prompt='#'
+    fi
+
     if [[ -n "${tp_step}" ]]
     then
         tp_echo "Preparing to run command, hit any key to continue!"
     fi
 
     echo
-    echo "${dir_rel}"'$'$( tp_util_quote "$@" )
+    if [[ -n "${TP_COLOR}" ]]
+    then
+        echo $'\e[1;34m'"${dir_rel}"$'\e[0m'"${prompt}"$'\e[1m'"$( tp_util_quote "$@" )"$'\e[0m'
+    else
+        echo "${dir_rel}${prompt}$( tp_util_quote "$@" )"
+    fi
 
     if [[ -n "${tp_step}" ]]
     then
