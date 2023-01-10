@@ -45,6 +45,7 @@ COPY . "/opt/tls-playground/"
 WORKDIR "/opt/tls-playground"
 
 ENV EDITOR="/usr/bin/nano"
+ENV TP_COLOR="yes"
 ENV TP_PASS="1234"
 ENV TP_SERVER_DOMAIN="localhost"
 ENV TP_SERVER_LISTEN_ADDRESS="127.0.0.1"
