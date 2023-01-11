@@ -1067,7 +1067,7 @@ function tp_util_run {
 
     if [[ -n "${tp_step}" ]]
     then
-        tp_msg "Preparing to run command, hit any key to continue!"
+        tp_prompt "Preparing to run below command, hit any key to continue!"
     fi
 
     echo
@@ -1089,7 +1089,7 @@ function tp_util_run {
 
     if [[ -n "${tp_step}" ]]
     then
-        tp_msg "Successully finished runing command, hit any key to continue!"
+        tp_prompt "Successully finished running the command, hit any key to continue!"
         read -s -n 1
     fi
 }
@@ -1271,6 +1271,15 @@ function tp_msg {
         echo $'\e[1;34m[TP]\e[0;36m'" $@"$'\e[0m'
     else
         echo "[TP] $@"
+    fi
+}
+
+function tp_prompt {
+    if [[ -n "${TP_COLOR}" ]]
+    then
+        echo $'\e[1;34m[TP]\e[0;35m'" $@"$'\e[0m'
+    else
+        echo "[TP][?] $@"
     fi
 }
 
