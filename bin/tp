@@ -1221,12 +1221,12 @@ function tp_util_template {
         var_names_string+='${'"${var_name}"'}'
     done
 
-    echo -n "[TP] Generating file ${target_file} from template... "
+    tp_msg "Generating file ${target_file} from template... "
     (
         export "${var_names_array[@]}"
         cat "${template_file}" | envsubst "${var_names_string}" > "${target_file}"
     )
-    echo "done."
+    tp_msg "done."
 }
 
 function tp_util_template_clean {
@@ -1268,7 +1268,7 @@ function tp_util_run_hook {
 function tp_msg {
     if [[ -n "${TP_COLOR}" ]]
     then
-        echo $'\e[2;36m[TP]\e[0m'" $@"
+        echo $'\e[1;34m[TP]\e[0;36m'" $@"$'\e[0m'
     else
         echo "[TP] $@"
     fi
@@ -1277,7 +1277,7 @@ function tp_msg {
 function tp_warn {
     if [[ -n "${TP_COLOR}" ]]
     then
-        echo $'\e[2;36m[TP]\e[0;33m'" $@"$'\e[0m'
+        echo $'\e[1;34m[TP]\e[0;33m'" $@"$'\e[0m'
     else
         echo "[TP][WARN]" "$@"
     fi
@@ -1286,7 +1286,7 @@ function tp_warn {
 function tp_err {
     if [[ -n "${TP_COLOR}" ]]
     then
-        echo $'\e[2;36m[TP]\e[0;31m'" $@"$'\e[0m'
+        echo $'\e[1;34m[TP]\e[0;31m'" $@"$'\e[0m'
     else
         echo "[TP][ERR]" "$@"
     fi
