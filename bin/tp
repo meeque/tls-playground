@@ -416,7 +416,7 @@ function tp_ca_init {
 
     if [[ -z "${ca_name}" ]]
     then
-        tp_err "No CA name specified. Proceeding to initialize all CAs..."
+        tp_msg "No CA name specified. Proceeding to initialize all CAs..."
         for ca_name in $( tp_ca_list )
         do
             echo
