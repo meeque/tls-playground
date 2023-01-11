@@ -171,10 +171,10 @@ function tp_cert_show {
             tp_util_run \
                 openssl rsa -in "${file}" -passin "file:${files[key_pass_path]}" -noout -text
 
-            tp_msg "***************************************************************************************"
-            tp_msg "Attention:"
-            tp_msg "If anyone has seen this, you should stop using this key and corresponding certificates!"
-            tp_msg "***************************************************************************************"
+            tp_warn "***************************************************************************************"
+            tp_warn "Attention:"
+            tp_warn "If anyone has seen this, you should stop using this key and corresponding certificates!"
+            tp_warn "***************************************************************************************"
             ;;
         * )
             tp_err "Sorry, don't know how to show contents of files with suffix '.${files[suffix]}'!"
@@ -238,9 +238,9 @@ function tp_cert_request {
             -new -config "${files[cert_conf_path]}" \
             -passout "file:${files[key_pass_path]}" -keyout "${files[key_pem_path]}" -out "${files[csr_pem_path]}"
 
-    tp_msg "New private key in '${files[key_pem_path]}'."
-    tp_msg "Pass-phrase for new private key in '${files[key_pass_path]}'."
-    tp_msg "New CSR in '${files[csr_pem_path]}'."
+    tp_succ "New private key in '${files[key_pem_path]}'."
+    tp_succ "Pass-phrase for new private key in '${files[key_pass_path]}'."
+    tp_succ "New CSR in '${files[csr_pem_path]}'."
 }
 
 function tp_cert_request_if_missing {
@@ -279,11 +279,11 @@ function tp_cert_selfsign {
             -signkey "${files[key_pem_path]}" -passin "file:${files[key_pass_path]}" \
             -out "${files[cert_pem_path]}"
 
-    tp_msg "New certificate in '${files[cert_pem_path]}'."
+    tp_succ "New certificate in '${files[cert_pem_path]}'."
     :> "${files[chain_pem_path]}"
-    tp_msg "New (empty) certificate chain in '${files[chain_pem_path]}'."
+    tp_succ "New (empty) certificate chain in '${files[chain_pem_path]}'."
     cp "${files[cert_pem_path]}" "${files[fullchain_pem_path]}"
-    tp_msg "New (single-entry) certificate full-chain in '${files[fullchain_pem_path]}'."
+    tp_succ "New (single-entry) certificate full-chain in '${files[fullchain_pem_path]}'."
 
     echo
     tp_cert_show "${files[cert_pem_path]}"
@@ -310,7 +310,7 @@ function tp_cert_pkcs8 {
             -in "${key_file}" -passin "file:${files[key_pass_path]}" \
             -outform 'DER' -out "${pkcs8_file}"
 
-    tp_msg "PKCS8 private key in '${pkcs8_file}'."
+    tp_succ "PKCS8 private key in '${pkcs8_file}'."
 }
 
 function tp_cert_pkcs12 {
@@ -338,7 +338,7 @@ function tp_cert_pkcs12 {
             -in "${cert_file}" -inkey "${files[key_pem_path]}" -passin "env:TP_PASS" \
             -out "${pkcs12_file}" -passout "env:TP_PASS"
 
-    tp_msg "PKCS12 bundle in '${pkcs12_file}'."
+    tp_succ "PKCS12 bundle in '${pkcs12_file}'."
 }
 
 function tp_cert_clean {
@@ -495,11 +495,11 @@ function tp_ca_sign {
     )
 
     cat "${archive_files[file_path]}" > "${archive_files[cert_pem_path]}"
-    tp_msg "New certificate in '${archive_files[cert_pem_path]}'."
+    tp_succ "New certificate in '${archive_files[cert_pem_path]}'."
     cat "${ca_files[fullchain_pem_path]}" > "${archive_files[chain_pem_path]}"
-    tp_msg "New certificate chain in '${archive_files[chain_pem_path]}'."
+    tp_succ "New certificate chain in '${archive_files[chain_pem_path]}'."
     cat "${archive_files[cert_pem_path]}" "${ca_files[fullchain_pem_path]}" > "${archive_files[fullchain_pem_path]}"
-    tp_msg "New certificate full-chain in '${archive_files[fullchain_pem_path]}'."
+    tp_succ "New certificate full-chain in '${archive_files[fullchain_pem_path]}'."
 
     echo
     tp_cert_link "${archive_files[file_path]}" "${target_files[file_path]}"
@@ -659,10 +659,10 @@ function tp_acme_sign_domains {
                 "${certbot_domain_args[@]}"
     )
 
-    tp_msg "New private key in '${certbot_live_dir}/privkey.pem'."
-    tp_msg "New certificate in '${certbot_live_dir}/cert.pem'."
-    tp_msg "New certificate chain in '${certbot_live_dir}/chain.pem'."
-    tp_msg "New certificate full-chain in '${certbot_live_dir}/fullchain.pem'."
+    tp_succ "New private key in '${certbot_live_dir}/privkey.pem'."
+    tp_succ "New certificate in '${certbot_live_dir}/cert.pem'."
+    tp_succ "New certificate chain in '${certbot_live_dir}/chain.pem'."
+    tp_succ "New certificate full-chain in '${certbot_live_dir}/fullchain.pem'."
 
     echo
     tp_acme_certbot_cert_link "${certbot_live_dir}" "${target_files[cert_conf_path]}"
@@ -709,9 +709,9 @@ function tp_acme_sign_csr {
                 --fullchain-path "${archive_files_rel[fullchain_pem_path]}"
     )
 
-    tp_msg "New certificate in '${archive_files[cert_pem_path]}'."
-    tp_msg "New certificate chain in '${archive_files[chain_pem_path]}'."
-    tp_msg "New certificate full-chain in '${archive_files[fullchain_pem_path]}'."
+    tp_succ "New certificate in '${archive_files[cert_pem_path]}'."
+    tp_succ "New certificate chain in '${archive_files[chain_pem_path]}'."
+    tp_succ "New certificate full-chain in '${archive_files[fullchain_pem_path]}'."
 
     echo
     tp_cert_link "${archive_files[file_path]}" "${target_files[file_path]}"
@@ -732,7 +732,7 @@ function tp_acme_renew {
                 --config "certbot/cli.ini"
     )
 
-    tp_msg "Certbot certificate renewal done."
+    tp_succ "Certbot certificate renewal done."
     tp_msg "No need to adjust any certificate links. The new certs are available at the same place in Certbot's live directory at '${tp_base_dir}/acme/certbot/conf/live/${certbot_lineage}'."
 }
 
@@ -793,7 +793,7 @@ function tp_acme_revoke {
         }
     }
     echo
-    tp_msg "Revoked certificate from '${cert_file}'."
+    tp_succ "Successfully revoked certificate from '${cert_file}'."
 }
 
 function tp_acme_clean {
@@ -1226,7 +1226,7 @@ function tp_util_template {
         export "${var_names_array[@]}"
         cat "${template_file}" | envsubst "${var_names_string}" > "${target_file}"
     )
-    tp_msg "done."
+    tp_succ "done."
 }
 
 function tp_util_template_clean {
@@ -1258,7 +1258,7 @@ function tp_util_run_hook {
         . ${hook_script}
     )
     echo
-    tp_msg "Done running ${hook_name}."
+    tp_succ "Done running ${hook_name}."
 }
 
 
@@ -1269,6 +1269,15 @@ function tp_msg {
     if [[ -n "${TP_COLOR}" ]]
     then
         echo $'\e[1;34m[TP]\e[0;36m'" $@"$'\e[0m'
+    else
+        echo "[TP] $@"
+    fi
+}
+
+function tp_succ {
+    if [[ -n "${TP_COLOR}" ]]
+    then
+        echo $'\e[1;34m[TP]\e[0;32m'" $@"$'\e[0m'
     else
         echo "[TP] $@"
     fi
