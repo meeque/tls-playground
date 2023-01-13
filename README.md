@@ -1,3 +1,16 @@
+```
+
+     ,-~~~-.
+    (  <O>  )`~-,.___..,--~~~-,-..___.,--~\
+    |`~---~'|   :      :      :       :    \
+    |       |   :   TLS Playground    :   <
+    |       |   :      :      :       :   /
+     `~---~' `~-'.___..'--~~~-'-..___.'--~'
+
+```
+
+
+
 # TLS Playground Project
 
 This playground demonstrates various TLS scenarios, including certificate handling and client server interactions over TLS.
