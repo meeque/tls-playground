@@ -2,7 +2,6 @@
 
 prompt = no
 utf8 = yes
-default_bits = 3072
 default_md = sha384
 encrypt_key = yes
 
@@ -15,3 +14,7 @@ ST = Bavaria
 L = Munich
 O  = Meeque TLS Playground
 CN = tls-playground.${TP_SERVER_DOMAIN}
+
+# Note
+# This certificate request configuration has an associated public key parameters file that has been generated with the following command:
+# $ openssl genpkey -genparam -algorithm ec -pkeyopt ec_paramgen_curve:secp384r1 -out server.key.params.pem

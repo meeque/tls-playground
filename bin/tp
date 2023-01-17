@@ -231,12 +231,30 @@ function tp_cert_request {
     cat "${files[cert_conf_path]}"
     echo
 
-    tp_msg "Generating key-pair and CSR..."
+    if [[ "${files[key_params_pem_stat]}" = 'f' ]]
+    then
+        tp_msg "Using private key parameters file '${files[key_params_pem_path]}':"
+        tp_util_run \
+            openssl pkeyparam \
+            -in "${files[key_params_pem_path]}" \
+            -noout -text
+    fi
 
-    tp_util_run \
-        openssl req \
-            -new -config "${files[cert_conf_path]}" \
-            -passout "file:${files[key_pass_path]}" -keyout "${files[key_pem_path]}" -out "${files[csr_pem_path]}"
+    # TODO generate key-pair in a separate step? optionally?
+    tp_msg "Generating key-pair and CSR..."
+    if [[ "${files[key_params_pem_stat]}" = 'f' ]]
+    then
+        tp_util_run \
+            openssl req \
+                -new -config "${files[cert_conf_path]}" \
+                -newkey "param:${files[key_params_pem_path]}" \
+                -passout "file:${files[key_pass_path]}" -keyout "${files[key_pem_path]}" -out "${files[csr_pem_path]}"
+    else
+        tp_util_run \
+            openssl req \
+                -new -config "${files[cert_conf_path]}" \
+                -passout "file:${files[key_pass_path]}" -keyout "${files[key_pem_path]}" -out "${files[csr_pem_path]}"
+    fi
 
     tp_succ "New private key in '${files[key_pem_path]}'."
     tp_succ "Pass-phrase for new private key in '${files[key_pass_path]}'."
@@ -352,8 +370,10 @@ function tp_cert_clean {
     tp_msg "Cleaning up certificates and related files in '${path}'..."
     (
         cd "${path}"
-        find . -type f -and '(' -name '*.pem' -or -name '*.der' -or -name '*.pfx' -or -name '*.pass.txt' ')' | xargs rm -f
-        find . -type l -and '(' -name '*.pem' -or -name '*.der' -or -name '*.pfx' -or -name '*.pass.txt' ')' | xargs rm -f
+        find . '(' -type f -or -type l ')' \
+            -and '(' -name '*.pem' -or -name '*.der' -or -name '*.pfx' -or -name '*.pass.txt' ')' \
+            -and '(' -not -name '*.key.params.pem' ')' \
+            | xargs rm -f
         find . -type d -and -empty -and -name 'private' | xargs rm -rf
     )
 }
@@ -1135,6 +1155,7 @@ function tp_util_files {
 
         # files (name + suffix)
         [cert_conf_file]="${name}.cert.conf"
+        [key_params_pem_file]="${name}.key.params.pem"
         [key_pem_file]="${name}.key.pem"
         [key_pass_file]="${name}.key.pass.txt"
         [csr_pem_file]="${name}.csr.pem"
@@ -1145,6 +1166,7 @@ function tp_util_files {
         # file paths (dir + name + suffix)
         [file_path]="${file_path}"
         [cert_conf_path]="${path}.cert.conf"
+        [key_params_pem_path]="${path}.key.params.pem"
         [key_pem_path]="${dir}/private/${name}.key.pem"
         [key_pass_path]="${dir}/private/${name}.key.pass.txt"
         [csr_pem_path]="${path}.csr.pem"
@@ -1155,6 +1177,7 @@ function tp_util_files {
         # file statuses
         [file_stat]="$( tp_util_files_stat "${file_path}" )"
         [cert_conf_stat]="$( tp_util_files_stat "${path}.cert.conf" )"
+        [key_params_pem_stat]="$( tp_util_files_stat "${path}.key.params.pem" )"
         [key_pem_stat]="$( tp_util_files_stat "${dir}/private/${name}.key.pem" )"
         [key_pass_stat]="$( tp_util_files_stat "${dir}/private/${name}.key.pass.txt" )"
         [csr_pem_stat]="$( tp_util_files_stat "${path}.csr.pem" )"
@@ -1199,6 +1222,7 @@ function tp_util_files_check {
 
     fi
 
+    # TODO use tp_err instead, and remove [TP] prefix from all messages
     echo "${message}"
     return 1
 }
