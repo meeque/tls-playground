@@ -240,7 +240,6 @@ function tp_cert_request {
             -noout -text
     fi
 
-    # TODO generate key-pair in a separate step? optionally?
     tp_msg "Generating key-pair and CSR..."
     if [[ "${files[key_params_pem_stat]}" = 'f' ]]
     then
@@ -556,7 +555,7 @@ function tp_ca_clean {
     (
         cd "${ca_dir}"
         find . -type d -and '(' -name 'archive' -or -name 'private' ')' | xargs rm -rf
-        find . -type f -and -not '(' -name '*.conf' -or -name '*.md' ')' | xargs rm -f
+        find . -type f -and -not '(' -name '*.conf' -or -name '*.md' -or -name '*.key.params.pem' ')' | xargs rm -f
     )
 }
 
