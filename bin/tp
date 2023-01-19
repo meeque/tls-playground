@@ -785,31 +785,28 @@ function tp_acme_revoke {
                 --config "certbot/cli.ini" \
                 --cert-path "${rel_files[file_path]}"
     ) \
-    || \
-    {
-        echo
-        tp_warn "Revoking certificate has failed! See above Certbot outputs."
+    && { tp_succ "Successfully used ACME account to revoke certificate in '${cert_file}'."; return 0; }
 
-        [[ -f "${source_files[key_pem_path]}" ]]
-        tp_msg "Re-trying to revoke certificate, using its private key in '${source_files[key_pem_path]}'..."
-        echo
-        (
-            cd "${tp_base_dir}/acme/"
-            tp_util_run \
-                certbot revoke \
-                    --config "certbot/cli.ini" \
-                    --cert-path "${rel_files[file_path]}" \
-                    --key-path "${rel_files[key_pem_path]}"
-        ) \
-        || \
-        {
-            echo
-            tp_err "Revoking certificate has failed again! See above Certbot outputs."
-            return 1
-        }
-    }
-    echo
-    tp_succ "Successfully revoked certificate from '${cert_file}'."
+    tp_warn "Revoking certificate has failed! See above Certbot outputs."
+    if [[ ! -f "${source_files[key_pem_path]}" ]]
+    then
+        tp_err "Could not retry revoking certificate based on its private key, because corresponding private key file '${source_files[key_pem_path]}' does not exist!"
+        return 1
+    fi
+
+    tp_msg "Retrying to revoke certificate, using its private key in '${source_files[key_pem_path]}'..."
+    (
+        cd "${tp_base_dir}/acme/"
+        tp_util_run \
+            certbot revoke \
+                --config "certbot/cli.ini" \
+                --cert-path "${rel_files[file_path]}" \
+                --key-path "${rel_files[key_pem_path]}"
+    ) \
+    && { tp_succ "Successfully used certificate's private key to revoke certificate in '${cert_file}'."; return 0; }
+
+    tp_err "Revoking certificate has failed again! See above Certbot outputs. Giving up."
+    return 1
 }
 
 function tp_acme_clean {
@@ -1338,4 +1335,3 @@ if ! ( return 0 2>/dev/null )
 then
     tp_main "$@"
 fi
-
