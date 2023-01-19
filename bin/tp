@@ -755,24 +755,10 @@ function tp_acme_renew {
 function tp_acme_revoke {
     local cert_file="$1"
 
-    if [[ -z "${cert_file}" ]]
-    then
-        tp_err "No certificate given to revoke! Specify the certificate (.cert.pem) file!"
-        return 1
-    fi
-
     tp_util_files 'source_files' "${cert_file}"
-
-    if [[ "${source_files[suffix]}" != 'cert.pem' ]]
-    then
-        tp_err "Revoking given file '${cert_file}' is not supported! Specify a certificate (.cert.pem) file instead!"
-        return 1
-    fi
-    if [[ ! -f "${cert_file}" ]]
-    then
-        tp_err "Given certificate file '${cert_file}' does not exist!"
-        return 1
-    fi
+    tp_util_files_check 'source_files' 'file_path' "No certificate given to revoke! Specify the certificate (.cert.pem) file!"
+    tp_util_files_check 'source_files' 'suffix=cert.pem' "Revoking given file '${cert_file}' is not supported! Specify a certificate (.cert.pem) file instead!"
+    tp_util_files_check 'source_files' 'file_stat=f' "Given certificate file '${cert_file}' does not exist!"
 
     tp_util_files 'rel_files' "$( realpath --relative-to "${tp_base_dir}/acme/" "${source_files[file_path]}" )"
 
