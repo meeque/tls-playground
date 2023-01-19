@@ -397,17 +397,14 @@ function tp_cert_link {
     local source="$1"
     local target="$2"
 
-    # TODO use ln built-in relative linking capabilities, if more elegant
-    local source_rel="$( realpath --relative-to "$( dirname "${target}" )" "${source}" )"
-    local target_rel="$( realpath --relative-to . "${target}" )"
-    tp_util_files "source_files" "${source_rel}"
-    tp_util_files "target_files" "${target_rel}"
+    tp_util_files "source_files" "${source}"
+    tp_util_files "target_files" "${target}"
 
-    ln -sf "${source_files[cert_pem_path]}" "${target_files[cert_pem_path]}"
+    ln -srf "${source_files[cert_pem_path]}" "${target_files[cert_pem_path]}"
     tp_msg "Linked new certificate into '${target_files[cert_pem_path]}'."
-    ln -sf "${source_files[chain_pem_path]}" "${target_files[chain_pem_path]}"
+    ln -srf "${source_files[chain_pem_path]}" "${target_files[chain_pem_path]}"
     tp_msg "Linked new certificate chain into '${target_files[chain_pem_path]}'."
-    ln -sf "${source_files[fullchain_pem_path]}" "${target_files[fullchain_pem_path]}"
+    ln -srf "${source_files[fullchain_pem_path]}" "${target_files[fullchain_pem_path]}"
     tp_msg "Linked new certificate full-chain into '${target_files[fullchain_pem_path]}'."
 }
 
@@ -848,16 +845,15 @@ function tp_acme_certbot_cert_link {
     local source="$1"
     local target="$2"
 
-    local source_rel="$( realpath --relative-to "$( dirname "${target}" )" "${source}/" )"
-    tp_util_files 'target_files' "${cert_config}"
+    tp_util_files 'target_files' "${target}"
 
-    ln -sf "../${source_rel}/privkey.pem" "${target_files[key_pem_path]}"
+    ln -srf "${source}/privkey.pem" "${target_files[key_pem_path]}"
     tp_msg "Linked new private key into '${target_files[key_pem_path]}'."
-    ln -sf "${source_rel}/cert.pem" "${target_files[cert_pem_path]}"
+    ln -srf "${source}/cert.pem" "${target_files[cert_pem_path]}"
     tp_msg "Linked new certificate into '${target_files[cert_pem_path]}'."
-    ln -sf "${source_rel}/chain.pem" "${target_files[chain_pem_path]}"
+    ln -srf "${source}/chain.pem" "${target_files[chain_pem_path]}"
     tp_msg "Linked new certificate chain into '${target_files[chain_pem_path]}'."
-    ln -sf "${source_rel}/fullchain.pem" "${target_files[fullchain_pem_path]}"
+    ln -srf "${source}/fullchain.pem" "${target_files[fullchain_pem_path]}"
     tp_msg "Linked new certificate full-chain into '${target_files[fullchain_pem_path]}'."
 }
 
