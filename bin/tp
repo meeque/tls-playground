@@ -1095,15 +1095,25 @@ function tp_util_run {
         read -s -n 1
     fi
 
+    local status=0
     echo
     "$@"
+    status=$?
     echo
 
     if [[ -n "${tp_step}" ]]
     then
-        tp_prompt "Successully finished running the command, hit any key to continue!"
-        read -s -n 1
+        if [[ "${status}" == 0 ]]
+        then
+            tp_prompt "Successfully finished running the command, hit any key to continue!"
+            read -s -n 1
+        else
+            tp_prompt "Finished running the command with error status ${status}, hit any key to continue!"
+            read -s -n 1
+        fi
     fi
+
+    return "${status}"
 }
 
 function tp_util_quote {
