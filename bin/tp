@@ -752,6 +752,7 @@ function tp_acme_renew {
     tp_msg "No need to adjust any certificate links. The new certs are available at the same place in Certbot's live directory at '${tp_base_dir}/acme/certbot/conf/live/${certbot_lineage}'."
 }
 
+# TODO add variant that revokes all acme certs
 function tp_acme_revoke {
     local cert_file="$1"
 
@@ -760,10 +761,11 @@ function tp_acme_revoke {
     tp_util_files_check 'source_files' 'suffix=cert.pem' "Revoking given file '${cert_file}' is not supported! Specify a certificate (.cert.pem) file instead!"
     tp_util_files_check 'source_files' 'file_stat=f' "Given certificate file '${cert_file}' does not exist!"
 
+    # TODO add support for revoking files that follow certbot naming conventions rather than TP naming conventions
+
     tp_util_files 'rel_files' "$( realpath --relative-to "${tp_base_dir}/acme/" "${source_files[file_path]}" )"
 
     tp_msg "Trying to revoke certificate in '${cert_file}', using existing ACME account..."
-    echo
     (
         cd "${tp_base_dir}/acme/"
         tp_util_run \
