@@ -583,6 +583,7 @@ function tp_acme_init {
     tp_msg "Initializing ACME and Certbot..."
     mkdir -p "${tp_base_dir}/acme/challenges/http-01/public/.well-known/acme-challenge"
     mkdir -p "${tp_base_dir}/acme/certbot/custom/archive"
+    tp_acme_check_env
     tp_util_template "${tp_base_dir}/acme/certbot/cli.ini.tmpl" TP_ACME_SERVER_URL TP_ACME_ACCOUNT_EMAIL
     tp_server_nginx_init "${tp_base_dir}/acme/challenges/http-01"
 }
@@ -976,6 +977,7 @@ function tp_server_nginx_init {
 
     for config_file_template in $( find "${server_dir}" -type f -and -name '*.tmpl' )
     do
+        tp_server_check_env
         tp_util_template "${config_file_template}" TP_SERVER_DOMAIN TP_SERVER_LISTEN_ADDRESS TP_SERVER_HTTP_PORT TP_SERVER_HTTPS_PORT
     done
 
