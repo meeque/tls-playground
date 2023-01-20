@@ -759,10 +759,10 @@ function tp_acme_revoke {
     # handle special keywords for mass-revocation
     if [[ "${cert_file}" == @(all|certbot|csr) ]]
     then
-        "tp_acme_revoke_${cert_file}"
-        local status=$?
-
+        local status=0
+        "tp_acme_revoke_${cert_file}" || status=$?
         echo
+
         if [[ "${status}" == '0' ]]
         then
             tp_succ "Successfully revoked all given certificates."
