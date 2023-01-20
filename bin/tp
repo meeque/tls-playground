@@ -753,9 +753,15 @@ function tp_acme_renew {
     tp_msg "No need to adjust any certificate links. The new certs are available at the same place in Certbot's live directory at '${tp_base_dir}/acme/certbot/conf/live/${certbot_lineage}'."
 }
 
-# TODO add variant that revokes all acme certs
 function tp_acme_revoke {
     local cert_file="$1"
+
+    # handle special keywords for mass-revocation
+    if [[ "${cert_file}" == @(all|certbot|csr) ]]
+    then
+        "tp_acme_revoke_${cert_file}"
+        return $?
+    fi
 
     tp_util_files 'source_files' "${cert_file}"
     tp_util_files_check 'source_files' 'file_path' "No certificate given to revoke! Specify the certificate (.cert.pem) file!"
@@ -796,6 +802,51 @@ function tp_acme_revoke {
 
     tp_err "Revoking certificate has failed again! See above Certbot outputs. Giving up."
     return 1
+}
+
+function tp_acme_revoke_all {
+    tp_msg "Revoking all archived certificates that have been signed with ACME..."
+    echo
+
+    local status=0
+    tp_acme_revoke_certbot || status=$?
+    tp_acme_revoke_csr || status=$?
+    return "${status}"
+}
+
+function tp_acme_revoke_certbot {
+    tp_msg "Revoking Certbot's archived certificates that have been signed with ACME..."
+    echo
+
+    local status=0
+    local archive_dir="${tp_base_dir}/acme/certbot/conf/archive"
+    if [[ -d "${archive_dir}" ]]
+    then
+        for lineage_dir in $( find "${archive_dir}" -mindepth 1 -maxdepth 1 -type d )
+        do
+            for archived_cert_file in $( find "${lineage_dir}" -type f -name 'cert*.pem' )
+            do
+                echo "TODO revoke archived cert '${archived_cert_file}', not implemented yet!" || status=$?
+            done
+        done
+    fi
+    return "${status}"
+}
+
+function tp_acme_revoke_csr {
+    tp_msg "Revoking TP archived certificates that have been signed with ACME using a custom CSR..."
+    echo
+
+    local status=0
+    local archive_dir="${tp_base_dir}/acme/certbot/custom/archive"
+    if [[ -d "${archive_dir}" ]]
+    then
+        for archived_cert_file in $( find "${archive_dir}" -type f -name '*.cert.pem' )
+        do
+            echo "TODO revoke archived cert '${archived_cert_file}', not implemented yet!" || status=$?
+        done
+    fi
+    return "${status}"
 }
 
 function tp_acme_clean {
