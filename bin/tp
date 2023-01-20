@@ -760,7 +760,16 @@ function tp_acme_revoke {
     if [[ "${cert_file}" == @(all|certbot|csr) ]]
     then
         "tp_acme_revoke_${cert_file}"
-        return $?
+        local status=$?
+
+        echo
+        if [[ "${status}" == '0' ]]
+        then
+            tp_succ "Successfully revoked all given certificates."
+        else
+            tp_warn "Tried to revoke given certificates, but revocation has failed for some of them! Check above outputs!"
+        fi
+        return "${status}"
     fi
 
     tp_util_files 'source_files' "${cert_file}"
@@ -826,7 +835,7 @@ function tp_acme_revoke_certbot {
         do
             for archived_cert_file in $( find "${lineage_dir}" -type f -name 'cert*.pem' )
             do
-                echo "TODO revoke archived cert '${archived_cert_file}', not implemented yet!" || status=$?
+                tp_acme_revoke "${archived_cert_file}" || status=$?
             done
         done
     fi
@@ -843,7 +852,7 @@ function tp_acme_revoke_csr {
     then
         for archived_cert_file in $( find "${archive_dir}" -type f -name '*.cert.pem' )
         do
-            echo "TODO revoke archived cert '${archived_cert_file}', not implemented yet!" || status=$?
+            tp_acme_revoke "${archived_cert_file}" || status=$?
         done
     fi
     return "${status}"
