@@ -773,11 +773,9 @@ function tp_acme_revoke {
     fi
 
     tp_util_files 'source_files' "${cert_file}"
-    tp_util_files_check 'source_files' 'file_path' "No certificate given to revoke! Specify the certificate (.cert.pem) file!" || return $?
-    tp_util_files_check 'source_files' 'suffix=cert.pem' "Revoking given file '${cert_file}' is not supported! Specify a certificate (.cert.pem) file instead!" || return $?
+    tp_util_files_check 'source_files' 'file_path' "No certificate given to revoke! Specify the certificate (.pem) file!" || return $?
+    [[ "${cert_file}" =~ [.]pem$ ]] || { tp_err "Revoking given file '${cert_file}' is not supported! Specify a certificate (.pem) file instead!"; return 1; }
     tp_util_files_check 'source_files' 'file_stat=f' "Given certificate file '${cert_file}' does not exist!" || return $?
-
-    # TODO add support for revoking files that follow certbot naming conventions rather than TP naming conventions
 
     tp_util_files 'rel_files' "$( realpath --relative-to "${tp_base_dir}/acme/" "${source_files[file_path]}" )"
 
@@ -790,22 +788,35 @@ function tp_acme_revoke {
                 --cert-path "${rel_files[file_path]}"
     ) \
     && { tp_succ "Successfully used ACME account to revoke certificate in '${cert_file}'."; return 0; }
-
     tp_warn "Revoking certificate has failed! See above Certbot outputs."
-    if [[ ! -f "${source_files[key_pem_path]}" ]]
+
+    local private_key_file=''
+    if [[ -f "${source_files[key_pem_path]}" ]]
     then
-        tp_err "Could not retry revoking certificate based on its private key, because corresponding private key file '${source_files[key_pem_path]}' does not exist!"
+        private_key_file="private/${source_files[key_pem_file]}"
+    elif [[ "${source_files[file]}" == cert*.pem ]]
+    then
+        local candidate_file="$( echo "${source_files[file]}" | sed -e 's/^cert/privkey/' )"
+        if [[ -f "${source_files[dir]}/${candidate_file}" ]]
+        then
+            private_key_file="${candidate_file}"
+        fi
+    fi
+
+    if [[ -z ${private_key_file} ]]
+    then
+        tp_err "Could not retry revoking certificate based on its private key, because corresponding private key file could not be found by naming conventions!"
         return 1
     fi
 
-    tp_msg "Retrying to revoke certificate, using its private key in '${source_files[key_pem_path]}'..."
+    tp_msg "Retrying to revoke certificate, using its private key found in '${source_files[dir]}/${private_key_file}'..."
     (
         cd "${tp_base_dir}/acme/"
         tp_util_run \
             certbot revoke \
                 --config "certbot/cli.ini" \
                 --cert-path "${rel_files[file_path]}" \
-                --key-path "${rel_files[key_pem_path]}"
+                --key-path "${rel_files[dir]}/${private_key_file}"
     ) \
     && { tp_succ "Successfully used certificate's private key to revoke certificate in '${cert_file}'."; return 0; }
 
@@ -836,6 +847,7 @@ function tp_acme_revoke_certbot {
             for archived_cert_file in $( find "${lineage_dir}" -type f -name 'cert*.pem' )
             do
                 tp_acme_revoke "${archived_cert_file}" || status=$?
+                echo
             done
         done
     fi
@@ -853,6 +865,7 @@ function tp_acme_revoke_csr {
         for archived_cert_file in $( find "${archive_dir}" -type f -name '*.cert.pem' )
         do
             tp_acme_revoke "${archived_cert_file}" || status=$?
+            echo
         done
     fi
     return "${status}"
@@ -1205,6 +1218,7 @@ function tp_util_files {
         [path]="${path}"
 
         # files (name + suffix)
+        [file]="${file}"
         [cert_conf_file]="${name}.cert.conf"
         [key_params_pem_file]="${name}.key.params.pem"
         [key_pem_file]="${name}.key.pem"
