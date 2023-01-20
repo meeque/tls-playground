@@ -773,9 +773,9 @@ function tp_acme_revoke {
     fi
 
     tp_util_files 'source_files' "${cert_file}"
-    tp_util_files_check 'source_files' 'file_path' "No certificate given to revoke! Specify the certificate (.cert.pem) file!"
-    tp_util_files_check 'source_files' 'suffix=cert.pem' "Revoking given file '${cert_file}' is not supported! Specify a certificate (.cert.pem) file instead!"
-    tp_util_files_check 'source_files' 'file_stat=f' "Given certificate file '${cert_file}' does not exist!"
+    tp_util_files_check 'source_files' 'file_path' "No certificate given to revoke! Specify the certificate (.cert.pem) file!" || return $?
+    tp_util_files_check 'source_files' 'suffix=cert.pem' "Revoking given file '${cert_file}' is not supported! Specify a certificate (.cert.pem) file instead!" || return $?
+    tp_util_files_check 'source_files' 'file_stat=f' "Given certificate file '${cert_file}' does not exist!" || return $?
 
     # TODO add support for revoking files that follow certbot naming conventions rather than TP naming conventions
 
@@ -1147,8 +1147,7 @@ function tp_util_run {
 
     local status=0
     echo
-    "$@"
-    status=$?
+    "$@" || status=$?
     echo
 
     if [[ -n "${tp_step}" ]]
