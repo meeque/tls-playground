@@ -842,9 +842,9 @@ function tp_acme_revoke_certbot {
     local archive_dir="${tp_base_dir}/acme/certbot/conf/archive"
     if [[ -d "${archive_dir}" ]]
     then
-        for lineage_dir in $( find "${archive_dir}" -mindepth 1 -maxdepth 1 -type d )
+        for lineage_dir in $( find "${archive_dir}" -mindepth 1 -maxdepth 1 -type d | sort )
         do
-            for archived_cert_file in $( find "${lineage_dir}" -type f -name 'cert*.pem' )
+            for archived_cert_file in $( find "${lineage_dir}" -type f -name 'cert*.pem' | sort )
             do
                 tp_acme_revoke "${archived_cert_file}" || status=$?
                 echo
@@ -862,7 +862,7 @@ function tp_acme_revoke_csr {
     local archive_dir="${tp_base_dir}/acme/certbot/custom/archive"
     if [[ -d "${archive_dir}" ]]
     then
-        for archived_cert_file in $( find "${archive_dir}" -type f -name '*.cert.pem' )
+        for archived_cert_file in $( find "${archive_dir}" -type f -name '*.cert.pem' | sort )
         do
             tp_acme_revoke "${archived_cert_file}" || status=$?
             echo
