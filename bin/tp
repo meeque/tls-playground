@@ -152,8 +152,8 @@ function tp_cert_show {
     local file="$1"
 
     tp_util_files 'files' "${file}"
-    tp_util_files_check 'files' 'file_path' "No file given. Specify a key, csr, or certificate file to show!"
-    tp_util_files_check 'files' 'file_stat' "Given file '${file}' does not exist!"
+    tp_util_files_check 'files' 'file_path' "No file given. Specify a key, csr, or certificate file to show!" || return $?
+    tp_util_files_check 'files' 'file_stat' "Given file '${file}' does not exist!" || return $?
 
     case "${files[suffix]}" in
         'cert.pem' | 'pem' )
@@ -187,8 +187,8 @@ function tp_cert_fingerprint {
     local file="$1"
 
     tp_util_files 'files' "${file}"
-    tp_util_files_check 'files' 'file_path' "No file given. Specify a key, csr, or certificate whose fingerprint to calculate!"
-    tp_util_files_check 'files' 'file_stat' "Given file '${file}' does not exist!"
+    tp_util_files_check 'files' 'file_path' "No file given. Specify a key, csr, or certificate whose fingerprint to calculate!" || return $?
+    tp_util_files_check 'files' 'file_stat' "Given file '${file}' does not exist!" || return $?
 
     case "${files[suffix]}" in
         'cert.pem' | 'pem' )
@@ -218,9 +218,9 @@ function tp_cert_request {
     local cert_config="$1"
 
     tp_util_files 'files' "${cert_config}"
-    tp_util_files_check 'files' 'file_path' "No certificate config file name specified. Specify the OpenSSL config file for the CSR!"
-    tp_util_files_check 'files' 'suffix=cert.conf' "Creating a CSR from given file '${cert_config}' is not supported! Specify a certificate config (.cert.conf) file!"
-    tp_util_files_check 'files' 'cert_conf_stat' "Given certificate config file '${cert_config}' does not exist!"
+    tp_util_files_check 'files' 'file_path' "No certificate config file name specified. Specify the OpenSSL config file for the CSR!" || return $?
+    tp_util_files_check 'files' 'suffix=cert.conf' "Creating a CSR from given file '${cert_config}' is not supported! Specify a certificate config (.cert.conf) file!" || return $?
+    tp_util_files_check 'files' 'cert_conf_stat' "Given certificate config file '${cert_config}' does not exist!" || return $?
 
     mkdir -p "${files[dir]}/private"
     chmod 'og-rwx' "${files[dir]}/private"
@@ -264,13 +264,13 @@ function tp_cert_request_if_missing {
     local cert_config_or_csr="$1"
 
     tp_util_files 'files' "${cert_config_or_csr}"
-    tp_util_files_check 'files' 'file_path' "No file name specified. Specify an OpenSSL certificate config file or an existing CSR file!"
+    tp_util_files_check 'files' 'file_path' "No file name specified. Specify an OpenSSL certificate config file or an existing CSR file!" || return $?
 
     if [[ "${files[suffix]}" == 'csr.pem' ]]
     then
-        tp_util_files_check 'files' 'csr_pem_stat' "CSR file '${cert_config_or_csr}' does not exist! Specify either an existing CSR file or a certificate config file!"
-        tp_util_files_check 'files' 'key_pem_stat' "The given CSR exists, but could not find associated private key file in '${key_pem_path}'! You may need to clean up and start from scratch."
-        tp_util_files_check 'files' 'key_pass_stat' "The given CSR exists, but could not find associated private key pass-hprase file in '${key_pass_path}'! You may need to clean up and start from scratch."
+        tp_util_files_check 'files' 'csr_pem_stat' "CSR file '${cert_config_or_csr}' does not exist! Specify either an existing CSR file or a certificate config file!" || return $?
+        tp_util_files_check 'files' 'key_pem_stat' "The given CSR exists, but could not find associated private key file in '${key_pem_path}'! You may need to clean up and start from scratch." || return $?
+        tp_util_files_check 'files' 'key_pass_stat' "The given CSR exists, but could not find associated private key pass-hprase file in '${key_pass_path}'! You may need to clean up and start from scratch." || return $?
         tp_msg "CSR already exists in '${cert_config_or_csr}'. Skipping generation of a new one."
         return 0
     fi
@@ -282,7 +282,7 @@ function tp_cert_selfsign {
     local cert_config_or_csr="$1"
 
     tp_util_files 'files' "${cert_config_or_csr}"
-    tp_util_files_check 'files' 'file_path' "Nothing to self-sign. Specify a certificate config file or a CSR file!"
+    tp_util_files_check 'files' 'file_path' "Nothing to self-sign. Specify a certificate config file or a CSR file!" || return $?
 
     tp_msg "Generating CSR for the self-signed certificate..."
     tp_cert_request_if_missing "${cert_config_or_csr}"
@@ -312,10 +312,10 @@ function tp_cert_pkcs8 {
     local key_file="$1"
 
     tp_util_files 'files' "${key_file}"
-    tp_util_files_check 'files' 'file_path' "No key file name specified. Specify the key file to convert to PKCS8!"
-    tp_util_files_check 'files' 'suffix=key.pem' "Converting file '${key_file}' to PKCS8 format is not supported! Specify a private key (.key.pem) file!"
-    tp_util_files_check 'files' 'file_stat' "Given private key file '${key_file}' does not exist!"
-    tp_util_files_check 'files' 'key_pass_stat' "Looked for matching pass-phrase file '${files[key_pass_path]}' for the given private key! But it does not exist!"
+    tp_util_files_check 'files' 'file_path' "No key file name specified. Specify the key file to convert to PKCS8!" || return $?
+    tp_util_files_check 'files' 'suffix=key.pem' "Converting file '${key_file}' to PKCS8 format is not supported! Specify a private key (.key.pem) file!" || return $?
+    tp_util_files_check 'files' 'file_stat' "Given private key file '${key_file}' does not exist!" || return $?
+    tp_util_files_check 'files' 'key_pass_stat' "Looked for matching pass-phrase file '${files[key_pass_path]}' for the given private key! But it does not exist!" || return $?
 
     local pkcs8_file="${files[path]}.key.pkcs8.der"
 
@@ -334,11 +334,11 @@ function tp_cert_pkcs12 {
     local cert_file="$1"
 
     tp_util_files 'files' "${cert_file}"
-    tp_util_files_check 'files' 'file_path' "No certificate specified. Specify the certificate file to bundle in PKCS12!"
-    tp_util_files_check 'files' 'suffix=cert.pem' "Bundling file '${cert_file}' in PKCS12 format is not supported! Specify a certificate (.cert.pem) file!"
-    tp_util_files_check 'files' 'file_stat' "Given certificate file '${cert_file}' does not exist!"
-    tp_util_files_check 'files' 'key_pem_stat' "Looked for matching private key file '${files[key_pem_path]}' for the given certificate. But it does not exist!"
-    tp_util_files_check 'files' 'key_pass_stat' "Looked for matching private key paass-phrase file '${files[key_pass_path]}' for the given certificate. But it does not exist!"
+    tp_util_files_check 'files' 'file_path' "No certificate specified. Specify the certificate file to bundle in PKCS12!" || return $?
+    tp_util_files_check 'files' 'suffix=cert.pem' "Bundling file '${cert_file}' in PKCS12 format is not supported! Specify a certificate (.cert.pem) file!" || return $?
+    tp_util_files_check 'files' 'file_stat' "Given certificate file '${cert_file}' does not exist!" || return $?
+    tp_util_files_check 'files' 'key_pem_stat' "Looked for matching private key file '${files[key_pem_path]}' for the given certificate. But it does not exist!" || return $?
+    tp_util_files_check 'files' 'key_pass_stat' "Looked for matching private key paass-phrase file '${files[key_pass_path]}' for the given certificate. But it does not exist!" || return $?
 
     local pkcs12_file="${files[dir]}/private/${files[name]}.pfx"
 
@@ -485,9 +485,9 @@ function tp_ca_sign {
     fi
 
     tp_util_files 'ca_files' "${tp_base_dir}/ca/${ca_name}/ca-root.cert.pem"
-    tp_util_files_check 'ca_files' 'file_stat' "Could not find root certificate of CA ${ca_name} in '${ca_files[file_path]}'! Initialize the CA first!"
-    tp_util_files_check 'ca_files' 'key_pem_stat' "Could not find private key of CA ${ca_name} in '${ca_files[key_pem_path]}'! Initialize the CA first!"
-    tp_util_files_check 'ca_files' 'key_pass_stat' "Could not find private key pass-phrase of CA ${ca_name} in '${ca_files[key_pass_path]}'! Initialize the CA first!"
+    tp_util_files_check 'ca_files' 'file_stat' "Could not find root certificate of CA ${ca_name} in '${ca_files[file_path]}'! Initialize the CA first!" || return $?
+    tp_util_files_check 'ca_files' 'key_pem_stat' "Could not find private key of CA ${ca_name} in '${ca_files[key_pem_path]}'! Initialize the CA first!" || return $?
+    tp_util_files_check 'ca_files' 'key_pass_stat' "Could not find private key pass-phrase of CA ${ca_name} in '${ca_files[key_pass_path]}'! Initialize the CA first!" || return $?
 
     tp_msg "Generating CSR for the new certificate..."
     tp_cert_request_if_missing "${cert_config_or_csr}"
@@ -647,7 +647,7 @@ function tp_acme_sign_domains {
     local cert_config="$1"
 
     tp_util_files 'target_files' "${cert_config}"
-    tp_util_files_check 'target_files' 'cert_conf_stat' "Given certificate config file '${cert_config}' does not exist!"
+    tp_util_files_check 'target_files' 'cert_conf_stat' "Given certificate config file '${cert_config}' does not exist!" || return $?
 
     local domains=( $( tp_cert_get_domains_from_config "${target_files[cert_conf_path]}" ) )
     local certbot_lineage="${domains[0]}"
@@ -814,11 +814,11 @@ function tp_acme_revoke {
 }
 
 function tp_acme_revoke_all {
+    local status=0
     tp_msg "Revoking all archived certificates that have been signed with ACME..."
     echo
-
-    local status=0
     tp_acme_revoke_certbot || status=$?
+    echo
     tp_acme_revoke_csr || status=$?
     return "${status}"
 }
