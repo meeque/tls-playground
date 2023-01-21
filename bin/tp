@@ -604,11 +604,19 @@ function tp_acme_account {
 }
 
 function tp_acme_account_register {
-     certbot --config "${tp_base_dir}/acme/certbot/cli.ini" register
+    (
+        cd "${tp_base_dir}/acme/"
+        tp_util_run \
+            certbot --config 'cli.ini' register
+    )
 }
 
 function tp_acme_account_unregister {
-     certbot --config "${tp_base_dir}/acme/certbot/cli.ini" unregister
+    (
+        cd "${tp_base_dir}/acme/"
+        tp_util_run \
+            certbot --config 'cli.ini' unregister
+    )
 }
 
 function tp_acme_challenges {
