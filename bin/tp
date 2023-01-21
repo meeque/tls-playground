@@ -607,7 +607,7 @@ function tp_acme_account_register {
     (
         cd "${tp_base_dir}/acme/"
         tp_util_run \
-            certbot --config 'cli.ini' register
+            certbot --config 'certbot/cli.ini' register
     )
 }
 
@@ -615,7 +615,7 @@ function tp_acme_account_unregister {
     (
         cd "${tp_base_dir}/acme/"
         tp_util_run \
-            certbot --config 'cli.ini' unregister
+            certbot --config 'certbot/cli.ini' unregister
     )
 }
 
