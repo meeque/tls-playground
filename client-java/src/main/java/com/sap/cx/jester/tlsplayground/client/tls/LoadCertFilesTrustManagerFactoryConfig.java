@@ -46,9 +46,9 @@ public class LoadCertFilesTrustManagerFactoryConfig {
 		if (tlsProps.isCheckRevocation()) {
 			final CertPathBuilder certificatePathBuilder = CertPathBuilder.getInstance("PKIX");
 			final PKIXRevocationChecker revocationChecker = (PKIXRevocationChecker)certificatePathBuilder.getRevocationChecker();
-			revocationChecker.setOptions(
-					EnumSet.of(PKIXRevocationChecker.Option.NO_FALLBACK)
-					);
+			if (tlsProps.getPkixRevocationCheckerOptions() != null ) {
+				revocationChecker.setOptions(tlsProps.getPkixRevocationCheckerOptions());
+			}
 			final PKIXBuilderParameters pkixParams = new PKIXBuilderParameters(
 					trustStore,
 					new X509CertSelector()

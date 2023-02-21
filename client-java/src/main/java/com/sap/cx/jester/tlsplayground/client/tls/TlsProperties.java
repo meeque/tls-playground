@@ -2,9 +2,12 @@ package com.sap.cx.jester.tlsplayground.client.tls;
 
 import java.io.File;
 import java.util.List;
+import java.util.Set;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+
+import java.security.cert.PKIXRevocationChecker;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
@@ -23,6 +26,8 @@ public class TlsProperties {
 	private List<File> trustedCerts;
 
 	private boolean checkRevocation;
+
+	private Set<PKIXRevocationChecker.Option> pkixRevocationCheckerOptions;
 
 	private File clientCert;
 

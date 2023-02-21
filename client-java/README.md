@@ -26,9 +26,10 @@ java -jar 'target/tls-playground-client-0.0.1-SNAPSHOT.jar' 'https://badssl.com/
 
 By default, Java TLS clients using a standard `SSLContext` do not seem to perform certificate revocation checks according to the PKIX standard. This may differ among JVM versions and vendors though.
 
-This Java client supports configuration option `--tls.check-revocation=true` to explicitly enable certificate revocation checking using OCSP.
+This Java client supports boolean configuration option `--tls.check-revocation` to explicitly enable certificate revocation with `java.security.cert.PKIXRevocationChecker`. It also supports optional configuration option `--tls.pkix-revocation-checker-options` which takes a comma-separated list of the enum values of `PKIXRevocationChecker.Option`.
 
 Usage examples:
+
 ```
 # HTTPS request to a server with a revoked certificate.
 # Using default TLS configuration.
@@ -39,6 +40,12 @@ java -jar 'target/tls-playground-client-0.0.1-SNAPSHOT.jar' 'https://revoked.bad
 # Using a custom Java `SSLContext` with PKIX revocation checks.
 # This is expected to fail and print a Java Exception that indicates that the certificate has been revoked.
 java -jar 'target/tls-playground-client-0.0.1-SNAPSHOT.jar' --tls.check-revocation='true' 'https://revoked.badssl.com/'
+
+# HTTP request to a server with a revoked certificate.
+# Using a custom Java `SSLContext` with custom PKIX revocation checker options:
+# - NO_FALLBACK: no fallback from OCSP to CRL.
+# - SOFT_FAIL: no failure, when OCSP responder is not reachable.
+java -jar 'target/tls-playground-client-0.0.1-SNAPSHOT.jar' --tls.check-revocation='true' --tls.pkix-revocation-checker-options='NO_FALLBACK,SOFT_FAIL' 'https://revoked.badssl.com/'
 ```
 
 
