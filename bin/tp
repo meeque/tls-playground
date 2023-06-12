@@ -582,7 +582,8 @@ function tp_acme {
 function tp_acme_init {
     tp_msg "Initializing ACME and Certbot..."
     mkdir -p "${tp_base_dir}/acme/challenges/http-01/public/.well-known/acme-challenge"
-    mkdir -p "${tp_base_dir}/acme/certbot/custom/archive"
+    mkdir -p "${tp_base_dir}/acme/certbot/custom/archive/private"
+    chmod 'go-rwx' "${tp_base_dir}/acme/certbot/custom/archive/private"
     tp_acme_check_env
     tp_util_template "${tp_base_dir}/acme/certbot/cli.ini.tmpl" TP_ACME_SERVER_URL TP_ACME_ACCOUNT_EMAIL
     tp_server_nginx_init "${tp_base_dir}/acme/challenges/http-01"
@@ -719,6 +720,14 @@ function tp_acme_sign_csr {
     tp_util_files 'target_files_rel' "$( realpath --relative-to "${tp_base_dir}/acme/" "${target_files[file_path]}" )"
     tp_util_files 'archive_files_rel' "certbot/custom/archive/${new_cert_number}.cert.pem"
     tp_util_files 'archive_files' "$( realpath --relative-to "." "${tp_base_dir}/acme/${archive_files_rel[file_path]}" )"
+
+    tp_msg "Archiving CSR, private key, and key passphrase in order to facilitate later certificate revocation..."
+    cp "${target_files[csr_pem_path]}" "${archive_files[csr_pem_path]}"
+    tp_succ "Archived CSR in '${archive_files[csr_pem_path]}'."
+    cp "${target_files[key_pem_path]}" "${archive_files[key_pem_path]}"
+    tp_succ "Archived private key in '${archive_files[key_pem_path]}'."
+    cp "${target_files[key_pass_path]}" "${archive_files[key_pass_path]}"
+    tp_succ "Archived key passphrase in '${archive_files[key_pass_path]}'."
 
     tp_msg "Signing CSR from '${target_files[csr_pem_path]}' with ACME..."
 
