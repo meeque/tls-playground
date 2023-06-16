@@ -20,13 +20,16 @@ function tp_main {
     tp_main_arg_defaults
 
     # parse arguments
-    local tp_arguments="$( getopt --options 'sc::amr' --longoptions 'step,ca::,acme,manual,request,csr' --name '[TP]' -- "$@" )"
+    local tp_arguments="$( getopt --options 'shc::amr' --longoptions 'step,help,ca::,acme,manual,request,csr' --name '[TP]' -- "$@" )"
     eval set -- ${tp_arguments}
 
     # process arguments
     while true
     do
         case "$1" in
+            -h | --help )
+                tp_help='true'
+                ;;
             -s | --step )
                 tp_step='true'
                 ;;
@@ -64,8 +67,13 @@ function tp_main {
             return $?
             ;;
         * )
-            tp_err "Unsupported TLS Playground command '${tp_command}'."
-            return 1
+            if [[ -n "${tp_help}" ]]
+            then
+                tp_util_extract_markdown_code_block "${tp_base_dir}/bin/README.md"
+            else
+                tp_err "Unsupported TLS Playground command '${tp_command}'."
+                return 1
+            fi
             ;;
     esac
 }
@@ -122,6 +130,7 @@ function tp_main_env_check {
 }
 
 function tp_main_arg_defaults {
+    tp_help=''
     tp_step=''
     tp_cert_provider='selfsign'
     tp_cert_provider_opt=''
@@ -142,8 +151,13 @@ function tp_cert {
             "tp_cert_${command}" "$@"
             ;;
         * )
-            tp_err "Unsupported certificate command '${command}'."
-            return 1
+            if [[ -n "${tp_help}" ]]
+            then
+                tp_util_extract_markdown_code_block "${tp_base_dir}/cert/README.md"
+            else
+                tp_err "Unsupported certificate command '${command}'."
+                return 1
+            fi
             ;;
     esac
 }
@@ -1364,6 +1378,16 @@ function tp_util_run_hook {
     )
     echo
     tp_succ "Done running ${hook_name}."
+}
+
+function tp_util_extract_markdown_code_block {
+    local markdown_file="$1"
+
+    # fail, if no file given or file is missing
+    [[ -n "${markdown_file}" ]]
+    [[ -f "${markdown_file}" ]]
+
+    cat "${markdown_file}" | grep -oPz '(\n```\s*?\n)((.|\n)*?)(\n```\s*?\n)' | grep --text -Pv '```'
 }
 
 
