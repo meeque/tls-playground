@@ -1,8 +1,42 @@
-# TLS Playground Certificate Authority (CA)
+# TLS Playground CA Commands
 
 This TLS Playground component implements opinionated, easy to use, but incomplete Certificate Authorities (CAs). It is based on `openssl ca` and other `openssl` commands.
 
 These CAs are not intended for production use, or even for use in a public facing test scenario. It lacks important CA features, like domain ownership verification and certificate revocation. Also, it uses a default passphrase to protect certificate keys.
+
+
+
+## `ca` Commands Summary
+
+```
+Usage: tp [<global opions>] ca <command> [<ca>] [<request>]
+
+Available commands:
+
+  init        Initialize given <ca>, or all TP CAs, if <ca> is omitted.
+              Initialization includes creating the necessary directory structures,
+              generating a CA root certificate and its private key, creating an
+              empty cert DB, etc.
+
+  sign        Sign given <request> with given <ca>.
+              Both <ca> and <request> are mandatory for the sign command.
+              Signed cert files will be placed next to the <request>.
+
+  clean       Clean up given <ca>, or all TP CAs, if <ca> is omitted.
+              Clean up includes deletion of all transient CA files, such as the
+              CA root certificate and its private key, the cert DB and the cert archive.
+
+Arguments:
+
+  <ca>        Name of a TP CA.
+              Each TP CA is represented by a sub-directory of ${tp_base_dir}/ca/.
+              The name of this sub-directory is also the name of the CA.
+
+  <request>   The file to sign.
+              This can be either a Certificate Signing Request (CSR) or
+              an openssl req configuration file. If it's the latter, the CSR will
+              be generated on the fly before signing.
+```
 
 
 
