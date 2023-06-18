@@ -1,6 +1,6 @@
-# The TLS Playground Certificate Commands
+# TLS Playground Certificate Commands
 
-## Commands Summary
+## `cert` Commands Summary
 
 ```
 Usage: tp [<global opions>] cert <command> <file> 
@@ -31,6 +31,3 @@ Arguments:
 
           TODO document dirs
 ```
-
-
-
