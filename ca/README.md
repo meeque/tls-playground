@@ -32,10 +32,10 @@ Arguments:
               Each TP CA is represented by a sub-directory of ${tp_base_dir}/ca/.
               The name of this sub-directory is also the name of the CA.
 
-  <request>   The file to sign.
-              This can be either a Certificate Signing Request (CSR) or
-              an openssl req configuration file. If it's the latter, the CSR will
-              be generated on the fly before signing.
+  <request>   The request to sign.
+              This can be either a Certificate Signing Request (CSR) file or
+              an 'openssl req' configuration file. If it's the latter,
+              the CSR will be generated on the fly before signing.
 ```
 
 
