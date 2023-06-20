@@ -3,7 +3,7 @@
 ## `cert` Commands Summary
 
 ```
-Usage: tp [<global opions>] cert <command> <file> 
+Usage: tp [<global options>] cert <command> <file> 
 
 Available commands:
 

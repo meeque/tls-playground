@@ -9,7 +9,7 @@ These CAs are not intended for production use, or even for use in a public facin
 ## `ca` Commands Summary
 
 ```
-Usage: tp [<global opions>] ca <command> [<ca>] [<request>]
+Usage: tp [<global options>] ca <command> [<ca>] [<request>]
 
 Available commands:
 

@@ -3,7 +3,7 @@
 ## Commands Summary
 
 ```
-Usage: tp [<global opions>] <command> [<args>]
+Usage: tp [<global options>] <command> [...]
 
 Available commands:
 
