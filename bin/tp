@@ -592,8 +592,13 @@ function tp_acme {
             "tp_acme_${command}" "$@"
             ;;
         * )
-            tp_err "Unsupported ACME command '${command}'."
-            return 1
+            if [[ -n "${tp_help}" ]]
+            then
+                tp_util_extract_markdown_code_block "${tp_base_dir}/acme/README.md"
+            else
+                tp_err "Unsupported ACME command '${command}'."
+                return 1
+            fi
             ;;
     esac
 }
