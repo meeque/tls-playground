@@ -388,6 +388,7 @@ function tp_cert_clean {
             -and '(' -not -name '*.key.params.pem' ')' \
             | xargs rm -f
         find . -type d -and -empty -and -name 'private' | xargs rm -rf
+        # TODO use shred for key files instead?
     )
 }
 
