@@ -42,7 +42,7 @@ http {
         # listen on the default HTTPS port and enable SSL
         listen ${TP_SERVER_LISTEN_ADDRESS}:${TP_SERVER_HTTPS_PORT} ssl default_server;
 
-        # the server name (should match the server name in the certificate below)
+        # the server name (should match the server name in the certificate, see ssl_certificate directive in the http section above)
         server_name tls-playground.${TP_SERVER_DOMAIN};
 
         # ...
