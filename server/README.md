@@ -1,7 +1,8 @@
-# TLS Playground nginx Server
+# TLS Playground Demo Servers
 
 This TLS Playground component provides demo web-servers that makes use of
 TLS server certificates.
+
 
 
 ## `server` Commands Summary
@@ -205,4 +206,3 @@ TLS Playground `server2` demonstrates the use of client certificates. If you req
     curl --cacert ca/ca1/ca-cert.pem https://server2.tls-playground.localhost:8443/
 
 In order to get a 200 response status from `server2`, your client will need to present a valid certificate that is signed by Playground `ca2`. To obtain and use such a certificate, see [TLS Playground Generic Client Support](../client-generic/).
-

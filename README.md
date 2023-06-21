@@ -21,7 +21,7 @@ This TLS Playground demonstrates various TLS scenarios, including certificate ha
 
 ### Certificate Utilities
 
-Utilities for dealing with CSRs and certificates using openssl.
+Utilities for dealing with [CSRs and certificates](cert/) using openssl.
 
 ### Private Certificate Authorities
 
@@ -29,17 +29,15 @@ Configuration samples and utilities for running [Certificate Authorities (CA)](c
 
 ### ACME / Let's Encypt
 
-Configuation samples and utilities for obtaining certificates through the ACME protocol using Certbot.
+Configuation samples and utilities for obtaining certificates through the [ACME](acme) protocol using Certbot.
 
 ### Servers
 
-Sample [web servers](server/) using various TLS certificate configurations.
+Demo [(web) servers](server/) using various configurations and certificates.
 
 ### Clients
 
-[Generic client support](client-generic/) for using TLS client certificates with web browsers or `curl`.
-
-A simple [TLS-enabled HTTP client in Java](client-java/) supporting different TLS setups, including client certificates.
+Demo [clients](client/) using various configurations and certificates.
 
 
 
@@ -67,3 +65,6 @@ TODO
 
 TODO
 
+### Developing with Docker
+
+TODO
