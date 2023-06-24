@@ -26,27 +26,25 @@ These can all be controlled with the [TP](tp/README.md) command.
 
 Utilities for dealing with [CSRs and certificates](cert/README.md) using openssl.
 
-### Private Certificate Authorities
+### Demo CAs
 
 Configuration samples and utilities for running [Certificate Authorities (CA)](ca/README.md) based on `openssl ca`.
 
-### ACME / Let's Encypt
+### ACME Utilities
 
 Configuation samples and utilities for obtaining certificates through the [ACME](acme/README.md) protocol using Certbot.
 
-### Servers
+### Demo Servers
 
 Demo [(web) servers](server/README.md) using various configurations and certificates.
 
-### Clients
+### Demo Clients
 
 Demo [clients](client/README.md) using various configurations and certificates.
 
 
 
 ## Using TP Locally
-
-TODO explain path
 
 TODO list pre-requisites
 

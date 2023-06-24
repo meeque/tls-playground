@@ -1,4 +1,4 @@
-# The TLS Playground Commands
+# TLS Playground CLI
 
 The TP commands are the main tool for using the TLS playground.
 Assuming that your copy of TP is located at `${tp_base_dir}`, you can find the TP commands executable at `${tp_base_dir}/bin/tp`.
@@ -6,6 +6,48 @@ Consider adding this directory to your `${PATH}` env-var.
 
 You can invoke TP commands from everywhere and most file arguments are interpreted relative to the current working directory.
 However, some TP commands reference some files relative to the `${tp_base_dir}`.
+
+
+
+## CLI Phylosophy
+
+The main purpose of the TP is educational.
+All TP commands follow consistent usage patterns and tell the user exactly what is going on.
+
+TP will print relevant commands and all their arguments before actually running them.
+This focuses on commands that are directly dealing with certificates and TLS, in particular [openssl](https://www.openssl.org/) and [certbot](https://certbot.eff.org/).
+Less interesting part, e.g. file operations, are usually not printed verbatim, but summarized in a brief output message.
+
+TODO mention --step option again
+TODO explain use of config files for openssl
+TODO explain tls vs. ssl terminology
+
+TODO segway to opinionated file naming
+
+
+
+## File Naming Conventions
+
+XXX The CAs use PEM as their standard file format. Wherever keys, certificate signing requests (CSRs), and certificates are involved they will be PEM encoded. For private keys, passphrase encryption is used, based on the value of environment variable `$TP_PASS`. If not specified in the environment, the passphrase defaults to `1234`.
+
+TODO
+
+.cert.conf
+.key.parms.pem
+.csr.pem
+.cert.pem
+.chain.pem
+.fullchain.pem
+
+.key.pem
+.key.pass.txt
+
+
+.der
+.key.pkcs8.der
+.pfx
+
+.tmpl
 
 
 
@@ -53,41 +95,6 @@ Directories:
   tp_base_dir  the base directory where the TLS Playground is located. I.e. the parent of the directory that contains the 'tp' script.
 ```
 
+## Environment Variables
 
-## CLI Phylosophy
-
-The main purpose of the TP is educational.
-All TP commands follow consistent usage patterns and tell the user exactly what is going on.
-
-TP will print relevant commands and all their arguments before actually running them.
-This focuses on commands that are directly dealing with certificates and TLS, in particular [openssl](https://www.openssl.org/) and [certbot](https://certbot.eff.org/).
-Less interesting part, e.g. file operations, are usually not printed verbatim, but summarized in a brief output message.
-
-TODO mention --step option again
-TODO explain use of config files for openssl
-TODO explain tls vs. ssl terminology
-
-TODO segway to opinionated file naming
-
-
-## File Naming Conventions
-
-TODO
-
-.cert.conf
-.key.parms.pem
-.csr.pem
-.cert.pem
-.chain.pem
-.fullchain.pem
-
-.key.pem
-.key.pass.txt
-
-
-.der
-.key.pkcs8.der
-.pfx
-
-.tmpl
-
+TODO collect envar docs here, so they can be referenced from elsewhere
