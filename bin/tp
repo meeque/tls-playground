@@ -190,6 +190,11 @@ function tp_cert_show {
             tp_warn "If anyone has seen this, you should stop using this key and corresponding certificates!"
             tp_warn "***************************************************************************************"
             ;;
+        'key.params.pem' )
+            tp_msg "Showing public key algorithm parameters in '${file}'..."
+            tp_util_run \
+                openssl pkeyparam -in "${file}" -noout -text
+            ;;
         * )
             tp_err "Sorry, don't know how to show contents of files with suffix '.${files[suffix]}'!"
             return 1
