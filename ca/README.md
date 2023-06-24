@@ -8,6 +8,8 @@ These CAs are not intended for production use, or even for use in a public facin
 
 ## `ca` Commands Summary
 
+You can control and utilize the TP CAs with the `tp ca` command:
+
 ```
 Usage: tp [<global options>] ca <command> [<ca>] [<request>]
 
@@ -41,8 +43,6 @@ Arguments:
 
 
 ## CA Usage
-
-You can control the provided CAs by running the wrapper script `ca.sh`. The following exmples assume that you run `ca.sh` from the root directory of the TLS Playground Project, i.e. the parent of this directory.
 
 The CAs use PEM as their standard file format. Wherever keys, certificate signing requests (CSRs), and certificates are involved they will be PEM encoded. For private keys, passphrase encryption is used, based on the value of environment variable `$TP_PASS`. If not specified in the environment, the passphrase defaults to `1234`.
 

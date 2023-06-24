@@ -13,11 +13,14 @@
 
 # TLS Playground Project
 
-This TLS Playground demonstrates various TLS scenarios, including certificate handling and client/server interactions over TLS.
+This TLS Playground (TP) demonstrates various TLS scenarios, including certificate handling and client/server interactions over TLS.
 
 
 
 ## TP Components
+
+The TP consist of several loosely related components.
+These can all be controlled with the [TP](tp/) command.
 
 ### Certificate Utilities
 
@@ -29,7 +32,7 @@ Configuration samples and utilities for running [Certificate Authorities (CA)](c
 
 ### ACME / Let's Encypt
 
-Configuation samples and utilities for obtaining certificates through the [ACME](acme) protocol using Certbot.
+Configuation samples and utilities for obtaining certificates through the [ACME](acme/) protocol using Certbot.
 
 ### Servers
 
@@ -39,6 +42,15 @@ Demo [(web) servers](server/) using various configurations and certificates.
 
 Demo [clients](client/) using various configurations and certificates.
 
+
+
+## Using TP Locally
+
+TODO explain path
+
+TODO list pre-requisites
+
+TODO limitations: need internet facing host with public DNS record
 
 
 ## Using TP with Docker
