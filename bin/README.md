@@ -54,7 +54,9 @@ TODO
 ## Command Summary
 
 ```
-Usage: tp [<global options>] <command> [...]
+Summary:   TLS Playground CLI
+
+Usage:     tp [<global options>] <command> [...]
 
 Available commands:
 
@@ -79,7 +81,7 @@ Global environment variables:
 
   TODO Gather docs for all env-vars in one place?
 
-  TP_PASS   The passphrase for encrypt key files.
+  TP_PASS   The passphrase for encrypting key files.
 
   TP_COLOR  Control colored terminal outputs.
             Set to non-empty to force colors.
@@ -97,4 +99,4 @@ Directories:
 
 ## Environment Variables
 
-TODO collect envar docs here, so they can be referenced from elsewhere
+TODO collect env-var docs here, so they can be referenced from elsewhere

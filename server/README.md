@@ -8,7 +8,9 @@ TLS server certificates.
 ## `server` Commands Summary
 
 ```
-Usage: tp [<global options>] server <command> [<server>] [<options>]
+Summary:    Control TLS Playground Demo Servers
+
+Usage:      tp [<global options>] server <command> [<server>] [<options>]
 
 Available commands:
 

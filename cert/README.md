@@ -2,19 +2,27 @@
 
 
 
-## `cert` Commands Summary
+## TP CA Command Reference
 
 ```
-Usage: tp [<global options>] cert <command> <file> 
+Summary:   TLS Playground Certificate Utilities
+
+Usage:     tp [<global options>] cert <command> <file> 
 
 Available commands:
 
   show         Show contents of a cert, CSR, or key <file> in human-readable form.
+
   fingerprint  Calculate fingerprint of a cert, CSR, or key <file>.
+
   request      Create a certificate signing request based on a config <file>.
+
   selfsign     Create a self-signed certificate based on a config <file> file or an existing CSR <file>.
+
   pkcs8        Convert a private key <file> into PKCS8 format.
+
   pkcs12       Bundle private key <file> and cert <file> into a PKCS12 file.
+
   clean        Clean up cert <file> and related files.
 
 Arguments:

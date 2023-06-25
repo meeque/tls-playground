@@ -7,7 +7,9 @@ This TLS Playground component implements certificate management through the ACME
 ## `acme` Commands Summary
 
 ```
-Usage: tp [<global options>] acme <command> [<sub-command>]
+Summary:    TLS Playground ACME Utilities
+
+Usage:      tp [<global options>] acme <command> [<sub-command>]
   [<request>|<cert>] [<options>]
 
 Available commands:

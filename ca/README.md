@@ -102,7 +102,7 @@ It also deletes all transient files that have been created during CA operation, 
 ## TP CA Command Reference
 
 ```
-Summary:      Control TLS Playground demo CAs
+Summary:      Control TLS Playground Demo CAs
 
 Usage:        tp [<global options>] ca <command> [<ca>] [<request>]
 
