@@ -1414,12 +1414,36 @@ function tp_util_run_hook {
 
 function tp_util_extract_markdown_code_block {
     local markdown_file="$1"
+    local index="${2:-0}"
 
     # fail, if no file given or file is missing
     [[ -n "${markdown_file}" ]]
     [[ -f "${markdown_file}" ]]
 
-    cat "${markdown_file}" | grep -oPz '(\n```\s*?\n)((.|\n)*?)(\n```\s*?\n)' | grep --text -Pv '```'
+    (
+        local blocks=()
+        unset current_block
+
+        IFS=''
+        while read -r line
+        do
+            if [[ "${line}" =~ ^\`\`\`\s*$ ]]
+            then
+                if [[ -z "${current_block+x}" ]]
+                then
+                    local current_block=''
+                else
+                    blocks+=( "${current_block}" )
+                    unset current_block
+                fi
+            elif [[ -n "${current_block+x}" ]]
+            then
+                local current_block+="${line}"$'\n'
+            fi
+        done < "${markdown_file}"
+
+        echo -n "${blocks["${index}"]}"
+    )
 }
 
 
