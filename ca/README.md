@@ -44,22 +44,49 @@ Arguments:
 
 ## CA Usage
 
-### Bootstrapping/Resetting a CA
+### Initializing the CA
 
-This TLS Playground component comes with two [preconfigured CAs](ca.conf), `ca1` and `ca2`. Each ca uses its own self-signed root certificate. These root certificates are not hard-coded, but can be genereted according to their respective CSR configuration. Find here the CSR configurations for [ca1](ca1/ca-req.config) and [ca2](ca2/ca-req.config) respectively.
+TP comes with several demo CAs, which are located `${tp_base_dir}/ca/` directory.
+Each CA comes with a few static config files that specify the CA's behavior and its root certificate.
+During operation, each CA will need a few other, which it manages in its own directory.
+CA initialization will put all the necessary files and directories in place.
+You can run initialization for individual CAs, or for all of them at once:
 
-Use the `ca.sh` sub-command `reset` to bootstrap or reset one of the preconfigured CAs. This will generate a new root certificate and create some house-keeping files that are necessary for CA operations.
+```
+tp ca init
+```
 
-Run the following commands to bootstrap both CAs:
+The most important step in CA initialization is the creation of a **CA root certificate**.
+As with other TP certificates, initialization creates the CA root certificate based on an `openssl req` configuration file.
+This is exactly the same as running `tp cert sign` to create a new certificate.
 
-    ca/ca.sh reset ca1
-    ca/ca.sh reset ca2
+Note that this creates a **self-signed certificate**, which is the standard for both public and private CAs.
+However, a couple o things distinguish CA root certificates from self-signed certificates that you would use for a server:
 
-After that, you will find new files in the respective CA's base directory. This includes `ca-csr.pem`, `ca-cert.pem`, `private/ca-key.pem`, `db.txt`, and `serial`.
+1. The certificate subject DN does not contain a DNS domain name.
+The CN field simply contains some informal descriptive name.
 
-When you rerun the `reset` sub-command on an existing CA, all previously stored CA data will be lost.
+2. The certificate has an `X509v3 Basic Constraints` extension that says `CA:TRUE`.
+Server certificates say `CA:FALSE`, or may omit the extension altogether.
+
+The latter is very important when verifying certificate chains.
+If the chain contains a signature from an issues whose certificate does not have `CA:TRUE`, the verification must fail.
+In other words, only the leaf certificate may have `CA:FALSE` or omit the extension altogether, but intermediate and root certificates must have `CA:TRUE`.
+Note that the TP demo CAs do not make use of intermediate certificates.
 
 
+
+### Signing Certificates with the CA
+
+TODO
+
+### Cleaning Up the CA
+
+TODO
+
+
+
+XXX delete below here
 
 ### Issuing Certs based on CSRs
 
