@@ -242,7 +242,9 @@ function tp_cert_request {
     tp_util_files_check 'files' 'cert_conf_stat' "Given certificate config file '${cert_config}' does not exist!" || return $?
 
     mkdir -p "${files[dir]}/private"
-    chmod 'og-rwx' "${files[dir]}/private"
+    tp_util_remove_symlinks "${files[key_pass_path]}" "${files[key_pem_path]}" "${files[csr_pem_path]}"
+    touch "${files[key_pass_path]}"
+    chmod 'og-rwx' "${files[dir]}/private" "${files[key_pass_path]}"
     echo -n "${TP_PASS}" > "${files[key_pass_path]}"
 
     tp_msg "Using OpenSSL certificate config file '${files[cert_conf_path]}':"
@@ -305,6 +307,8 @@ function tp_cert_selfsign {
 
     tp_msg "Generating CSR for the self-signed certificate..."
     tp_cert_request_if_missing "${cert_config_or_csr}"
+
+    tp_util_remove_symlinks "${files[cert_pem_path]}" "${files[chain_pem_path]}" "${files[fullchain_pem_path]}"
 
     tp_msg "Signing CSR with it's own private key..."
 
@@ -1336,6 +1340,17 @@ function tp_util_files_check {
 
     tp_err "${message}"
     return 1
+}
+
+function tp_util_remove_symlinks {
+    for file in "$@"
+    do
+        if [[ -L "${file}" ]]
+        then
+            tp_msg "Removing old symlink ${file} before creating a new file in its place..."
+            rm -rf "${file}"
+        fi
+    done
 }
 
 function tp_util_template {
