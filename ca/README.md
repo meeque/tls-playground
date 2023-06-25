@@ -1,12 +1,18 @@
 # TLS Playground Demo CAs
 
-This TLS Playground component implements opinionated, easy to use, but incomplete Certificate Authorities (CAs). It is based on `openssl ca` and other `openssl` commands.
+The TLS Playground CA module implements opinionated, easy to use, but incomplete private Certificate Authorities (CAs).
+You can use these CAs to sign and issue new certificates, either directly or through one of the other CA modules that make use of it.
 
-These CAs are not intended for production use, or even for use in a public facing test scenario. It lacks important CA features, like domain ownership verification and certificate revocation. Also, it uses a default passphrase to protect certificate keys.
+The demo CAs can be controlled through the `tp ca` command of the TP CLI.
+Under the hood this makes heavy use of `openssl ca` and other `openssl` commands, as well as related `openssl` config files.
+Observe the outputs of the TP CLI to find out how it makes use of `openssl`.
+
+The TP demo CAs are not intended for production use, or even for use in a public facing test scenario.
+They lack important CA features, like domain ownership verification and certificate revocation.
 
 
 
-## `ca` Commands Summary
+## `ca` Commands Reference
 
 You can control and utilize the TP CAs with the `tp ca` command:
 
@@ -42,15 +48,18 @@ Arguments:
 
 
 
-## CA Usage
+## Demo CA Usage
 
-### Initializing the CA
-
-TP comes with several demo CAs, which are located `${tp_base_dir}/ca/` directory.
+The TP demo CAs are located `${tp_base_dir}/ca/` directory, but you can control them by running the TP CLI from any directory.
 Each CA comes with a few static config files that specify the CA's behavior and its root certificate.
 During operation, each CA will create a few other files, which it manages in its own directory.
 
-CA initialization will put all the necessary files and directories in place.
+
+
+### Initializing a CA
+
+Before using it, you'll have to initialize the CA by calling the `init` command.
+Initialization will put all the necessary files and directories in place.
 You can run initialization for individual CAs, or for all of them at once:
 
 ```
@@ -77,7 +86,7 @@ Note that the TP demo CAs do not make use of intermediate certificates.
 
 
 
-### Signing Certificates with the CA
+### Signing Certificates with a CA
 
 Once a TP demo CA has been initialized, you can use it to sign certificates.
 This is very similar to the self-signing a certificate with the `tp cert sign` command.
@@ -112,7 +121,14 @@ The `tp ca sign` command will never delete files in the CA's `archive` directory
 
 
 
-### Cleaning Up the CA
+### Cleaning Up a CA
 
-TODO
+After using it, or if anything get's stuck, you can clean up the CA by calling the `clean` command.
+You can run clean up for individual CAs, or for all of them at once:
 
+```
+tp ca clean
+```
+
+This deletes all transient files that have been created during CA initialization, including the CA root certificate and associated private key.
+It also deletes all transient files that have been created during CA operation, such as the archive of issued certificates.
