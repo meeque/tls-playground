@@ -12,42 +12,6 @@ They lack important CA features, like domain ownership verification and certific
 
 
 
-## `ca` Commands Reference
-
-You can control and utilize the TP CAs with the `tp ca` command:
-
-```
-Usage: tp [<global options>] ca <command> [<ca>] [<request>]
-
-Available commands:
-
-  init        Initialize given <ca>, or all TP CAs, if <ca> is omitted.
-              Initialization includes creating the necessary directory structures,
-              generating a CA root certificate and its private key, creating an
-              empty cert DB, etc.
-
-  sign        Sign given <request> with given <ca>.
-              Both <ca> and <request> are mandatory for the sign command.
-              Signed cert files will be placed next to the <request>.
-
-  clean       Clean up given <ca>, or all TP CAs, if <ca> is omitted.
-              Clean up includes deletion of all transient CA files, such as the
-              CA root certificate and its private key, the cert DB and the cert archive.
-
-Arguments:
-
-  <ca>        Name of a TP CA.
-              Each TP CA is represented by a sub-directory of ${tp_base_dir}/ca/.
-              The name of this sub-directory is also the name of the CA.
-
-  <request>   The request to sign.
-              This can be either a Certificate Signing Request (CSR) file or
-              an 'openssl req' configuration file. If it's the latter,
-              the CSR will be generated on the fly before signing.
-```
-
-
-
 ## Demo CA Usage
 
 The TP demo CAs are located `${tp_base_dir}/ca/` directory, but you can control them by running the TP CLI from any directory.
@@ -132,3 +96,39 @@ tp ca clean
 
 This deletes all transient files that have been created during CA initialization, including the CA root certificate and associated private key.
 It also deletes all transient files that have been created during CA operation, such as the archive of issued certificates.
+
+
+
+## TP CA Command Reference
+
+```
+Summary:      Control TLS Playground demo CAs
+
+Usage:        tp [<global options>] ca <command> [<ca>] [<request>]
+
+Available commands:
+
+  init        Initialize given <ca>, or all TP CAs, if <ca> is omitted.
+              Initialization includes creating the necessary directory structures,
+              generating a CA root certificate and its private key, creating an
+              empty cert DB, etc.
+
+  sign        Sign given <request> with given <ca>.
+              Both <ca> and <request> are mandatory for the sign command.
+              Signed cert files will be placed next to the <request>.
+
+  clean       Clean up given <ca>, or all TP CAs, if <ca> is omitted.
+              Clean up includes deletion of all transient CA files, such as the
+              CA root certificate and its private key, the cert DB and the cert archive.
+
+Arguments:
+
+  <ca>        Name of a TP CA.
+              Each TP CA is represented by a sub-directory of ${tp_base_dir}/ca/.
+              The name of this sub-directory is also the name of the CA.
+
+  <request>   The request to sign.
+              This can be either a Certificate Signing Request (CSR) file or
+              an 'openssl req' configuration file. If it's the latter,
+              the CSR will be generated on the fly before signing.
+```

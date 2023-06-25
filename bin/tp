@@ -448,7 +448,7 @@ function tp_ca {
         * )
             if [[ -n "${tp_help}" ]]
             then
-                tp_util_extract_markdown_code_block "${tp_base_dir}/ca/README.md"
+                tp_util_extract_markdown_code_block "${tp_base_dir}/ca/README.md" '-1'
             else
                 tp_err "Unsupported CA command '${command}'."
                 return 1
