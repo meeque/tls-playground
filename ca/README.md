@@ -48,7 +48,8 @@ Arguments:
 
 TP comes with several demo CAs, which are located `${tp_base_dir}/ca/` directory.
 Each CA comes with a few static config files that specify the CA's behavior and its root certificate.
-During operation, each CA will need a few other, which it manages in its own directory.
+During operation, each CA will create a few other files, which it manages in its own directory.
+
 CA initialization will put all the necessary files and directories in place.
 You can run initialization for individual CAs, or for all of them at once:
 
@@ -58,10 +59,10 @@ tp ca init
 
 The most important step in CA initialization is the creation of a **CA root certificate**.
 As with other TP certificates, initialization creates the CA root certificate based on an `openssl req` configuration file.
-This is exactly the same as running `tp cert sign` to create a new certificate.
+This works the same way as running `tp cert sign`.
 
 Note that this creates a **self-signed certificate**, which is the standard for both public and private CAs.
-However, a couple o things distinguish CA root certificates from self-signed certificates that you would use for a server:
+However, a couple of things distinguish CA root certificates from self-signed certificates that you would use for a server:
 
 1. The certificate subject DN does not contain a DNS domain name.
 The CN field simply contains some informal descriptive name.
@@ -78,46 +79,40 @@ Note that the TP demo CAs do not make use of intermediate certificates.
 
 ### Signing Certificates with the CA
 
-TODO
+Once a TP demo CA has been initialized, you can use it to sign certificates.
+This is very similar to the self-signing a certificate with the `tp cert sign` command.
+Here is an example:
+
+```
+tp ca sign ca4servers server/nginx-simple/tls/server.cert.conf
+```
+
+In the above, `ca4servers` is the name of the TP demo to use and `ca4servers server/nginx-simple/tls/server.cert.conf` is an `openssl req` configuration file.
+Instead of such configuration file, you can also pass an existing CSR to `tp ca sign`.
+
+The `tp ca sign` command will initially put the newly signed certificate into the `archive` directory of the CA itself, along with some certificate chain files.
+It will then create symlinks to these files and put them next to original `openssl req` configuration file or CSR.
+E.g. in the above example, the following new files and symlinks would get created:
+
+```
+ca/ca4servers/archive/91F5716800000001.cert.pem
+ca/ca4servers/archive/91F5716800000001.chain.pem
+ca/ca4servers/archive/91F5716800000001.fullchain.pem
+server/nginx-simple/tls/server.cert.pem -> ../../../ca/ca4servers/archive/91F5716800000001.cert.pem
+server/nginx-simple/tls/server.chain.pem -> ../../../ca/ca4servers/archive/91F5716800000001.chain.pem
+server/nginx-simple/tls/server.fullchain.pem -> ../../../ca/ca4servers/archive/91F5716800000001.fullchain.pem
+```
+
+Note that the `91F5716800000001` in the filenames is is a serial number of the newly signed certificate.
+The TP demo CAs will increase this serial number for each certificate that they sign.
+
+Also note that symlink will delete any files with the same name that have previously existed.
+This may include the results of previous runs of `tp cert sign`, `tp ca sign`, `tp acme sign`, or similar.
+The `tp ca sign` command will never delete files in the CA's `archive` directory though.
+
+
 
 ### Cleaning Up the CA
 
 TODO
-
-
-
-XXX delete below here
-
-### Issuing Certs based on CSRs
-
-Once a CA is bootstrapped, you can use it issue and sign new certificates. If you have already created a CSR for your certificate, you use the `ca.sh` sub-command `sign`. For instance, to issue a new certificate with `ca1`, issue the following command:
-
-    ca/ca.sh sign ca1 path/to/my-csr.pem path/to/my-new-cert-link.pem
-
-Here, the `my-csr.pem` argument represents the PEM-encoded CSR file that you have generated. The optional `my-new-cert-link.pem` argument represents the location where a symlink to the newly signed certificate will be created.
-
-In any case, `ca.sh` will emit the new certificate in the `newcerts` subdirectory of the CA that you use. The name of the new certificate will be `SERIAL.pem`, where `SERIAL` is a unique serial number issued by the respective CA.
-
-
-
-### Issuing Certs based on Configuration
-
-The `ca.sh` script also supports the convenience sub-command `request`. This sub-command will perform two steps:
-
-1. Create a new key-pair and CSR, based on an `openssl` CSR configuration file.
-(This step is typically the requester's responsibility, not a CA responsibility.)
-2. Issue and sign a new certificate based on that CSR.
-
-For example, the following command will use `ca1` to create and sign a new request based on a config file:
-
-    ca/ca.sh request ca1 path/to/my.config
-
-This `request` command will do the following:
-
-1. Create a new private key and CSR file next to the `my.config` file.
-These will go to `private/my-key.pem` and `my-csr.pem` respectively.
-2. Use `ca1` to issue and sign a new certificate. 
-The certificate will be symlinked to `my-cert.pem`, located next to the `my.config` file.
-
-If any of the above-mentioned files already exist, they will by overwritten.
 
