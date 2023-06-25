@@ -265,14 +265,14 @@ function tp_cert_request {
     if [[ "${files[key_params_pem_stat]}" = 'f' ]]
     then
         tp_util_run \
-            openssl req \
-                -new -config "${files[cert_conf_path]}" \
+            openssl req -new \
+                -config "${files[cert_conf_path]}" \
                 -newkey "param:${files[key_params_pem_path]}" \
                 -passout "file:${files[key_pass_path]}" -keyout "${files[key_pem_path]}" -out "${files[csr_pem_path]}"
     else
         tp_util_run \
-            openssl req \
-                -new -config "${files[cert_conf_path]}" \
+            openssl req -new \
+                -config "${files[cert_conf_path]}" \
                 -passout "file:${files[key_pass_path]}" -keyout "${files[key_pem_path]}" -out "${files[csr_pem_path]}"
     fi
 
@@ -313,9 +313,10 @@ function tp_cert_selfsign {
     tp_msg "Signing CSR with it's own private key..."
 
     tp_util_run \
-        openssl x509 \
+        openssl x509 -req \
             -days '90' \
-            -req -in "${files[csr_pem_path]}" \
+            -copy_extensions 'copyall' \
+            -in "${files[csr_pem_path]}" \
             -signkey "${files[key_pem_path]}" -passin "file:${files[key_pass_path]}" \
             -out "${files[cert_pem_path]}"
 
