@@ -19,7 +19,7 @@ Available commands:
 
 Arguments:
 
-  <file>  Path to a cert, CSR, key, or openssl cert config file.
+  <file>  Path to a cert, CSR, key, or 'openssl req' config file.
           Commands that support multiple file types will deduce it from naming conventions:
 
           "${name}.cert.conf"
