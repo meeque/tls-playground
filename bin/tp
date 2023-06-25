@@ -1000,8 +1000,13 @@ function tp_server {
             ;;
 
         * )
-            tp_err "Unsupported demo server command '${command}'."
-            return 1
+            if [[ -n "${tp_help}" ]]
+            then
+                tp_util_extract_markdown_code_block "${tp_base_dir}/server/README.md"
+            else
+                tp_err "Unsupported demo server command '${command}'."
+                return 1
+            fi
             ;;
     esac
 }
