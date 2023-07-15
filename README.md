@@ -53,14 +53,14 @@ TODO limitations: need internet facing host with public DNS record
 
 ## Using TP with Docker
 
-### Building with Docker
+### Building a TP Docker Image
 
 Use the following to create a Docker image of the TLS Playground and all its prerequisites:
 
 ```
 $ docker image pull debian:testing-slim
-$ docker build --tag user/tls-playground:latest .
-$ docker image push user/tls-playground:latest .
+$ docker build --tag "${DOCKER_HUB_USER}/tls-playground:latest" .
+$ docker image push "${DOCKER_HUB_USER}/tls-playground:latest" .
 ```
 
 ### Running with Docker
