@@ -20,7 +20,7 @@ This TLS Playground (TP) demonstrates various TLS scenarios, including certifica
 ## TP Components
 
 The TP consist of several loosely related components.
-These can all be controlled with the [TP](tp/README.md) command.
+These can all be controlled with the **[TP CLI Tool](bin/README.md)**.
 
 ### Certificate Utilities
 
