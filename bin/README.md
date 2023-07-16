@@ -323,4 +323,7 @@ Global config files:
   .bashrc          Recommended bash configuration for running TP demos.
                    Puts the TP CLI tool on the ${PATH} and configures a minimalistic [TP] prompt amongst other tweaks.
                    Source it into your shell by running '. .bashrc'
+
+  README.md        Entry-point to the TP documentation, best viewed in a markdown editor or viewer.
+                   Should work nicely with built-in markdown viewers of Github and other repository servers.
 ```
