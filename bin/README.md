@@ -152,29 +152,76 @@ TP prefers *PEM* over *DER* whenever possible.
 
 ### Filename Extensions Summary
 
-XXX The CAs use PEM as their standard file format. Wherever keys, certificate signing requests (CSRs), and certificates are involved they will be PEM encoded. For private keys, passphrase encryption is used, based on the value of environment variable `$TP_PASS`. If not specified in the environment, the passphrase defaults to `1234`.
+XXX The CAs use PEM as their standard file format. Wherever keys, certificate signing requests (CSRs), and certificates are involved they will be PEM encoded. For private keys, passphrase encryption is used, based on the value of environment variable `$[TP_PASS]`. If not specified in the environment, TP will generate a random passphrase.
 
-TODO
+```
+Certificate specification files:
 
-.cert.conf
-.key.params.pem
-.csr.pem
-.cert.pem
-.chain.pem
-.fullchain.pem
+  Static files that are part of TP, but can be customized.
 
-.key.pem
-.key.pass.txt
+  .cert.conf       An OpenSSL configuration file that specifies certificate contents and parameters.
+                   It affects generated key files, Cetificate Signing Requests (CSR), and Certificates.
 
+  .key.params.pem  A file that contains cryptographic key parameters in PEM format, as used by OpenSSL.
+                   This is necessary for cryptographic paramaters that cannot be provided as CLI arguments
+                   or in text-based OpenSSL config files.
+                   Typically used to specify curves for elliptic-curves cryptography (EC).
 
-.der
-.key.pkcs8.der
-.pfx
+Certificate key files:
 
-.conf
-.tmpl
+  Transient files that store generated keys and related data.
+  TP always stores them in a 'private/' directory, relative to Certificate specification files.
+  TP sets file system permission to restrict all access to the file owner.
 
-TODO directories
+  .key.pem         A private key file in PEM format.
+
+  .key.pass.txt    The encryption-at-rest passphrase that protects the private key file.
+                   This is a copy of ${TP_PASS} env-var at the time the key has been generated.
+
+Certificate related files:
+
+  Transient files that store generated Cetificate Signing Requests (CSR) and Certificates.
+
+  .csr.pem         A Certificate Signing Request (CSR) in PEM format.
+
+  .cert.pem        A Certificate in PEM format.
+
+  .fullchain.pem   A Certificate chain file that contains a Certificate and transitively
+                   all Certificates that signed it.
+                   The order is from the Certificate itself (a.k.a. leaf Certificate) up to a root Certificate.
+                   For self-signed certificates, this will only contain the Certificate itself.
+                   The file is in PEM format, which is simply a concatenation of all the Certificates in PEM format.
+
+  .chain.pem       A Certificate chain file that contains all Certificates that transitively signed a Certificate.
+                   Very similar to .fullchain.pem, but does NOT contain the leaf Certificate itself.
+                   This is useful because some applications expect the leaf Certificate and the rest of the chain in separate files.
+
+Alternative certificate files:
+
+  Transient files that contain keys and Certificates in alternative formats.
+  TP stores them in a 'private/' directory, like other files that contain keys, see above.
+
+  .key.pkcs8.der   A PKCS8 encoded private key in DER format.
+                   This is usefull for import into some applications, such as Java key stores.
+
+  .pfx             A PKCS12 bundle that contains a certificate and associated private key.
+                   This is usefull for import into some applications.
+
+Other configuration files:
+
+   Static files that contain various configuration data.
+
+  .conf            Configuration files for various TP components, such as CAs, Certbot, or nginx demo servers.
+  .ini
+
+  .tmpl            Configuration file templates.
+  .cert.conf.tmpl  TP CLI 'init' commands will process these files and use envsubst to replace placeholders
+  .conf.tmpl       with the values of respective environment variables.
+  .ini.tmpl        TP will place the result into a file with the same name, but with the .tmpl extension removed.
+                   TP CLI 'clean' commands will remove all files that have been generated from a configuration file template.
+                   In other words, the generated file will be treated as a transient file and only the template itself will
+                   be treated as a static file.
+```
 
 
 
@@ -209,6 +256,7 @@ Global environment variables:
   TODO Gather docs for all env-vars in one place?
 
   TP_PASS   The passphrase for encrypting key files.
+            Defaults to the contents of file .tp.pass.txt, see below.
 
   TP_COLOR  Control colored terminal outputs.
             Set to non-empty to force colors.
@@ -217,7 +265,10 @@ Global environment variables:
 
 Global config files:
 
-  ${tp_base_dir}/.tp.pass.txt  Use this password to encrypt key files (ignored, if TP_PASS is set)
+  ${tp_base_dir}/.tp.pass.txt
+            Passphrase to encrypt key files.
+            Ignored, if ${TP_PASS} env-var is set.
+            If neither the env-var nor this file exist, 'tp' will generate a new passphrase and store it in this file.
 
 Directories:
 
