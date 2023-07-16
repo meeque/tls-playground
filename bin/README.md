@@ -93,12 +93,71 @@ However, it prefers **certificate** in prose and **cert** in more technical cont
 
 ## File Naming Conventions
 
+If you've ever worked with certificates before, you have probably encountered a confusing number of filename extensions.
+These may have included `.key`, `.csr`, `.req`, `.crt`, `.p12`, `.pfx`, `.der`, `.pem`, and similar.
+
+Some of these extensions denote different **file types** (technically types of data-structues inside the file), while others denote different **file encoding formats**.
+Confusion arises, because most extensions only tell you one of these, but not the other.
+TP tries to address this by using two levels of filename extensions, which together denote both type and encoding.
+
+### File Types
+
+These are the most important file types that TP uses, with their filename extensions in parentheses:
+
+* **cryptographic parameters** (`.params`)
+* **cryptographic keys** (`.key`)
+* **certificate signing requests (CSR)** (`.csr`)
+* **certificates** (`.cert`)
+* **certificate chains** (`.chain`, `.fullchain`)
+
+On top of this, you may encounter several tool-specific configuration files, mostly in text-based formats.
+TP uses filename extensions `.conf` or `.ini` for most of these.
+
+### File Encoding Formats
+
+At a logical level, most of the above file types are defined in terms of an interface description language called [Abstract Syntax Notation One (ASN.1)](https://en.wikipedia.org/wiki/ASN.1).
+However, *ASN.1* can be serialized using different encoding formats.
+In the context of TLS, the most important encoding formats are:
+
+* **[Distinguished Encoding Rules (DER)](https://en.wikipedia.org/wiki/X.690#DER_encoding):**
+A binary format, which is also used to transmit certificates over the network during a TLS handshake.
+TP uses the customary filename extension `.der` for this format.
+
+* **[Privacy-Enhanced Mail (PEM)](https://en.wikipedia.org/wiki/Privacy-Enhanced_Mail):**
+A text format that is based on base64-encoded **DER** data, broken into multiple lines for better readability.
+*PEM* also adds textual headers and footers that denote the file type.
+TP uses the customary filename extension `.pem` for this format.
+
+You will easily recognize a *PEM* file by its contents, if you've ever seen one before.
+Here is an example *PEM* file that contains a certificate:
+
+```
+-----BEGIN CERTIFICATE-----
+MIICOzCCAcCgAwIBAgIUEigCKjXituvLXvl/4Y2ZxF3DlpQwCgYIKoZIzj0EAwIw
+ZjELMAkGA1UEBhMCREUxEDAOBgNVBAgMB0JhdmFyaWExDzANBgNVBAcMBk11bmlj
+aDEXMBUGA1UECgwOVExTIFBsYXlncm91bmQxGzAZBgNVBAMMElRQIENBIGZvciBB
+bnl0aGluZzAeFw0yMzA2MjUxNjAwNTNaFw0yMzA5MjMxNjAwNTNaMGYxCzAJBgNV
+BAYTAkRFMRAwDgYDVQQIDAdCYXZhcmlhMQ8wDQYDVQQHDAZNdW5pY2gxFzAVBgNV
+BAoMDlRMUyBQbGF5Z3JvdW5kMRswGQYDVQQDDBJUUCBDQSBmb3IgQW55dGhpbmcw
+djAQBgcqhkjOPQIBBgUrgQQAIgNiAAQ8VFR1kYVErg8gX7TvorM2EaNoENJmME+j
+Zm1opRGLa6/G6XB9KKyk7sCziUQqAZ7kJfBJxQ6iWTB5CtEfuVeZw3KwI2zViQV5
+MH1u5XlG1fvRrlFojwsoi7g8RK2lr1CjLzAtMAwGA1UdEwQFMAMBAf8wHQYDVR0O
+BBYEFOIOC0nGkqlb6HbhUhBXKyIkpcPyMAoGCCqGSM49BAMCA2kAMGYCMQDvRLVl
+GrbGskmHFANnuTpqQGJKK4CH5myBVSe6RFQ3npSJ5QJiJDMPl7p8AaJQ/woCMQD1
+6RB5DMj57yeskaP/F7ypwdyJZo10tT2jJzITcTvwo0F7DIFVJQObOaTNsO4iML4=
+-----END CERTIFICATE-----
+```
+
+TP prefers *PEM* over *DER* whenever possible.
+
+### Filename Extensions Summary
+
 XXX The CAs use PEM as their standard file format. Wherever keys, certificate signing requests (CSRs), and certificates are involved they will be PEM encoded. For private keys, passphrase encryption is used, based on the value of environment variable `$TP_PASS`. If not specified in the environment, the passphrase defaults to `1234`.
 
 TODO
 
 .cert.conf
-.key.parms.pem
+.key.params.pem
 .csr.pem
 .cert.pem
 .chain.pem
@@ -112,7 +171,10 @@ TODO
 .key.pkcs8.der
 .pfx
 
+.conf
 .tmpl
+
+TODO directories
 
 
 
