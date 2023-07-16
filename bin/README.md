@@ -150,7 +150,7 @@ TP prefers *PEM* over *DER* whenever possible.
 
 
 
-## Command Summary
+## TP Command Reference
 
 ```
 Summary:   TLS Playground CLI
@@ -252,7 +252,7 @@ Alternative certificate files:
 
 Other configuration files:
 
-   Static files that contain various configuration data.
+  Static files that contain various configuration data.
 
   .conf            Configuration files for various TP components, such as CAs, Certbot, or nginx demo servers.
   .ini
@@ -267,12 +267,16 @@ Other configuration files:
 
 Global config files:
 
-  ${tp_base_dir}/.tp.pass.txt
-                   Passphrase to encrypt key files.
+  Static configuration files for TP as a whole.
+  These files reside in ${tp_base_dir} this is the base directory where the TP is located,
+  that is the parent of the directory that contains the 'tp' script.
+  Note that setting an env-var with the same name will not affect '${tp_base_dir}'.
+  TP always determins it relative to the 'tp' script.
+
+  .tp.pass.txt     Passphrase to encrypt key files.
                    Ignored, if ${TP_PASS} env-var is set.
                    If neither the env-var nor this file exist, 'tp' will generate a new passphrase and store it in this file.
 
-Directories:
-
-  tp_base_dir      The base directory where the TLS Playground is located. I.e. the parent of the directory that contains the 'tp' script.
+  .bashrc          Recommended bash configuration for running TP demos.
+                   Source it into your shell by running '. .bashrc'
 ```
