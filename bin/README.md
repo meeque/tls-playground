@@ -1,13 +1,10 @@
 # TLS Playground CLI
 
-TODO what is it good for?
-
-The TP commands are the main tool for using the TLS playground.
+The TP CLI is the main tool for using the TLS playground, which demonstrates usage of certificates and TLS.
 Assuming that your copy of TP is located at `${tp_base_dir}`, you can find the TP commands executable at `${tp_base_dir}/bin/tp`.
 Consider adding this directory to your `${PATH}` env-var.
 
-You can invoke TP commands from anywhere.
-Most file arguments are interpreted relative to the current working directory.
+You can invoke TP commands from anywhere, and most file arguments are interpreted relative to the current working directory.
 However, some TP commands reference some files relative to the `${tp_base_dir}`.
 
 
@@ -48,7 +45,7 @@ Continue by pressing any key.
 
 
 
-## Terminology
+## Terminology Conventions
 
 Some terminology around TLS can be rather confusing, especially to newcomers.
 To reduce this confusion, TP tries to stick to the following terminology conventions.
@@ -59,9 +56,9 @@ Technically, the acronym **SSL (Secure Socket Layer)** denotes the predecessor o
 All versions of SSL have been deprecated years ago, as have older versions of TLS.
 The SSL and TLS version history goes like this, in chronological order:
 
-* **SSL 1** (internal draft only)
-* **SSL 2** (insecure and deprecated)
-* **SSL 3** (insecure and deprecated)
+* **SSL 1.0** (internal draft only)
+* **SSL 2.0** (insecure and deprecated)
+* **SSL 3.0** (insecure and deprecated)
 * **TLS 1.0** (insecure and deprecated)
 * **TLS 1.1** (insecure and deprecated)
 * **TLS 1.2** (deemed secure for some supported [cipher suites](https://en.wikipedia.org/wiki/Cipher_suite))
