@@ -78,8 +78,8 @@ function tp_main {
                     local help_block=1
                     ;;
             esac
-            tp_util_help "${tp_base_dir}/bin/README.md" "${help_block}" || return 0
-            tp_util_help_commands 'tp' 'TLS Playground' "${command}" 'cert ca acme server clean'
+            tp_help_if_needed "${tp_base_dir}/bin/README.md" "${help_block}" || return 0
+            tp_help_with_commands 'tp' 'TLS Playground' "${command}" 'cert ca acme server clean'
             ;;
     esac
 }
@@ -152,14 +152,14 @@ function tp_cert {
     local command="$1"
     shift || true
 
-    tp_util_help "${tp_base_dir}/cert/README.md" || return 0
+    tp_help_if_needed "${tp_base_dir}/cert/README.md" || return 0
 
     case "${command}" in
         'show' | 'fingerprint' | 'request' | 'selfsign' | 'pkcs8' | 'pkcs12' | 'clean' )
             "tp_cert_${command}" "$@"
             ;;
         * )
-            tp_util_help_commands 'tp cert' 'TP Certificate Utilities' "${command}" 'show fingerprint request selfsign pkcs8 pkcs12 clean'
+            tp_help_with_commands 'tp cert' 'TP Certificate Utilities' "${command}" 'show fingerprint request selfsign pkcs8 pkcs12 clean'
             ;;
     esac
 }
@@ -443,14 +443,14 @@ function tp_ca {
     local command="$1"
     shift || true
 
-    tp_util_help "${tp_base_dir}/ca/README.md" '-1' || return 0
+    tp_help_if_needed "${tp_base_dir}/ca/README.md" '-1' || return 0
 
     case "${command}" in
         'init' | 'sign' | 'clean' )
             "tp_ca_${command}" "$@"
             ;;
         * )
-            tp_util_help_commands 'tp ca' 'TP Demo CA' "${command}" 'init sign clean'
+            tp_help_with_commands 'tp ca' 'TP Demo CA' "${command}" 'init sign clean'
             ;;
     esac
 }
@@ -598,14 +598,14 @@ function tp_acme {
     local command="$1"
     shift || true
 
-    tp_util_help "${tp_base_dir}/acme/README.md" || return 0
+    tp_help_if_needed "${tp_base_dir}/acme/README.md" || return 0
 
     case "${command}" in
         'init' | 'account' | 'challenges' | 'sign' | 'renew' | 'revoke' | 'clean' )
             "tp_acme_${command}" "$@"
             ;;
         * )
-            tp_util_help_commands 'tp acme' 'TP ACME Utilities' "${command}" 'init account challenges sign renew revoke clean'
+            tp_help_with_commands 'tp acme' 'TP ACME Utilities' "${command}" 'init account challenges sign renew revoke clean'
             ;;
     esac
 }
@@ -624,14 +624,14 @@ function tp_acme_account {
     local command="$1"
     shift || true
 
-    tp_util_help "${tp_base_dir}/acme/README.md" || return 0
+    tp_help_if_needed "${tp_base_dir}/acme/README.md" || return 0
 
     case "${command}" in
         'register' | 'unregister' )
             "tp_acme_account_${command}" "$@"
             ;;
         * )
-            tp_util_help_commands 'tp acme account' 'TP ACME Account' "${command}" 'register unregister'
+            tp_help_with_commands 'tp acme account' 'TP ACME Account' "${command}" 'register unregister'
             ;;
     esac
 }
@@ -656,14 +656,14 @@ function tp_acme_challenges {
     local command="$1"
     shift || true
 
-    tp_util_help "${tp_base_dir}/acme/README.md" || return 0
+    tp_help_if_needed "${tp_base_dir}/acme/README.md" || return 0
 
     case "${command}" in
         'run' | 'start' | 'reload' | 'stop' )
             "tp_server_nginx_${command}" "${tp_base_dir}/acme/challenges/http-01" "$@"
             ;;
         * )
-            tp_util_help_commands 'tp acme challenes' 'TP ACME Challenges' "${command}" 'run start reload stop'
+            tp_help_with_commands 'tp acme challenes' 'TP ACME Challenges' "${command}" 'run start reload stop'
             ;;
     esac
 }
@@ -974,7 +974,7 @@ function tp_server {
     local command="$1"
     shift || true
 
-    tp_util_help "${tp_base_dir}/server/README.md" || return 0
+    tp_help_if_needed "${tp_base_dir}/server/README.md" || return 0
 
     case "${command}" in
 
@@ -1003,7 +1003,7 @@ function tp_server {
             "tp_server_nginx_${command}" "${server_dir}" "$@"
             ;;
         * )
-            tp_util_help_commands 'tp server' 'TP Demo Server' "${command}" 'init run start reload stop clean'
+            tp_help_with_commands 'tp server' 'TP Demo Server' "${command}" 'init run start reload stop clean'
             ;;
     esac
 }
@@ -1414,7 +1414,45 @@ function tp_util_run_hook {
     tp_succ "Done running ${hook_name}."
 }
 
-function tp_util_extract_markdown_code_block {
+
+
+# TP help system functions
+
+function tp_help_if_needed {
+    if [[ -n "${tp_help}" ]]
+    then
+        echo
+        tp_help_extract_markdown_code_block "$@"
+        echo
+        return 1
+    fi
+}
+
+function tp_help_with_commands {
+    local parent_command="$1"
+    local parent_command_name="$2"
+    local given_command="$3"
+    local supported_commands="$4"
+
+    if [[ -n "${given_command}" ]]
+    then
+        tp_err "Unsupported ${parent_command_name} command '${given_command}'."
+        tp_msg "Try one of the following instead:"
+    else
+        tp_err "No ${parent_command_name} command given."
+        tp_msg "Try one of the following:"
+    fi
+
+    for supported_command in ${supported_commands}
+    do
+        echo "${supported_command}"
+    done
+
+    tp_msg "Or, run '${parent_command} --help' to learn more about these commands."
+    return 1
+}
+
+function tp_help_extract_markdown_code_block {
     local markdown_file="$1"
     local index="${2:-0}"
 
@@ -1446,40 +1484,6 @@ function tp_util_extract_markdown_code_block {
 
         echo -n "${blocks["${index}"]}"
     )
-}
-
-function tp_util_help {
-    if [[ -n "${tp_help}" ]]
-    then
-        echo
-        tp_util_extract_markdown_code_block "$@"
-        echo
-        return 1
-    fi
-}
-
-function tp_util_help_commands {
-    local parent_command="$1"
-    local parent_command_name="$2"
-    local given_command="$3"
-    local supported_commands="$4"
-
-    if [[ -n "${given_command}" ]]
-    then
-        tp_err "Unsupported ${parent_command_name} command '${given_command}'."
-        tp_msg "Try one of the following instead:"
-    else
-        tp_err "No ${parent_command_name} command given."
-        tp_msg "Try one of the following:"
-    fi
-
-    for supported_command in ${supported_commands}
-    do
-        echo "${supported_command}"
-    done
-
-    tp_msg "Or, run '${parent_command} --help' to learn more about these commands."
-    return 1
 }
 
 
