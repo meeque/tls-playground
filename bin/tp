@@ -69,7 +69,17 @@ function tp_main {
         * )
             if [[ -n "${tp_help}" ]]
             then
-                tp_util_extract_markdown_code_block "${tp_base_dir}/bin/README.md" 2
+                case "${tp_command}" in
+                    'files' )
+                        tp_util_extract_markdown_code_block "${tp_base_dir}/bin/README.md" 3
+                        ;;
+                    'env' )
+                        tp_util_extract_markdown_code_block "${tp_base_dir}/bin/README.md" 2
+                        ;;
+                    * )
+                        tp_util_extract_markdown_code_block "${tp_base_dir}/bin/README.md" 1
+                        ;;
+                esac
             else
                 tp_err "Unsupported TLS Playground command '${tp_command}'."
                 return 1

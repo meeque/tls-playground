@@ -89,9 +89,7 @@ Less commonly, it may be abbreviated to *X.509*, *x509*, or similar.
 TP follows common practice uses all these terms interchangeably.
 However, it prefers **certificate** in prose and **cert** in more technical contexts, such as in the file names described in the next section.
 
-
-
-## File Naming Conventions
+### File Naming Conventions
 
 If you've ever worked with certificates before, you have probably encountered a confusing number of filename extensions.
 These may have included `.key`, `.csr`, `.req`, `.crt`, `.p12`, `.pfx`, `.der`, `.pem`, and similar.
@@ -100,7 +98,7 @@ Some of these extensions denote different **file types** (technically types of d
 Confusion arises, because most extensions only tell you one of these, but not the other.
 TP tries to address this by using two levels of filename extensions, which together denote both type and encoding.
 
-### File Types
+#### File Types
 
 These are the most important file types that TP uses, with their filename extensions in parentheses:
 
@@ -113,7 +111,7 @@ These are the most important file types that TP uses, with their filename extens
 On top of this, you may encounter several tool-specific configuration files, mostly in text-based formats.
 TP uses filename extensions `.conf` or `.ini` for most of these.
 
-### File Encoding Formats
+#### File Encoding Formats
 
 At a logical level, most of the above file types are defined in terms of an interface description language called [Abstract Syntax Notation One (ASN.1)](https://en.wikipedia.org/wiki/ASN.1).
 However, *ASN.1* can be serialized using different encoding formats.
@@ -150,9 +148,54 @@ GrbGskmHFANnuTpqQGJKK4CH5myBVSe6RFQ3npSJ5QJiJDMPl7p8AaJQ/woCMQD1
 
 TP prefers *PEM* over *DER* whenever possible.
 
-### Filename Extensions Summary
 
-XXX The CAs use PEM as their standard file format. Wherever keys, certificate signing requests (CSRs), and certificates are involved they will be PEM encoded. For private keys, passphrase encryption is used, based on the value of environment variable `$[TP_PASS]`. If not specified in the environment, TP will generate a random passphrase.
+
+## Command Summary
+
+```
+Summary:   TLS Playground CLI
+
+Usage:     tp [<global options>] <command> [...]
+
+Available commands:
+
+  cert     Manage keys, CSRs, certificates, etc.
+
+  ca       Manage and use built-in private Certificate Authorities (CA).
+
+  acme     Obtain and manage certificates from external CAs using the ACME protocol.
+
+  server   Use sample servers with certificates and TLS.
+
+  clean    Delete transient data.
+
+Global options:
+
+  -s, --step  Step through invocation of external commands (e.g. openssl, certbot) one-by-one.
+
+  -h, --help  Print this global help text, a command help text, or a topic help text.
+              Run 'tp --help <command>' to learn more about individual commands and their arguments.
+              Run 'tp --help env' to learn more about supported environment variables.
+              Run 'tp --help files' to learn more about files and file naming conventions.
+```
+
+### Environment Variables
+
+```
+Global environment variables:
+
+  TP_PASS   The passphrase for encrypting key files.
+            Defaults to the contents of file .tp.pass.txt, see below.
+
+  TP_COLOR  Control colored terminal outputs.
+            Set to non-empty to force colors.
+            Set to empty string to suppress colors.
+            Leave unset to let TP decide to use colors depending on terminal support.
+
+  TODO Gather docs for all env-vars here!
+```
+
+### Filenames and Extensions
 
 ```
 Certificate specification files:
@@ -221,60 +264,15 @@ Other configuration files:
                    TP CLI 'clean' commands will remove all files that have been generated from a configuration file template.
                    In other words, the generated file will be treated as a transient file and only the template itself will
                    be treated as a static file.
-```
-
-
-
-## Command Summary
-
-```
-Summary:   TLS Playground CLI
-
-Usage:     tp [<global options>] <command> [...]
-
-Available commands:
-
-  cert     Manage keys, CSRs, certificates, etc.
-
-  ca       Manage and use built-in private Certificate Authorities (CAs).
-
-  acme     Obtain and manage certificates from external CAs using the ACME protocol.
-
-  server   Use sample servers with certificates and TLS.
-
-  clean    Delete transient data.
-
-Global options:
-
-  -h, --help  Print this global help text or command help texts.
-              Run 'tp <command> --help' to learn more about individual commands and their arguments.
-
-  -s, --step  Step through invocation of external commands (e.g. openssl, certbot) one-by-one.
-
-Global environment variables:
-
-  TODO Gather docs for all env-vars in one place?
-
-  TP_PASS   The passphrase for encrypting key files.
-            Defaults to the contents of file .tp.pass.txt, see below.
-
-  TP_COLOR  Control colored terminal outputs.
-            Set to non-empty to force colors.
-            Set to empty string to suppress colors.
-            Leave unset to let TP decide to use colors depending on terminal support.
 
 Global config files:
 
   ${tp_base_dir}/.tp.pass.txt
-            Passphrase to encrypt key files.
-            Ignored, if ${TP_PASS} env-var is set.
-            If neither the env-var nor this file exist, 'tp' will generate a new passphrase and store it in this file.
+                   Passphrase to encrypt key files.
+                   Ignored, if ${TP_PASS} env-var is set.
+                   If neither the env-var nor this file exist, 'tp' will generate a new passphrase and store it in this file.
 
 Directories:
 
-  tp_base_dir  the base directory where the TLS Playground is located. I.e. the parent of the directory that contains the 'tp' script.
+  tp_base_dir      The base directory where the TLS Playground is located. I.e. the parent of the directory that contains the 'tp' script.
 ```
-
-## Environment Variables
-
-TODO collect env-var docs here, so they can be referenced from elsewhere
