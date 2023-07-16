@@ -99,7 +99,7 @@ It also deletes all transient files that have been created during CA operation, 
 
 
 
-## TP CA Command Reference
+## TP CA Commands Reference
 
 ```
 Summary:      Control TLS Playground Demo CAs

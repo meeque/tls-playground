@@ -45,7 +45,7 @@ Continue by pressing any key.
 
 
 
-## Terminology Conventions
+## TP Terminology Conventions
 
 Some terminology around TLS can be rather confusing, especially to newcomers.
 To reduce this confusion, TP tries to stick to the following terminology conventions.
@@ -165,7 +165,7 @@ Available commands:
 
   acme     Obtain and manage certificates from external CAs using the ACME protocol.
 
-  server   Use sample servers with certificates and TLS.
+  server   Use demo servers with certificates and TLS.
 
   clean    Delete transient data.
 
@@ -182,17 +182,60 @@ Global options:
 ### Environment Variables
 
 ```
-Global environment variables:
+  TP_PASS   The passphrase for encrypting private key files.
+            Defaults to the contents of file .tp.pass.txt in ${tp_base_dir}.
+            Run 'tp --help files' to learn more about this global configuration file.
 
-  TP_PASS   The passphrase for encrypting key files.
-            Defaults to the contents of file .tp.pass.txt, see below.
+  TP_SERVER_DOMAIN
+            The base FQDN (fully qualified domain name) for the demo servers and
+            their certificates.
+            Some demo servers may be using hard-coded sub-domains of this domain
+            rather than the FQDN itself.
+            Defaults to localhost. When working with ACME certificates, you will
+            have to change it to your own public DNS domain.
+
+  TP_SERVER_LISTEN_ADDRESS
+            The local address that TP demo servers and the TP ACME challenges
+            web-server will listen to.
+            To access a demo server over the Internet and to resolve ACME http-01
+            challenges from a public CA, change this to a local address that receives
+            traffic from the Internet.
+            Defaults to 127.0.0.1 (localhost), for the sake of attack surface
+            reduction. Use 0.0.0.0 to listen on all local addresses.
+
+  TP_SERVER_HTTP_PORT
+            The local TCP port to which the TP ACME challenges web-server will
+            listen for plain http connections.
+            Defaults to unprivileged port 8080, to allow local testing without
+            root privileges. If this is not a concern, consider changing it to the
+            http default port, 80, or establish some sort of port forwarding.
+            To resolve ACME http-01 challenges from a public CA, the challenges
+            web-server must be reachable at port 80 from the Internet.
+
+  TP_SERVER_HTTPS_PORT
+            The local TCP port to which TP demo servers will listen for
+            TLS-protected https connections.
+            Defaults to unprivileged port 8443, to allow local testing without
+            root privileges. If this is not a concern, consider changing it to the
+            https default port, 443, or establish some sort of port forwarding.
+
+  TP_ACME_SERVER_URL
+            Use this http base URL to contact the ACME server.
+            Defaults to a URL that represents Let's Encrypt Staging.
+            Note that consecutive TP ACME commands may not work as expected,
+            if you change this URL in-between.
+
+  TP_ACME_ACCOUNT_EMAIL
+            Use this email address when registering an ACME account.
+            The ACME server does not perform email address verification, but it
+            may send notification emails to this address, e.g. certificate
+            expiration warnings.
+            Defaults to an invalid example address with an .example domain name.
 
   TP_COLOR  Control colored terminal outputs.
             Set to non-empty to force colors.
             Set to empty string to suppress colors.
             Leave unset to let TP decide to use colors depending on terminal support.
-
-  TODO Gather docs for all env-vars here!
 ```
 
 ### Filenames and Extensions
@@ -278,5 +321,6 @@ Global config files:
                    If neither the env-var nor this file exist, 'tp' will generate a new passphrase and store it in this file.
 
   .bashrc          Recommended bash configuration for running TP demos.
+                   Puts the TP CLI tool on the ${PATH} and configures a minimalistic [TP] prompt amongst other tweaks.
                    Source it into your shell by running '. .bashrc'
 ```

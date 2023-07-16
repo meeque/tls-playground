@@ -2,7 +2,7 @@
 
 
 
-## TP CA Command Reference
+## TP Certificate Commands Reference
 
 ```
 Summary:   TLS Playground Certificate Utilities
@@ -15,7 +15,7 @@ Available commands:
 
   fingerprint  Calculate fingerprint of a cert, CSR, or key <file>.
 
-  request      Create a certificate signing request based on a config <file>.
+  request      Create a key-pair and a certificate signing request based on a config <file>.
 
   selfsign     Create a self-signed certificate based on a config <file> file or an existing CSR <file>.
 
@@ -28,26 +28,21 @@ Available commands:
 Arguments:
 
   <file>  Path to a cert, CSR, key, or 'openssl req' config file.
-          Commands that support multiple file types will deduce it from naming conventions:
+          Commands that support multiple file types will deduce it from naming conventions.
+          Run 'tp --help files' to learn more about files and file naming conventions.
 
-          "${name}.cert.conf"
-          "${name}.key.params.pem"
-          "${name}.key.pem"
-          "${name}.key.pass.txt"
-          "${name}.csr.pem"
-          "${name}.cert.pem"
-          "${name}.chain.pem"
-          "${name}.fullchain.pem"
+Environment:
 
-          TODO document dirs
+  Set ${TP_PASS} to conigure the passphrase for private key files encryption.
+
+  Run 'tp --help env' to learn more about this env-var.
 ```
+
 
 
 ## Certificate Usage
 
 When you deal with CSRs and certificates, you can also use `openssl` directly. Here is some useful `openssl` commands for introspecting such files.
-
-
 
 ### Introspecting CSRs
 
@@ -58,8 +53,6 @@ To display CSR contents in text form:
 To verify a CSR:
 
     openssl req -in client-generic/tls/client1-csr.pem -noout -verify
-
-
 
 ### Introspecting Certificates
 

@@ -69,34 +69,12 @@ Options:
             configurations of the demo server. See the sign command for details
             and additional options.
 
-Environment variables:
+Environment:
 
-  TP_SERVER_DOMAIN
-            The base FQDN (fully qualified domain name) for the demo servers and
-            their certificates.
-            Some demo servers may be using hard-coded sub-domains of this domain
-            rather than the FQDN itself.
-            Defaults to localhost. When working with ACME certificates, you will
-            have to change it your own domain name in the public DNS.
+  Set ${TP_SERVER_DOMAIN}, ${TP_SERVER_LISTEN_ADDRESS}, and ${TP_SERVER_HTTPS_PORT}
+  to configure the TP demo servers.
 
-  TP_SERVER_LISTEN_ADDRESS
-            The local address that the TP built-in ACME challenges web-server
-            will listen to. See the challenges command.
-            To resolve ACME challenges from a public CA this local address must
-            receive traffic from the Internet. Use 0.0.0.0 to listen on all
-            local addresses.
-            Defaults to 127.0.0.1 (localhost), for the sake of attack surface
-            reduction. In order to make ACME work, change this to something
-            different, or establish some sort of traffic forwarding.
-
-  TP_SERVER_HTTPS_PORT
-            The local TCP port that the TP built-in challenges web-server will
-            listen to. See the challenges command.
-            To resolve ACME challenges from a public CA, the challenges
-            web-server must be reachable at port 80 from the Internet.
-            Defaults to unprivileged port 8080, to allow local testing without
-            root privileges. In order to make ACME work, change it to 80, or
-            establish some sort of port forwarding.
+  Run 'tp --help env' to learn more about these env-vars.
 ```
 
 
