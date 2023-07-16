@@ -497,6 +497,8 @@ function tp_ca_sign {
     if [[ -z "${ca_name}" ]]
     then
         tp_err "No CA name specified. Specify the CA to sign with!"
+        tp_msg "Try one of the following:"
+        tp_ca_list
         return 1
     fi
     if [[ ! -d "${tp_base_dir}/ca/${ca_name}" ]]
@@ -973,12 +975,16 @@ function tp_server {
             if [[ -z "${server_name}" ]]
             then
                 tp_err "Failed to ${command} demo server! No demo server name specified!"
+                tp_msg "Try one of the following:"
+                tp_server_list
                 return 1
             fi
             local server_dir="${tp_base_dir}/server/${server_name}"
             if [[ ! -d "${server_dir}" ]]
             then
                 tp_err "Failed to ${command} demo server '${server_name}'! Could not find expected demo server directory '${server_dir}'!"
+                tp_msg "Try one of the following instead:"
+                tp_server_list
                 return 1
             fi
             "tp_server_nginx_${command}" "${server_dir}" "$@"
