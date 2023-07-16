@@ -59,31 +59,26 @@ function tp_main {
     done
 
     # dispatch command
-    tp_command="$1"
+    local command="$1"
     shift || true
-    case "${tp_command}" in
+    case "${command}" in
         'cert' | 'ca' | 'acme' | 'server' | 'clean' )
-            "tp_${tp_command}" "$@"
+            "tp_${command}" "$@"
             return $?
             ;;
         * )
-            if [[ -n "${tp_help}" ]]
-            then
-                case "${tp_command}" in
-                    'files' )
-                        tp_util_extract_markdown_code_block "${tp_base_dir}/bin/README.md" 3
-                        ;;
-                    'env' )
-                        tp_util_extract_markdown_code_block "${tp_base_dir}/bin/README.md" 2
-                        ;;
-                    * )
-                        tp_util_extract_markdown_code_block "${tp_base_dir}/bin/README.md" 1
-                        ;;
-                esac
-            else
-                tp_err "Unsupported TLS Playground command '${tp_command}'."
-                return 1
-            fi
+            case "${command}" in
+                'files' )
+                    local help_block=3
+                    ;;
+                'env' )
+                    local help_block=2
+                    ;;
+                * )
+                    local help_block=1
+                    ;;
+            esac
+            tp_util_help 'tp' 'TLS Playground' "${command}" 'cert ca acme server clean' "${tp_base_dir}/bin/README.md" "${help_block}"
             ;;
     esac
 }
@@ -161,13 +156,7 @@ function tp_cert {
             "tp_cert_${command}" "$@"
             ;;
         * )
-            if [[ -n "${tp_help}" ]]
-            then
-                tp_util_extract_markdown_code_block "${tp_base_dir}/cert/README.md"
-            else
-                tp_err "Unsupported certificate command '${command}'."
-                return 1
-            fi
+            tp_util_help 'tp cert' 'TP Certificate Utilities' "${command}" 'show fingerprint request selfsign pkcs8 pkcs12 clean' "${tp_base_dir}/cert/README.md"
             ;;
     esac
 }
@@ -456,13 +445,7 @@ function tp_ca {
             "tp_ca_${command}" "$@"
             ;;
         * )
-            if [[ -n "${tp_help}" ]]
-            then
-                tp_util_extract_markdown_code_block "${tp_base_dir}/ca/README.md" '-1'
-            else
-                tp_err "Unsupported CA command '${command}'."
-                return 1
-            fi
+            tp_util_help 'tp ca' 'TP Demo CA' "${command}" 'init sign clean' "${tp_base_dir}/ca/README.md" '-1'
             ;;
     esac
 }
@@ -613,13 +596,7 @@ function tp_acme {
             "tp_acme_${command}" "$@"
             ;;
         * )
-            if [[ -n "${tp_help}" ]]
-            then
-                tp_util_extract_markdown_code_block "${tp_base_dir}/acme/README.md"
-            else
-                tp_err "Unsupported ACME command '${command}'."
-                return 1
-            fi
+            tp_util_help 'tp acme' 'TP ACME Utilities' "${command}" 'init account challenges sign renew revoke clean' "${tp_base_dir}/acme/README.md"
             ;;
     esac
 }
@@ -643,8 +620,7 @@ function tp_acme_account {
             "tp_acme_account_${command}" "$@"
             ;;
         * )
-            tp_err "Unsupported ACME account command '${command}'."
-            return 1
+            tp_util_help 'tp acme account' 'TP ACME Account' "${command}" 'register unregister' "${tp_base_dir}/acme/README.md"
             ;;
     esac
 }
@@ -674,8 +650,7 @@ function tp_acme_challenges {
             "tp_server_nginx_${command}" "${tp_base_dir}/acme/challenges/http-01" "$@"
             ;;
         * )
-            tp_err "Unsupported ACME challenges command '${command}'."
-            return 1
+            tp_util_help 'tp acme challenes' 'TP ACME Challenges' "${command}" 'run start reload stop' "${tp_base_dir}/acme/README.md"
             ;;
     esac
 }
@@ -1010,13 +985,7 @@ function tp_server {
             ;;
 
         * )
-            if [[ -n "${tp_help}" ]]
-            then
-                tp_util_extract_markdown_code_block "${tp_base_dir}/server/README.md"
-            else
-                tp_err "Unsupported demo server command '${command}'."
-                return 1
-            fi
+            tp_util_help 'tp server' 'TP Demo Server' "${command}" 'init run start reload stop clean' "${tp_base_dir}/server/README.md"
             ;;
     esac
 }
@@ -1459,6 +1428,45 @@ function tp_util_extract_markdown_code_block {
 
         echo -n "${blocks["${index}"]}"
     )
+}
+
+
+
+# TP help functions
+
+function tp_util_help {
+    if [[ -n "${tp_help}" ]]
+    then
+        shift
+        shift
+        shift
+        shift
+        echo
+        tp_util_extract_markdown_code_block "$@"
+        echo
+    else
+        local parent_command="$1"
+        local parent_command_name="$2"
+        local given_command="$3"
+        local supported_commands="$4"
+
+        if [[ -n "${given_command}" ]]
+        then
+            tp_err "Unsupported ${parent_command_name} command '${given_command}'."
+            tp_msg "Try one of the following instead:"
+        else
+            tp_err "No ${parent_command_name} command given."
+            tp_msg "Try one of the following:"
+        fi
+
+        for supported_command in ${supported_commands}
+        do
+            echo "${supported_command}"
+        done
+
+        tp_msg "Or, run '${parent_command} --help' to learn more about these commands."
+        return 1
+    fi
 }
 
 
