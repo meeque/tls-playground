@@ -418,20 +418,7 @@ function tp_cert_clean {
 }
 
 function tp_cert_get_domains_from_config {
-    # TODO just invoke more generic tp_util_get_config_values instead
-    local cert_config="$1"
-    local domain_config_line_regex='^\s*(CN|DNS[.][0-9]+)\s*=\s*(([-a-zA-Z0-9]+[.])*[-a-zA-Z0-9]+)\s*$'
-
-    # 1. pick lines starting with config key CN or DNS.<nubmer>, followed by =, followed by a domain name
-    #    ignore surrounding whitespace and ignore which sections they are in
-    # 2. sort by config key, CN before DNS.<number>
-    # 3. strip the config key and surrounding whitespace
-    # 4. make domain list unique, since domains can occur in both CN and DNS.<number>
-    cat "${cert_config}" \
-        | grep -E "${domain_config_line_regex}" \
-        | sort \
-        | sed -E -e 's/'"${domain_config_line_regex}"'/\2/' \
-        | awk '!uniq[$0]++'
+    tp_util_get_config_values "$1" 'CN|DNS[.][0-9]+' '([-a-zA-Z0-9]+[.])*[-a-zA-Z0-9]+'
 }
 
 function tp_cert_link {
