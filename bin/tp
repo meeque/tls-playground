@@ -310,6 +310,18 @@ function tp_cert_selfsign {
     tp_msg "Generating CSR for the self-signed certificate..."
     tp_cert_request_if_missing "${cert_config_or_csr}"
 
+    local openssl_x509_extra_args=()
+    if [[ "${files[cert_conf_stat]}" == 'f' ]]
+    then
+        local default_md=( $( tp_util_get_config_values "${files[cert_conf_path]}" 'default_md' ) )
+        if [[ -n "${default_md}" ]]
+        then
+            tp_msg "Found configuration 'default_md = ${default_md}' in certificate config file '${files[cert_conf_path]}'."
+            tp_msg "Using ${default_md} as message digest (a.k.a. cryptographic hash function) in the certificate signature."
+            openssl_x509_extra_args+="-${default_md}"
+        fi
+    fi
+
     tp_util_remove_symlinks "${files[cert_pem_path]}" "${files[chain_pem_path]}" "${files[fullchain_pem_path]}"
 
     tp_msg "Signing CSR with it's own private key..."
@@ -318,6 +330,7 @@ function tp_cert_selfsign {
         openssl x509 -req \
             -days '90' \
             -copy_extensions 'copyall' \
+            "${openssl_x509_extra_args[@]}" \
             -in "${files[csr_pem_path]}" \
             -signkey "${files[key_pem_path]}" -passin "file:${files[key_pass_path]}" \
             -out "${files[cert_pem_path]}"
@@ -405,6 +418,7 @@ function tp_cert_clean {
 }
 
 function tp_cert_get_domains_from_config {
+    # TODO just invoke more generic tp_util_get_config_values instead
     local cert_config="$1"
     local domain_config_line_regex='^\s*(CN|DNS[.][0-9]+)\s*=\s*(([-a-zA-Z0-9]+[.])*[-a-zA-Z0-9]+)\s*$'
 
@@ -1343,6 +1357,26 @@ function tp_util_files_check {
 
     tp_err "${message}"
     return 1
+}
+
+function tp_util_get_config_values {
+    local config_file="$1"
+    local key_regexp="$2"
+    local value_regexp="${3:-"[-a-zA-Z0-9]+"}"
+
+    local config_line_regex='^\s*('"${key_regexp}"')\s*=\s*('"${value_regexp}"')\s*$'
+
+    # 1. pick lines starting with config key, followed by =, followed by config value
+    #    ignore surrounding whitespace and ignore which sections they are in
+    # 2. sort by config key
+    # 3. strip the config key and surrounding whitespace
+    # 4. remove duplicate config values
+    cat "${config_file}" \
+        | grep -E "${config_line_regex}" \
+        | sort \
+        | sed -E -e 's/'"${config_line_regex}"'/\2/' \
+        | awk '!uniq[$0]++' \
+        || true
 }
 
 function tp_util_remove_symlinks {
