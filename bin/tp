@@ -712,6 +712,7 @@ function tp_acme_sign_domains {
             certbot certonly \
                 --config "certbot/cli.ini" \
                 "${tp_acme_certbot_opts[@]}" \
+                --cert-name "${certbot_lineage}" \
                 "${certbot_domain_args[@]}"
     )
 
