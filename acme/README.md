@@ -1,6 +1,6 @@
 # TLS Playground ACME Utiliies
 
-This TLS Playground component implements certificate management through the ACME protocol using `certbot`. ACME allows you to obtain domain-validated server certificates from a public CA, like [Let's Encrypt](https://letsencrypt.org/).
+This TLS Playground module implements certificate management through the ACME protocol using `certbot`. ACME allows you to obtain domain-validated server certificates from a public CA, like [Let's Encrypt](https://letsencrypt.org/).
 
 
 

@@ -1,5 +1,14 @@
 # TLS Playground Certificate Utilities
 
+This TLS Playground module implements utilities for dealing with X.509 certificates.
+Most of it's functionality is implemented by invoking commands of the [OpenSSL](https://www.openssl.org/) CLI tool.
+
+You may never need to use these certificates utilities explicitly.
+Other TP modules make heavy use of this module under the hood.
+Following the TP CLI Philosophy, this will print infos about what's going on, in particular the relevant *OpenSSL* commands.
+
+
+TODO Add example cert configs, in particular bad examples (weak keys, insecure signature algs, custom EC curves, etc.)
 
 
 ## TP Certificate Commands Reference

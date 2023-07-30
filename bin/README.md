@@ -15,7 +15,7 @@ The main purpose of TP is educational.
 All TP commands follow consistent usage patterns and tell you exactly what is going on.
 
 TP will print relevant external tools and all their arguments before actually running them.
-This focuses on tools that are dealing with TLS and cetificates, in particular [OpenSSL](https://www.openssl.org/) and [Certbot](https://certbot.eff.org/).
+This focuses on tools that are dealing with TLS and certificates, in particular [OpenSSL](https://www.openssl.org/) and [Certbot](https://certbot.eff.org/).
 Less interesting external tool invocations, such as trivial file operations, are usually not printed verbatim, but summarized in a brief message.
 
 ### OpenSSL Usage
