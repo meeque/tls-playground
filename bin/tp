@@ -688,7 +688,7 @@ function tp_acme_sign_domains {
     tp_util_files 'target_files' "${cert_config}"
     tp_util_files_check 'target_files' 'cert_conf_stat' "Given certificate config file '${cert_config}' does not exist!" || return $?
 
-    local domains=( $( tp_util_get_config_values "$1" 'CN|DNS[.][0-9]+' '([-a-zA-Z0-9]+[.])*[-a-zA-Z0-9]+' ) )
+    local domains=( $( tp_util_get_config_values "$1" 'CN|DNS[.][0-9]+' '([-a-zA-Z0-9*]+[.])*[-a-zA-Z0-9*]+' ) )
     local certbot_lineage="${domains[0]}"
     local certbot_live_dir="${tp_base_dir}/acme/certbot/conf/live/${certbot_lineage}"
 
