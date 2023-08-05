@@ -7,6 +7,9 @@
 *.der
 *.pfx
 *.pass.txt
+!*.params.pem
+
+/cert/**/*.conf
 
 /ca/**/db.txt
 /ca/**/db.txt.*
@@ -25,4 +28,3 @@
 
 var/
 target/
-
