@@ -130,6 +130,7 @@ function tp_main_env_defaults {
 
 function tp_main_env_check {
     local status=0
+    tp_cert_check_env || status=1
     tp_server_check_env || status=1
     tp_acme_check_env || status=1
     return "${status}"
@@ -155,14 +156,32 @@ function tp_cert {
     tp_help_if_needed "${tp_base_dir}/cert/README.md" || return 0
 
     case "${command}" in
-        'show' | 'fingerprint' | 'request' | 'selfsign' | 'pkcs8' | 'pkcs12' | 'clean' )
+        'init' | 'show' | 'fingerprint' | 'request' | 'selfsign' | 'pkcs8' | 'pkcs12' | 'clean' )
             "tp_cert_${command}" "$@"
             ;;
         * )
-            tp_help_with_commands 'tp cert' 'TP Certificate Utilities' "${command}" 'show fingerprint request selfsign pkcs8 pkcs12 clean'
+            tp_help_with_commands 'tp cert' 'TP Certificate Utilities' "${command}" 'init show fingerprint request selfsign pkcs8 pkcs12 clean'
             ;;
     esac
 }
+
+function tp_cert_init {
+    local path="$1"
+
+    if [[ -z "${path}" ]]
+    then
+        tp_msg "No certificate path specified. Proceeding to initialize TP sample certificates in '${tp_base_dir}/cert'..."
+        local path="${tp_base_dir}/cert"
+    fi
+
+    for cert_config_file_template in $( find "${path}" -type f -and -name '*.cert.conf.tmpl' )
+    do
+        tp_cert_check_env
+        tp_util_template "${cert_config_file_template}" TP_SERVER_DOMAIN
+    done
+}
+
+# TODO add short cut for resolving file names foo/bar to cert/foo/bar.cert.conf, etc.
 
 function tp_cert_show {
     local file="$1"
@@ -402,19 +421,33 @@ function tp_cert_clean {
 
     if [[ -z "${path}" ]]
     then
-        local path="${tp_base_dir}"
+        tp_msg "No certificate path specified. Proceeding to clean up TP sample certificates in '${tp_base_dir}/cert'..."
+        local path="${tp_base_dir}/cert"
     fi
 
     tp_msg "Cleaning up certificates and related files in '${path}'..."
     (
         cd "${path}"
+
+        # TODO use shred for key files instead?
         find . '(' -type f -or -type l ')' \
             -and '(' -name '*.pem' -or -name '*.der' -or -name '*.pfx' -or -name '*.pass.txt' ')' \
             -and '(' -not -name '*.key.params.pem' ')' \
             | xargs rm -f
+
         find . -type d -and -empty -and -name 'private' | xargs rm -rf
-        # TODO use shred for key files instead?
+
+        for cert_config_file_template in $( find . -type f -and -name '*.cert.conf.tmpl' )
+        do
+            tp_util_template_clean "${cert_config_file_template}"
+        done
     )
+}
+
+function tp_cert_check_env {
+
+    [[ "${TP_SERVER_DOMAIN}" =~ ^([-a-zA-Z0-9]+[.])*[-a-zA-Z0-9]+$ ]] \
+        || { tp_err "Variable TP_SERVER_DOMAIN with value '${TP_SERVER_DOMAIN}' does not look like a DNS domain name!"; return 1; }
 }
 
 function tp_cert_link {
@@ -1073,8 +1106,7 @@ function tp_server_clean {
 function tp_server_check_env {
     local status=0
 
-    [[ "${TP_SERVER_DOMAIN}" =~ ^([-a-zA-Z0-9]+[.])*[-a-zA-Z0-9]+$ ]] \
-        || { status=1; tp_err "Variable TP_SERVER_DOMAIN with value '${TP_SERVER_DOMAIN}' does not look like a DNS domain name!"; }
+    tp_cert_check_env || status=1
     [[ "${TP_SERVER_LISTEN_ADDRESS}" =~ ^([*]|[0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3})$ ]] \
         || { status=1; tp_err "Variable TP_SERVER_LISTEN_ADDRESS with value '${TP_SERVER_LISTEN_ADDRESS}' does not look like an IP address!"; }
     [[ "${TP_SERVER_HTTP_PORT}" =~ ^[0-9]{1,5}$ ]] \
@@ -1173,6 +1205,7 @@ function tp_clean {
     tp_server_clean
     tp_acme_clean
     tp_ca_clean
+    tp_cert_clean
 }
 
 
