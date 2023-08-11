@@ -157,7 +157,7 @@ function tp_cert {
 
     case "${command}" in
         'init' | 'show' | 'fingerprint' | 'request' | 'selfsign' | 'pkcs8' | 'pkcs12' | 'clean' )
-            "tp_cert_${command}" "$@"
+            tp_cert_handle_multiple "${command}" "$@"
             ;;
         * )
             tp_help_with_commands 'tp cert' 'TP Certificate Utilities' "${command}" 'init show fingerprint request selfsign pkcs8 pkcs12 clean'
@@ -166,22 +166,19 @@ function tp_cert {
 }
 
 function tp_cert_init {
-    local path="$1"
+    local cert_config="$1"
+    local cert_config="$1"
 
-    if [[ -z "${path}" ]]
+    tp_util_files 'files' "${cert_config}"
+    tp_msg "Initializing certificate configuration '${files[cert_conf_path]}'..."
+
+    local cert_config_template="${files[cert_conf_path]}.tmpl"
+    if [[ -f "${cert_config_template}" ]]
     then
-        tp_msg "No certificate path specified. Proceeding to initialize TP sample certificates in '${tp_base_dir}/cert'..."
-        local path="${tp_base_dir}/cert"
-    fi
-
-    for cert_config_file_template in $( find "${path}" -type f -and -name '*.cert.conf.tmpl' )
-    do
         tp_cert_check_env
-        tp_util_template "${cert_config_file_template}" TP_SERVER_DOMAIN
-    done
+        tp_util_template "${cert_config_template}" TP_SERVER_DOMAIN
+    fi
 }
-
-# TODO add short cut for resolving file names foo/bar to cert/foo/bar.cert.conf, etc.
 
 function tp_cert_show {
     local file="$1"
@@ -417,37 +414,73 @@ function tp_cert_pkcs12 {
 }
 
 function tp_cert_clean {
-    local path="$1"
+    local cert_config="$1"
 
-    if [[ -z "${path}" ]]
-    then
-        tp_msg "No certificate path specified. Proceeding to clean up TP sample certificates in '${tp_base_dir}/cert'..."
-        local path="${tp_base_dir}/cert"
-    fi
+    tp_util_files 'files' "${cert_config}"
+    tp_msg "Cleaning up certificates and other files related to '${files[cert_conf_path]}'..."
 
-    tp_msg "Cleaning up certificates and related files in '${path}'..."
-    (
-        cd "${path}"
-
-        # TODO use shred for key files instead?
-        find . '(' -type f -or -type l ')' \
-            -and '(' -name '*.pem' -or -name '*.der' -or -name '*.pfx' -or -name '*.pass.txt' ')' \
-            -and '(' -not -name '*.key.params.pem' ')' \
-            | xargs rm -f
-
-        find . -type d -and -empty -and -name 'private' | xargs rm -rf
-
-        for cert_config_file_template in $( find . -type f -and -name '*.cert.conf.tmpl' )
-        do
-            tp_util_template_clean "${cert_config_file_template}"
-        done
-    )
+    for file in "${files[key_pass_path]}" "${files[key_pem_path]}" "${files[csr_pem_path]}" "${files[cert_pem_path]}" "${files[chain_pem_path]}" "${files[fullchain_pem_path]}"
+    do
+        if [[ -f "${file}" ]]
+        then
+            shred --remove "${file}"
+        fi
+    done
+    find "${files[dir]}" -mindepth 1 -maxdepth 1 -type d -name 'private' -empty | xargs --no-run-if-empty rmdir
+    tp_util_template_clean "${files[cert_conf_path]}.tmpl"
 }
 
 function tp_cert_check_env {
 
     [[ "${TP_SERVER_DOMAIN}" =~ ^([-a-zA-Z0-9]+[.])*[-a-zA-Z0-9]+$ ]] \
         || { tp_err "Variable TP_SERVER_DOMAIN with value '${TP_SERVER_DOMAIN}' does not look like a DNS domain name!"; return 1; }
+}
+
+function tp_cert_handle_multiple {
+    local command="$1"
+    local path="$2"
+    shift
+    shift || true
+
+    if [[ -z "${path}" ]]
+    then
+        local path="${tp_base_dir}/cert"
+        tp_msg "No certificate specified. Proceeding to ${command} all TP sample certificates in '${path}'..."
+    elif [[ "${path}" =~ ^[^/]+/[^/]+$ ]]
+    then
+        local path="${tp_base_dir}/cert/${path}"
+        tp_msg "Looks like you mean a sample certificate. Proceeding to ${command} TP sample certificate(s) in '${path}'..."
+    fi
+
+    if [[ -d "${path}" ]]
+    then
+        tp_msg "You have specified a directory. Proceeding to ${command} all certificates in '${path}'..."
+
+        local multiple_files=()
+        case "${command}" in
+            'init' )
+                local multiple_files=( $( find "${path}" -type f -and -name '*.cert.conf.tmpl' ) )
+                ;;
+            'show' | 'fingerprint' | 'pkcs8' | 'pkcs12' )
+                local multiple_files=( $( find "${path}" -type f -and -name '*.cert.pem' ) )
+                # TODO tp_cert_pkcs8 expects the private .key.pem file instead! adjust here or there?
+                ;;
+            'request' | 'selfsign' )
+                local multiple_files=( $( find "${path}" -type f -and -name '*.cert.conf' ) )
+                # TODO also .csr.pem? or handle this tp_cert_request and tp_cert_selfsign?
+                ;;
+            'clean' )
+                local multiple_files=( $( find "${path}" -type f -and -name '*.cert.conf' ) )
+                ;;
+        esac
+
+        for file in "${multiple_files[@]}"
+        do
+            "tp_cert_${command}" "${file}" "$@"
+        done
+    else
+        "tp_cert_${command}" "${path}" "$@"
+    fi
 }
 
 function tp_cert_link {
@@ -1100,7 +1133,8 @@ function tp_server_clean {
 
     tp_msg "Cleaning transient files of demo server '${server_name}'..."
     tp_server_nginx_clean "${server_dir}"
-    tp_cert_clean "${server_dir}"
+    tp_cert_handle_multiple clean "${server_dir}"
+    tp_util_run_hook "${server_dir}/tp-clean-hook.sh" "clean hook for server '${server_name}'" "$@"
 }
 
 function tp_server_check_env {
@@ -1183,7 +1217,7 @@ function tp_server_nginx_clean {
         fi
     fi
 
-    for config_file_template in $( find "${server_dir}" -type f -and -name '*.tmpl' )
+    for config_file_template in $( find "${server_dir}" -type f -and -name '*.tmpl' -and -not -name '*.cert.conf.tmpl' )
     do
         tp_util_template_clean "${config_file_template}"
     done
@@ -1435,8 +1469,15 @@ function tp_util_template {
 
 function tp_util_template_clean {
     local template_file="$1"
-    local target_file="$( echo "${template_file}" | sed -e 's/[.]tmpl$//' )"
-    rm -f "${target_file}"
+
+    if [[ -f "${template_file}" ]]
+    then
+        local target_file="$( echo "${template_file}" | sed -e 's/[.]tmpl$//' )"
+        if [[ -f "${target_file}" ]]
+        then
+            rm -f "${target_file}"
+        fi
+    fi
 }
 
 function tp_util_generate_hex_token {
