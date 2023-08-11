@@ -452,13 +452,19 @@ function tp_cert_handle_multiple {
     elif [[ "${path}" =~ ^(good|bad|ugly)(/[^/]*)?$ ]]
     then
         local path="${tp_base_dir}/cert/${path}"
-        tp_msg "Looks like you mean a sample certificate. Proceeding to ${command} TP sample certificate(s) in '${path}'..."
+        if [[ -d "${path}" ]]
+        then
+            tp_msg "Looks like you mean TP sample certificates. Proceeding to ${command} TP sample certificates in '${path}'..."
+        else
+            tp_msg "Looks like you mean a TP sample certificate. Proceeding to ${command} TP sample certificate at '${path}'..."
+        fi
+    elif [[ -d "${path}" ]]
+    then
+        tp_msg "You have specified a directory. Proceeding to ${command} all certificates in '${path}'..."
     fi
 
     if [[ -d "${path}" ]]
     then
-        tp_msg "You have specified a directory. Proceeding to ${command} all certificates in '${path}'..."
-
         local multiple_files=()
         case "${command}" in
             'init' )
