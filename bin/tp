@@ -471,6 +471,7 @@ function tp_cert_handle_multiple {
                 ;;
             'clean' )
                 local multiple_files=( $( find "${path}" -type f -and -name '*.cert.conf' ) )
+                # TODO also cert clean files when there's only a *.cert.conf.tmpl file? or any file related to a cert according to tp naming conventions?
                 ;;
         esac
 
@@ -582,6 +583,7 @@ function tp_ca_sign {
     tp_util_files_check 'ca_files' 'key_pem_stat' "Could not find private key of CA ${ca_name} in '${ca_files[key_pem_path]}'! Initialize the CA first!" || return $?
     tp_util_files_check 'ca_files' 'key_pass_stat' "Could not find private key pass-phrase of CA ${ca_name} in '${ca_files[key_pass_path]}'! Initialize the CA first!" || return $?
 
+    # TODO add support for signing multiple certs? similar to 'tp cert selfsign'?
     tp_msg "Generating CSR for the new certificate..."
     tp_cert_request_if_missing "${cert_config_or_csr}"
 
@@ -739,6 +741,8 @@ function tp_acme_sign {
         tp_err "Nothing to sign with ACME. Specify a certificate config file or a CSR!"
         return 1
     fi
+
+    # TODO add support for signing multiple certs? similar to 'tp cert selfsign'?
 
     if [[ -n "${tp_acme_certbot_custom_csr}" ]]
     then
@@ -1101,6 +1105,7 @@ function tp_server_init {
 
     echo
     tp_msg "Creating server certificates for demo server '${server_name}' using certificate provider '${tp_cert_provider}'..."
+    # TODO simply pass the "${server_dir}" to the cert-provider, once all providers support signing multiple certificates in a directory
     for config_file in $( find "${server_dir}" -path '*/tls/*' -name 'server*.cert.conf' | sort )
     do
         "tp_server_cert_${tp_cert_provider}" "${config_file}" "$@"
@@ -1239,7 +1244,7 @@ function tp_clean {
     tp_server_clean
     tp_acme_clean
     tp_ca_clean
-    tp_cert_clean
+    tp_cert_handle_multiple clean
 }
 
 
