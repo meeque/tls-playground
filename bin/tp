@@ -449,7 +449,7 @@ function tp_cert_handle_multiple {
     then
         local path="${tp_base_dir}/cert"
         tp_msg "No certificate specified. Proceeding to ${command} all TP sample certificates in '${path}'..."
-    elif [[ "${path}" =~ ^[^/]+/[^/]+$ ]]
+    elif [[ "${path}" =~ ^(good|bad|ugly)(/[^/]*)?$ ]]
     then
         local path="${tp_base_dir}/cert/${path}"
         tp_msg "Looks like you mean a sample certificate. Proceeding to ${command} TP sample certificate(s) in '${path}'..."
