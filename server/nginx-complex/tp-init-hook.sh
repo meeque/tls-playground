@@ -3,7 +3,7 @@ tp_msg "Configuring trusted CAs for client certificates that the 'nginx-complex'
 local trusted_clients_cas_file="${tp_base_dir}/server/nginx-complex/virtual/server2/tls/trusted-clients-cas.certs.pem"
 :> "${trusted_clients_cas_file}"
 
-for ca_name in $( tp_ca_list )
+for ca_name in 'ca4all' 'ca4clients'
 do
     local ca_root_cert="${tp_base_dir}/ca/${ca_name}/ca-root.cert.pem"
     if [[ -f "${ca_root_cert}" ]]
