@@ -424,6 +424,9 @@ function tp_cert_clean {
         if [[ -f "${file}" ]]
         then
             shred --remove "${file}"
+        elif [[ -L "${file}" ]]
+        then
+            rm "${file}"
         fi
     done
     find "${files[dir]}" -mindepth 1 -maxdepth 1 -type d -name 'private' -empty | xargs --no-run-if-empty rmdir
@@ -459,18 +462,18 @@ function tp_cert_handle_multiple {
         local multiple_files=()
         case "${command}" in
             'init' )
-                local multiple_files=( $( find "${path}" -type f -and -name '*.cert.conf.tmpl' ) )
+                local multiple_files=( $( find "${path}" -type f -and -name '*.cert.conf.tmpl' | sort ) )
                 ;;
             'show' | 'fingerprint' | 'pkcs8' | 'pkcs12' )
-                local multiple_files=( $( find "${path}" -type f -and -name '*.cert.pem' ) )
+                local multiple_files=( $( find "${path}" -type f -and -name '*.cert.pem' | sort ) )
                 # TODO tp_cert_pkcs8 expects the private .key.pem file instead! adjust here or there?
                 ;;
             'request' | 'selfsign' )
-                local multiple_files=( $( find "${path}" -type f -and -name '*.cert.conf' ) )
+                local multiple_files=( $( find "${path}" -type f -and -name '*.cert.conf' | sort ) )
                 # TODO also .csr.pem? or handle this tp_cert_request and tp_cert_selfsign?
                 ;;
             'clean' )
-                local multiple_files=( $( find "${path}" -type f -and -name '*.cert.conf' ) )
+                local multiple_files=( $( find "${path}" -type f -and -name '*.cert.conf' | sort ) )
                 # TODO also cert clean files when there's only a *.cert.conf.tmpl file? or any file related to a cert according to tp naming conventions?
                 ;;
         esac
