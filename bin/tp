@@ -454,13 +454,13 @@ function tp_cert_handle_multiple {
         local path="${tp_base_dir}/cert/${path}"
         if [[ -d "${path}" ]]
         then
-            tp_msg "Looks like you mean TP sample certificates. Proceeding to ${command} TP sample certificates in '${path}'..."
+            tp_msg "Proceeding to ${command} TP sample certificates in '${path}'..."
         else
-            tp_msg "Looks like you mean a TP sample certificate. Proceeding to ${command} TP sample certificate at '${path}'..."
+            tp_msg "Proceeding to ${command} TP sample certificate at '${path}'..."
         fi
     elif [[ -d "${path}" ]]
     then
-        tp_msg "You have specified a directory. Proceeding to ${command} all certificates in '${path}'..."
+        tp_msg "Proceeding to ${command} all certificates in '${path}'..."
     fi
 
     if [[ -d "${path}" ]]
@@ -486,6 +486,7 @@ function tp_cert_handle_multiple {
 
         for file in "${multiple_files[@]}"
         do
+            echo
             "tp_cert_${command}" "${file}" "$@"
         done
     else
