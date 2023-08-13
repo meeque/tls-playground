@@ -167,61 +167,66 @@ function tp_cert {
 
 function tp_cert_handle_multiple {
     local command="$1"
-    local path="$2"
-    shift
-    shift || true
 
-    if [[ -z "${path}" ]]
+    if (( $# <= 1 ))
     then
-        local path="${tp_base_dir}/cert"
-        tp_msg "No certificate specified. Proceeding to ${command} all TP sample certificates in '${path}'..."
-    elif [[ "${path}" =~ ^(good|bad|ugly)(/[^/]*)?$ ]]
-    then
-        local path="${tp_base_dir}/cert/${path}"
-        if [[ -d "${path}" ]]
+        local default_arg="${tp_base_dir}/cert"
+        tp_msg "No certificate specified. Proceeding to ${command} all TP sample certificates in '${default_arg}'..."
+        tp_cert_handle_multiple "${command}" "${default_arg}"
+        return
+    fi
+
+    local files_to_handle=()
+    while shift
+    do
+        local arg="$1"
+        if [[ "${arg}" =~ ^(good|bad|ugly)(/[^/]*)?$ ]]
         then
-            tp_msg "Proceeding to ${command} TP sample certificates in '${path}'..."
-        else
-            tp_msg "Proceeding to ${command} TP sample certificate at '${path}'..."
+            local arg="${tp_base_dir}/cert/${arg}"
+            if [[ -d "${arg}" ]]
+            then
+                tp_msg "Proceeding to ${command} TP sample certificates in '${arg}'..."
+            else
+                tp_msg "Proceeding to ${command} TP sample certificate at '${arg}'..."
+            fi
+        elif [[ -d "${arg}" ]]
+        then
+            tp_msg "Proceeding to ${command} all certificates in '${arg}'..."
         fi
-    elif [[ -d "${path}" ]]
-    then
-        tp_msg "Proceeding to ${command} all certificates in '${path}'..."
-    fi
 
-    if [[ -d "${path}" ]]
-    then
-        local multiple_files=()
-        case "${command}" in
-            'init' )
-                local multiple_files=( $( find "${path}" -type f -and -name '*.cert.conf.tmpl' | sort ) )
-                ;;
-            'show' | 'fingerprint' )
-                local multiple_files=( $( find "${path}" -type f -and '(' -name '*.cert.pem' -or -name '*.csr.pem' ')' | sort ) )
-                ;;
-            'request' | 'selfsign' )
-                local multiple_files=( $( find "${path}" -type f -and -name '*.cert.conf' | sort ) )
-                ;;
-            'pkcs8' )
-                local multiple_files=( $( find "${path}" -type f -and -name '*.key.pem' | sort ) )
-                ;;
-            'pkcs12' )
-                local multiple_files=( $( find "${path}" -type f -and -name '*.cert.pem' | sort ) )
-                ;;
-            'clean' )
-                local multiple_files=( $( find "${path}" -type f -and -name '*.cert.conf' | sort ) )
-                # TODO also cert clean files when there's only a *.cert.conf.tmpl file? or any file related to a cert according to tp naming conventions?
-                ;;
-        esac
+        if [[ -d "${arg}" ]]
+        then
+            case "${command}" in
+                'init' )
+                    local files_to_handle+=( $( find "${arg}" -type f -and -name '*.cert.conf.tmpl' | sort ) )
+                    ;;
+                'show' | 'fingerprint' )
+                    local files_to_handle+=( $( find "${arg}" -type f -and '(' -name '*.cert.pem' -or -name '*.csr.pem' ')' | sort ) )
+                    ;;
+                'request' | 'selfsign' )
+                    local files_to_handle+=( $( find "${arg}" -type f -and -name '*.cert.conf' | sort ) )
+                    ;;
+                'pkcs8' )
+                    local files_to_handle+=( $( find "${arg}" -type f -and -name '*.key.pem' | sort ) )
+                    ;;
+                'pkcs12' )
+                    local files_to_handle+=( $( find "${arg}" -type f -and -name '*.cert.pem' | sort ) )
+                    ;;
+                'clean' )
+                    local files_to_handle=( $( find "${arg}" -type f -and -name '*.cert.conf' | sort ) )
+                    # TODO also cert clean files when there's only a *.cert.conf.tmpl file? or any file related to a cert according to tp naming conventions?
+                    ;;
+            esac
+        else
+            local files_to_handle+="${arg}"
+        fi
+    done
 
-        for file in "${multiple_files[@]}"
-        do
-            echo
-            "tp_cert_${command}" "${file}" "$@"
-        done
-    else
-        "tp_cert_${command}" "${path}" "$@"
-    fi
+    for file in "${files_to_handle[@]}"
+    do
+        echo
+        "tp_cert_${command}" "${file}" "$@"
+    done
 }
 
 function tp_cert_init {
