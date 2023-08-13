@@ -1152,7 +1152,7 @@ function tp_server_clean {
 
     tp_msg "Cleaning transient files of demo server '${server_name}'..."
     tp_server_nginx_clean "${server_dir}"
-    tp_cert_handle_multiple clean "${server_dir}"
+    tp_cert clean "${server_dir}"
     tp_util_run_hook "${server_dir}/tp-clean-hook.sh" "clean hook for server '${server_name}'" "$@"
 }
 
@@ -1254,11 +1254,10 @@ function tp_server_list {
 
 function tp_clean {
     tp_msg "Cleaning up everything..."
-    # TODO also clean demo clients
-    tp_server_clean
-    tp_acme_clean
-    tp_ca_clean
-    tp_cert_handle_multiple clean
+    tp_server clean
+    tp_acme clean
+    tp_ca clean
+    tp_cert clean
 }
 
 
