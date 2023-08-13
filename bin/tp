@@ -470,13 +470,17 @@ function tp_cert_handle_multiple {
             'init' )
                 local multiple_files=( $( find "${path}" -type f -and -name '*.cert.conf.tmpl' | sort ) )
                 ;;
-            'show' | 'fingerprint' | 'pkcs8' | 'pkcs12' )
-                local multiple_files=( $( find "${path}" -type f -and -name '*.cert.pem' | sort ) )
-                # TODO tp_cert_pkcs8 expects the private .key.pem file instead! adjust here or there?
+            'show' | 'fingerprint' )
+                local multiple_files=( $( find "${path}" -type f -and '(' -name '*.cert.pem' -or -name '*.csr.pem' ')' | sort ) )
                 ;;
             'request' | 'selfsign' )
                 local multiple_files=( $( find "${path}" -type f -and -name '*.cert.conf' | sort ) )
-                # TODO also .csr.pem? or handle this tp_cert_request and tp_cert_selfsign?
+                ;;
+            'pkcs8' )
+                local multiple_files=( $( find "${path}" -type f -and -name '*.key.pem' | sort ) )
+                ;;
+            'pkcs12' )
+                local multiple_files=( $( find "${path}" -type f -and -name '*.cert.pem' | sort ) )
                 ;;
             'clean' )
                 local multiple_files=( $( find "${path}" -type f -and -name '*.cert.conf' | sort ) )
