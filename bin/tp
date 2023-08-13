@@ -165,6 +165,65 @@ function tp_cert {
     esac
 }
 
+function tp_cert_handle_multiple {
+    local command="$1"
+    local path="$2"
+    shift
+    shift || true
+
+    if [[ -z "${path}" ]]
+    then
+        local path="${tp_base_dir}/cert"
+        tp_msg "No certificate specified. Proceeding to ${command} all TP sample certificates in '${path}'..."
+    elif [[ "${path}" =~ ^(good|bad|ugly)(/[^/]*)?$ ]]
+    then
+        local path="${tp_base_dir}/cert/${path}"
+        if [[ -d "${path}" ]]
+        then
+            tp_msg "Proceeding to ${command} TP sample certificates in '${path}'..."
+        else
+            tp_msg "Proceeding to ${command} TP sample certificate at '${path}'..."
+        fi
+    elif [[ -d "${path}" ]]
+    then
+        tp_msg "Proceeding to ${command} all certificates in '${path}'..."
+    fi
+
+    if [[ -d "${path}" ]]
+    then
+        local multiple_files=()
+        case "${command}" in
+            'init' )
+                local multiple_files=( $( find "${path}" -type f -and -name '*.cert.conf.tmpl' | sort ) )
+                ;;
+            'show' | 'fingerprint' )
+                local multiple_files=( $( find "${path}" -type f -and '(' -name '*.cert.pem' -or -name '*.csr.pem' ')' | sort ) )
+                ;;
+            'request' | 'selfsign' )
+                local multiple_files=( $( find "${path}" -type f -and -name '*.cert.conf' | sort ) )
+                ;;
+            'pkcs8' )
+                local multiple_files=( $( find "${path}" -type f -and -name '*.key.pem' | sort ) )
+                ;;
+            'pkcs12' )
+                local multiple_files=( $( find "${path}" -type f -and -name '*.cert.pem' | sort ) )
+                ;;
+            'clean' )
+                local multiple_files=( $( find "${path}" -type f -and -name '*.cert.conf' | sort ) )
+                # TODO also cert clean files when there's only a *.cert.conf.tmpl file? or any file related to a cert according to tp naming conventions?
+                ;;
+        esac
+
+        for file in "${multiple_files[@]}"
+        do
+            echo
+            "tp_cert_${command}" "${file}" "$@"
+        done
+    else
+        "tp_cert_${command}" "${path}" "$@"
+    fi
+}
+
 function tp_cert_init {
     local cert_config="$1"
     local cert_config="$1"
@@ -437,65 +496,6 @@ function tp_cert_check_env {
 
     [[ "${TP_SERVER_DOMAIN}" =~ ^([-a-zA-Z0-9]+[.])*[-a-zA-Z0-9]+$ ]] \
         || { tp_err "Variable TP_SERVER_DOMAIN with value '${TP_SERVER_DOMAIN}' does not look like a DNS domain name!"; return 1; }
-}
-
-function tp_cert_handle_multiple {
-    local command="$1"
-    local path="$2"
-    shift
-    shift || true
-
-    if [[ -z "${path}" ]]
-    then
-        local path="${tp_base_dir}/cert"
-        tp_msg "No certificate specified. Proceeding to ${command} all TP sample certificates in '${path}'..."
-    elif [[ "${path}" =~ ^(good|bad|ugly)(/[^/]*)?$ ]]
-    then
-        local path="${tp_base_dir}/cert/${path}"
-        if [[ -d "${path}" ]]
-        then
-            tp_msg "Proceeding to ${command} TP sample certificates in '${path}'..."
-        else
-            tp_msg "Proceeding to ${command} TP sample certificate at '${path}'..."
-        fi
-    elif [[ -d "${path}" ]]
-    then
-        tp_msg "Proceeding to ${command} all certificates in '${path}'..."
-    fi
-
-    if [[ -d "${path}" ]]
-    then
-        local multiple_files=()
-        case "${command}" in
-            'init' )
-                local multiple_files=( $( find "${path}" -type f -and -name '*.cert.conf.tmpl' | sort ) )
-                ;;
-            'show' | 'fingerprint' )
-                local multiple_files=( $( find "${path}" -type f -and '(' -name '*.cert.pem' -or -name '*.csr.pem' ')' | sort ) )
-                ;;
-            'request' | 'selfsign' )
-                local multiple_files=( $( find "${path}" -type f -and -name '*.cert.conf' | sort ) )
-                ;;
-            'pkcs8' )
-                local multiple_files=( $( find "${path}" -type f -and -name '*.key.pem' | sort ) )
-                ;;
-            'pkcs12' )
-                local multiple_files=( $( find "${path}" -type f -and -name '*.cert.pem' | sort ) )
-                ;;
-            'clean' )
-                local multiple_files=( $( find "${path}" -type f -and -name '*.cert.conf' | sort ) )
-                # TODO also cert clean files when there's only a *.cert.conf.tmpl file? or any file related to a cert according to tp naming conventions?
-                ;;
-        esac
-
-        for file in "${multiple_files[@]}"
-        do
-            echo
-            "tp_cert_${command}" "${file}" "$@"
-        done
-    else
-        "tp_cert_${command}" "${path}" "$@"
-    fi
 }
 
 function tp_cert_link {
