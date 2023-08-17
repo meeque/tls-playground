@@ -153,7 +153,7 @@ function tp_cert {
     local command="$1"
     shift || true
 
-    tp_help_if_needed "${tp_base_dir}/cert/README.md" || return 0
+    tp_help_if_needed "${tp_base_dir}/cert/README.md" 2 || return 0
 
     case "${command}" in
         'init' | 'show' | 'fingerprint' | 'request' | 'selfsign' | 'pkcs8' | 'pkcs12' | 'clean' )
@@ -1258,6 +1258,7 @@ function tp_server_list {
 # TP clean command
 
 function tp_clean {
+    # TODO Fix --help option for the clean command
     tp_msg "Cleaning up everything..."
     tp_server clean
     tp_acme clean
