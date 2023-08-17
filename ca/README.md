@@ -76,7 +76,7 @@ server/nginx-simple/tls/server.chain.pem -> ../../../ca/ca4servers/archive/91F57
 server/nginx-simple/tls/server.fullchain.pem -> ../../../ca/ca4servers/archive/91F5716800000001.fullchain.pem
 ```
 
-Note that the `91F5716800000001` in the filenames is is a serial number of the newly signed certificate.
+Note that the `91F5716800000001` in the filenames is the serial number of the newly signed certificate.
 The TP demo CAs will increase this serial number for each certificate that they sign.
 
 Also note that symlink will delete any files with the same name that have previously existed.
