@@ -17,8 +17,9 @@ These will print infos about what's going on, in particular the relevant *OpenSS
 ### Creating Certificate Signing Requests (CSR)
 
 The main purpose of the TP certificate utilities is creating Certificate Signing Requests (CSR, colloquially request or just req).
-These CSRs can then be signed by a Certificate Authority (CA).
-More formally, a CA will create an *X.509* cert that contains data from the CSR and sign this cert with its own private key.
+This can be done with the `tp cert request` command.
+The resulting CSRs can then be signed by a Certificate Authority (CA), or can be self-signed, as described in the next section.
+
 Data contained in a CSR includes:
 
 * Information about the "subject" of the desired cert, e.g. the DNS name of a server.
@@ -51,7 +52,7 @@ This is considered best-practice, though reusing the same key pair for multiple 
 Finally, here is how to generate a CSR based on one of the CSR config files that come with TP:
 
 ```
-tp cert sign server/nginx-simple/tls/server.cert.conf
+tp cert request server/nginx-simple/tls/server.cert.conf
 ```
 
 Based on the `server.cert.conf` file (and the `server.key.params.pem`) right next to it, this generates the following files:
@@ -62,15 +63,57 @@ server/nginx-simple/tls/private/server.key.pem
 server/nginx-simple/tls/private/server.key.pass.txt
 ```
 
+In the above example, `server.key.pass.txt` contains an encryption-at-rest passphrase that protects the private key file.
+This is a copy of the `${TP_PASS}` env-var at the time the key has been generated.
+Obviously, any software (e.g. a web server) that wants to make use of the certificate needs to have access to both the private key itself and its passphrase.
+Nevertheless, it is good practice to encrypt private keys with a strong passphrase.
+This gives some protection in case the private key file gets exposed by accident, but only if the passphrase remains confidential.
+
 ### Self-Signing Certificates
 
-TODO explain purpuse of self-signed certs and their legitimacy
+A CSR is just a means to an end, what we actually want is an X.509 certificate.
+The easiest way to create a cert from a CSR is self-signing, using the `tp cert selfsign` command.
+For other cert signing options, see the [TP Demo CAs](../ca/README.md) and the [TP ACME Utilities](../acme/README.md).
 
-TODO explain that this can take either a config file or an existing CSR as input
+At first, the notion of self-signing may seem odd.
+It does not involve any Certificate Authority (CA) that would verify the claims that the CSR (and the resulting cert) makes.
+It's like giving yourself a medal.
+However, self-signed certificates do have legitimate use-cases, in particular in smaller, closed scenarios.
+In such scenarios, it is possible to distribute certs (or their fingerprints) to all systems that need to validate them.
+If done through a secure, out-of-band channel, usage of self-signed certs for TLS can be perfectly secure.
 
-TODO show example command and resulting files
+To create a self-signed cert from an existing CSR, run the following:
 
-### Introspecting CSRs
+```
+tp cert selfsign server/nginx-simple/tls/server.csr.pem
+```
+
+This command will use TP file naming conventions to find a matching private key file (`.key.pem`) and key passphrase file (`.key.pass.txt`).
+A private key is necessary to create a digital signature over the contents of the new cert.
+For self-signed certificates, this is (by definition) the private key that matches the public key in the CSR and in the resulting cert.
+
+For convenience, TP certificate utilities allow you to create a CSR and a self-signed certificate through a single command.
+Simply pass an OpenSSL CSR config file to the command, instead of an existing CSR:
+
+```
+tp cert selfsign server/nginx-simple/tls/server.cert.conf
+```
+
+This invokes `tp cert request` (see previous section) under the hood and then uses the resulting CSR and private key to create a self-signed cert.
+In the end, both of the above examples will create the following new files:
+
+```
+server/nginx-simple/tls/server.cert.pem
+server/nginx-simple/tls/server.chain.pem
+server/nginx-simple/tls/server.fullchain.pem
+```
+
+The new certificate itself will be in the `.cert.pem` file.
+The other two files are chain files that can be useful for configuring TLS servers or clients to use the certificate.
+However, for self-signed certificates have a fixed cert chain length of one.
+Therefore, the above example creates an empty `.chain.pem` file and a `fullchain.pem` file that only contains the self-signed cert itself.
+
+### Inspecting Certificates and Related Files
 
 To display CSR contents in text form:
 
@@ -79,8 +122,6 @@ To display CSR contents in text form:
 To verify a CSR:
 
     openssl req -in client-generic/tls/client1-csr.pem -noout -verify
-
-### Introspecting Certificates
 
 To display certificate contents in text form:
 
@@ -98,7 +139,7 @@ To verify a certificate against a custom CA certificate:
 
 ### Sample Certificates
 
-
+TODO
 
 ## TP Certificate Commands Reference
 
@@ -109,11 +150,11 @@ Usage:     tp [<global options>] cert <command> <file> [<file> ...]
 
 Available Commands:
 
-  init         Initialize cert config files, where necessary.
+  init         Initialize a cert config <file>, where necessary.
 
   show         Show contents of a cert, CSR, or key <file> in human-readable form.
 
-  fingerprint  Calculate fingerprint of a cert, CSR, or key <file>.
+  fingerprint  Calculate a cryptographic checksum (a.k.a. fingerprint) of a cert, CSR, or key <file>.
 
   request      Create a key-pair and a CSR based on a config <file>.
 
