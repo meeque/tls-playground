@@ -32,7 +32,7 @@ tp ca init
 
 The most important step in CA initialization is the creation of a **CA root certificate**.
 As with other TP certificates, initialization creates the CA root certificate based on an `openssl req` configuration file.
-This works the same way as running `tp cert sign`.
+This works the same way as running `tp cert selfsign`.
 
 Note that this creates a **self-signed certificate**, which is the standard for both public and private CAs.
 However, a couple of things distinguish CA root certificates from self-signed certificates that you would use for a server:
