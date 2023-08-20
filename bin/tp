@@ -198,39 +198,39 @@ function tp_cert_handle_multiple {
         then
             case "${command}" in
                 'init' )
-                    local files_to_handle+=( $( find "${arg}" -type f -and -name '*.cert.conf.tmpl' | sort ) )
+                    files_to_handle+=( $( find "${arg}" -type f -and -name '*.cert.conf.tmpl' | sort ) )
                     ;;
                 'show' | 'fingerprint' )
-                    local files_to_handle+=( $( find "${arg}" -type f -and '(' -name '*.cert.pem' -or -name '*.csr.pem' ')' | sort ) )
+                    files_to_handle+=( $( find "${arg}" -type f -and '(' -name '*.cert.pem' -or -name '*.csr.pem' ')' | sort ) )
                     ;;
                 'request' | 'selfsign' )
-                    local files_to_handle+=( $( find "${arg}" -type f -and -name '*.cert.conf' | sort ) )
+                    files_to_handle+=( $( find "${arg}" -type f -and -name '*.cert.conf' | sort ) )
                     ;;
                 'pkcs8' )
-                    local files_to_handle+=( $( find "${arg}" -type f -and -name '*.key.pem' | sort ) )
+                    files_to_handle+=( $( find "${arg}" -type f -and -name '*.key.pem' | sort ) )
                     ;;
                 'pkcs12' )
-                    local files_to_handle+=( $( find "${arg}" -type f -and -name '*.cert.pem' | sort ) )
+                    files_to_handle+=( $( find "${arg}" -type f -and -name '*.cert.pem' | sort ) )
                     ;;
                 'clean' )
-                    local files_to_handle=( $( find "${arg}" -type f -and -name '*.cert.conf' | sort ) )
+                    files_to_handle+=( $( find "${arg}" -type f -and -name '*.cert.conf' | sort ) )
                     # TODO also cert clean files when there's only a *.cert.conf.tmpl file? or any file related to a cert according to tp naming conventions?
                     ;;
             esac
-        else
-            local files_to_handle+="${arg}"
+        elif [[ -n "${arg}" ]]
+        then
+            files_to_handle+=( "${arg}" )
         fi
     done
 
     for file in "${files_to_handle[@]}"
     do
         echo
-        "tp_cert_${command}" "${file}" "$@"
+        "tp_cert_${command}" "${file}"
     done
 }
 
 function tp_cert_init {
-    local cert_config="$1"
     local cert_config="$1"
 
     tp_util_files 'files' "${cert_config}"
@@ -263,6 +263,7 @@ function tp_cert_show {
                 openssl req -in "${file}" -noout -text
             ;;
         'key.pem' )
+            # TODO Add support for other key type, not just RSA
             tp_msg "Showing contents of private key in '${file}'..."
             tp_util_run \
                 openssl rsa -in "${file}" -passin "file:${files[key_pass_path]}" -noout -text
@@ -283,6 +284,8 @@ function tp_cert_show {
             ;;
     esac
 }
+
+# TODO Add support fingerprints with other hash functions
 
 function tp_cert_fingerprint {
     local file="$1"
@@ -314,6 +317,10 @@ function tp_cert_fingerprint {
             ;;
     esac
 }
+
+# TODO Add a verify command for CSRs and certs (and maybe other files)
+#openssl req -in example.csr.pem -noout -verify
+#openssl verify -CAfile ca-root.cert.pem example.cert.pem
 
 function tp_cert_request {
     local cert_config="$1"
