@@ -115,27 +115,22 @@ Therefore, the above example creates an empty `.chain.pem` file and a `fullchain
 
 ### Inspecting Certificates and Related Files
 
-To display CSR contents in text form:
+The above commands show a textual version of the CSR respectively the cert after creating it.
+They also show a cryptographic checksum (a.k.a. fingerprint) of the cert.
 
-    openssl req -in client-generic/tls/client1-csr.pem -noout -text
+You can also show file contents later, by using the `tp cert show` command.
+Just like other TP commands, this will determine how to show the file based on TP file naming conventions.
+The following command shows the contents of both the CSR and the cert created in the previous sections:
 
-To verify a CSR:
+```
+tp cert show server/nginx-simple/tls/server.csr.pem server/nginx-simple/tls/server.cert.pem
+```
 
-    openssl req -in client-generic/tls/client1-csr.pem -noout -verify
+Similarly you can show the fingerprint of the cert with this command:
 
-To display certificate contents in text form:
-
-    openssl x509 -in path/to/foo-cert.pem -noout -text
-
-To print certificate fingerprints using various hash functions:
-
-    openssl x509 -in path/to/foo-cert.pem -noout -fingerprint -md5
-    openssl x509 -in path/to/foo-cert.pem -noout -fingerprint -sha1
-    openssl x509 -in path/to/foo-cert.pem -noout -fingerprint -sha256
-
-To verify a certificate against a custom CA certificate:
-
-    openssl verify -CAfile path/to/ca-cert.pem path/to/foo-cert.pem
+```
+tp cert fingerprint server/nginx-simple/tls/server.cert.pem
+```
 
 ### Sample Certificates
 
