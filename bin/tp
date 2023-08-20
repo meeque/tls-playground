@@ -361,7 +361,9 @@ function tp_cert_request {
     tp_succ "New private key in '${files[key_pem_path]}'."
     tp_succ "Pass-phrase for new private key in '${files[key_pass_path]}'."
     tp_succ "New CSR in '${files[csr_pem_path]}'."
-    # TODO print csr contents as text?
+
+    echo
+    tp_cert_show "${files[csr_pem_path]}"
 }
 
 function tp_cert_request_if_missing {
