@@ -134,18 +134,50 @@ Just like other TP commands, this will determine how to show the file based on T
 The following command shows the contents of both the CSR and the certificate created in the previous sections:
 
 ```
-tp cert show cert/good/rsa-4096.cert.pem
+tp cert show good/rsa-4096.cert.pem
 ```
 
 Similarly you can show the fingerprint of the cert with this command:
 
 ```
-tp cert fingerprint cert/good/rsa-4096.cert.pem
+tp cert fingerprint good/rsa-4096.cert.pem
 ```
 
 ### Sample Certificates
 
-TODO
+The above examples made use of one of the sample certificates that comes with the TP certificate utilities.
+Well, more precisely it's CSR config files that can be used to generate CSRs and certificates.
+They come in the following sample sets:
+
+* **Good:** Demonstrate current best practices and could be used similarly for noneducational purposes.
+* **Bad:** Are cryptographically weak, e.g. because they use short key pairs or weak message digest algorithms.
+  OpenSSL will refuse work with some of these CSR config files that specify particularly short keys.
+* **Ugly:** Certificates that are cryptographically strong, but unsuited for practical use as TLS server certificates.
+  E.g. they contain *Subject* common names (CN) with unsuited domain names.
+  Public CAs or web-browsers would likely reject resulting CSRs or certificates respectively.
+
+You can run `tp cert` commands on all certificates in one of these sets by simply specifying the name of the set.
+E.g. try one of these:
+
+```
+tp cert selfsign good
+tp cert selfsign bad
+tp cert selfsign ugly
+```
+
+You can also run `tp cert` commands on individual certs from these sets, e.g. like so:
+
+```
+tp cert selfsign good/ecdsa-brainpoolP320r1.cert.conf
+tp cert selfsign bad/rsa-short-key-1337.cert.conf
+tp cert selfsign ugly/domain-wildcard-public-suffix.cert.conf
+```
+
+Note that all of the examples in this section and previous sections use a shorthand notation that only works for sample certificates.
+Any certificate related files whose path starts with `good`, `bad`, or `ugly` will be interpreted relative to `${tp_base_dir}/cert`, which is the base directory of the TP certificate utilities.
+All other relative paths will be interpreted relative to the current working directory.
+
+
 
 ## TP Certificate Commands Reference
 
