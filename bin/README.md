@@ -153,7 +153,7 @@ TP prefers *PEM* over *DER* whenever possible.
 
 
 
-## TP Command Reference
+## TP Commands Reference
 
 ```
 Summary:   TLS Playground CLI
