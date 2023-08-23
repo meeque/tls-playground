@@ -124,7 +124,7 @@ function tp_main_env_defaults {
     TP_SERVER_LISTEN_ADDRESS="${TP_SERVER_LISTEN_ADDRESS:=127.0.0.1}"
     TP_SERVER_HTTP_PORT="${TP_SERVER_HTTP_PORT:=8080}"
     TP_SERVER_HTTPS_PORT="${TP_SERVER_HTTPS_PORT:=8443}"
-    TP_ACME_SERVER_URL="${TP_ACME_SERVER_URL:=https://acme-staging-v02.api.letsencrypt.org/directory}"
+    TP_ACME_SERVER_URL="${TP_ACME_SERVER_URL:=lets-encrypt-staging}"
     TP_ACME_ACCOUNT_EMAIL="${TP_ACME_ACCOUNT_EMAIL:=webmaster@tls-playground.example}"
 }
 
@@ -1039,10 +1039,34 @@ function tp_acme_clean {
 function tp_acme_check_env {
     local status=0
 
-    [[ "${TP_ACME_SERVER_URL}" =~ ^https:[/][/]([-a-zA-Z0-9]+[.])*[-a-zA-Z0-9]+(:[0-9]{1,5})?([/][-a-zA-Z0-9.+*_~]*)*$ ]] \
-        || { status=1; tp_err "Variable TP_ACME_SERVER_URL with value '${TP_ACME_SERVER_URL}' does not look like an absolute https url! Please note that user-info, query string, fragment, or exotic path characters are not allowed here!"; }
-    [[ "${TP_ACME_ACCOUNT_EMAIL}" =~ ^[-a-zA-Z0-9._%+]+@([-a-zA-Z0-9]+[.])*[-a-zA-Z0-9]+$ ]] \
-        || { status=1; tp_err "Variable TP_ACME_ACCOUNT_EMAIL with value '${TP_ACME_ACCOUNT_EMAIL}' does not look like an email address!"; }
+    # resolve presets
+    if [[ "${TP_ACME_SERVER_URL}" =~ ^[-a-zA-Z0-9]+$ ]]
+    then
+        case "${TP_ACME_SERVER_URL}" in
+            'le' | 'letsencrypt' | 'lets-encrypt' )
+                TP_ACME_SERVER_URL='https://acme-v02.api.letsencrypt.org/directory'
+                ;;
+            'les' | 'letsencryptstaging' | 'lets-encrypt-staging' )
+                TP_ACME_SERVER_URL='https://acme-staging-v02.api.letsencrypt.org/directory'
+                ;;
+            * )
+                status=1
+                tp_err "Variable TP_ACME_SERVER_URL with value '${TP_ACME_SERVER_URL}' is neither an https url nor a valid preset!"
+                tp_msg "Run 'tp --help env' to a learn more about TP_ACME_SERVER_URL and supported presets."
+                ;;
+        esac
+    elif [[ ! "${TP_ACME_SERVER_URL}" =~ ^https:[/][/]([-a-zA-Z0-9]+[.])*[-a-zA-Z0-9]+(:[0-9]{1,5})?([/][-a-zA-Z0-9.+*_~]*)*$ ]]
+    then
+        status=1
+        tp_err "Variable TP_ACME_SERVER_URL with value '${TP_ACME_SERVER_URL}' does not look like an absolute https url! Please note that user-info, query string, fragment, or exotic path characters are not allowed here!"
+        tp_msg "Run 'tp --help env' to a learn more about TP_ACME_SERVER_URL."
+    fi
+
+    if [[ ! "${TP_ACME_ACCOUNT_EMAIL}" =~ ^[-a-zA-Z0-9._%+]+@([-a-zA-Z0-9]+[.])*[-a-zA-Z0-9]+$ ]]
+    then
+        status=1
+        tp_err "Variable TP_ACME_ACCOUNT_EMAIL with value '${TP_ACME_ACCOUNT_EMAIL}' does not look like an email address!"
+    fi
 
     return "${status}"
 }

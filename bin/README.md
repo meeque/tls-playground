@@ -223,8 +223,13 @@ Global options:
             https default port, 443, or establish some sort of port forwarding.
 
   TP_ACME_SERVER_URL
-            Use this http base URL to contact the ACME server.
-            Defaults to a URL that represents Let's Encrypt Staging.
+            Use this base URL to contact the ACME server.
+            Must be a formally valid https URL, or one of the following presets:
+              - le, letsencrypt, lets-encrypt:
+                -> https://acme-v02.api.letsencrypt.org/directory
+              - les, letsencryptstaging, lets-encrypt-staging:
+                -> https://acme-staging-v02.api.letsencrypt.org/directory
+            Defaults to lets-encrypt-staging.
             Note that consecutive TP ACME commands may not work as expected,
             if you change this URL in-between.
 
