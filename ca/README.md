@@ -1,6 +1,6 @@
 # TLS Playground Demo CAs
 
-This TLS Playground CA module implements opinionated, easy to use, but incomplete private Certificate Authorities (CAs).
+This TLS Playground module implements opinionated, easy to use, but incomplete private Certificate Authorities (CAs).
 You can use these CAs to sign and issue new certificates, either directly or through one of the other CA modules that make use of it.
 
 The demo CAs can be controlled through the `tp ca` command of the TP CLI.

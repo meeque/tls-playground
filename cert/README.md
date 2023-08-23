@@ -12,7 +12,7 @@ Observe the outputs of the TP CLI to find out how it makes use of `openssl`.
 
 You may never need to use the TP certificates utilities explicitly.
 Other TP modules make heavy use of this module under the hood.
-These will print infos about what's going on, in particular the relevant *OpenSSL* commands.
+These will print infos about what's going on, in particular the relevant `openssl` commands.
 
 ### Initializing Sample Certificates
 

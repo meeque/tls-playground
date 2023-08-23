@@ -1,11 +1,10 @@
 # TLS Playground Demo Servers
 
-This TLS Playground component provides demo web-servers that makes use of
-TLS server certificates.
+This TLS Playground module provides demo web-servers that make use of TLS server certificates.
 
 
 
-## `server` Commands Summary
+## TP Server Commands Reference
 
 ```
 Summary:    Control TLS Playground Demo Servers
