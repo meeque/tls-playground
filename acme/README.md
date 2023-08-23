@@ -1,6 +1,47 @@
-# TLS Playground ACME Utiliies
+# TLS Playground ACME Utilities
 
-This TLS Playground module implements certificate management through the ACME protocol using `certbot`. ACME allows you to obtain domain-validated server certificates from a public CA, like [Let's Encrypt](https://letsencrypt.org/).
+This TLS Playground module implements certificate management through the [ACME](https://www.rfc-editor.org/rfc/rfc8555.html) protocol.
+ACME allows you to obtain domain-validated server certificates from a public CA, like [Let's Encrypt](https://letsencrypt.org/).
+Let's Encrypt and the ACME protocol have enabled widespread TLS adoption by offering X.509 certificates at no financial cost and by automating the process of obtaining and revoking certificates.
+
+Like a classic CA, an ACME CA performs **validation of domain ownership** based on single-use security tokens.
+The CA asks the domain owner to deploy to a token in a designated location on an HTTP web server running on the domain or in the domain's DNS entries.
+This has been a well established approach even before ACME.
+But the standardization and automation that ACME offers makes it easy to obtain new certificates at scale.
+This allows CAs to issue shorter-lived certificates, which makes compromise of a certificate's private key less catastrophic.
+It also allows domain owners to design their domain and sub-domain layout without paying to much attention to the hassle of manual certificate management.
+This can be beneficial for security at large, because it allows to make better use of web browsers' same-origin-policy.
+
+The TP ACME Utilities can be controlled through the `tp acme` command of the TP CLI.
+Most of the functionality is implemented by invoking commands of the [Certbot](https://certbot.eff.org/) CLI tool, which implements an ACME client.
+Observe the outputs of the TP CLI to find out how it makes use of `certbot`.
+
+
+
+## ACME Utilities Usage
+
+
+TODO Document that ACME requires a web server on the public internet with a public DNS record.
+
+TODO Document certbot deviations from TP file naming conventions.
+
+### Initializing ACME Utilities
+
+TODO How to configure an ACME server (prod/stage)
+
+### ACME Account Management
+
+### Controlling ACME http-01 Challenge Server
+
+TODO document lack of suppport for dns-01 challanges, and possible impact on wildcard certificates
+
+TODO document manual challenge solving
+
+### Signing a certificate with ACME
+
+TODO document domain based vs. custom CSR
+
+### Revoking a certificate with ACME
 
 
 
