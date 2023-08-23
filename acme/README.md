@@ -20,14 +20,36 @@ Observe the outputs of the TP CLI to find out how it makes use of `certbot`.
 
 ## ACME Utilities Usage
 
+To make full use of the TP ACME utilities, you will need a **registered DNS domain** and **administrative access to the corresponding host**.
+The easiest way is running `tp acme` on the host itself (possibly inside a Docker container), in particular, when there is no other server listening to port 80, the standard HTTP port.
 
-TODO Document that ACME requires a web server on the public internet with a public DNS record.
-
-TODO Document certbot deviations from TP file naming conventions.
+If you want to run the TP CLI on a different host, or if port 80 is already taken, you can still use TP ACME utilities.
+It will just need to do some manual interaction, so watch out for the `--manual` flag in the sections below.
 
 ### Initializing ACME Utilities
 
-TODO How to configure an ACME server (prod/stage)
+Before using the TP ACME utilities, you will have to initialize them by running the `init` command.
+This creates necessary directories and `certbot` configuration files.
+Certbot configuration can be customized can be customized using the `${TP_ACME_SERVER_URL}` and `${TP_ACME_ACCOUNT_EMAIL}` environment variables.
+Run `tp --help env` to learn more about these env-vars and their defaults.
+Then run the following to initialize the TP ACME utilities:
+
+```
+tp acme init
+```
+
+Note that TP ACME utilities are designed to use a single ACME server at a time.
+When you point `${TP_ACME_SERVER_URL}` to a different ACME server, you will have to run `init` again to make the change effective.
+Most TP ACME utilities functionality should keep working after switching to a new server.
+However, some functionality like certificate renewal or certificate revocation may not work as expected.
+
+It's highly recommended that you first try out TP ACME utilities (or any other ACME client) against a non-production ACME server.
+Such server can be used like any other ACME server, but will not issue certificates that standard TLS clients will accept.
+This is because a non-production servers use different CA root certificates, which OS and browser vendors do not add to their lists of trusted CAs.
+
+By default, TP ACME utilities use the non-production ACME server from the [Let's Encrypt Staging Environment](https://letsencrypt.org/docs/staging-environment/).
+In case of Let's Encrypt, their staging server has another benefit: it enforces more generous quotas on how many certificates you're allowed to request in a day.
+This gives you more room for experimentation, before you switch to a production ACME server.
 
 ### ACME Account Management
 
@@ -40,6 +62,8 @@ TODO document manual challenge solving
 ### Signing a certificate with ACME
 
 TODO document domain based vs. custom CSR
+
+TODO Document certbot deviations from TP file naming conventions.
 
 ### Revoking a certificate with ACME
 
