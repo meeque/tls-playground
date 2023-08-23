@@ -53,6 +53,30 @@ This gives you more room for experimentation, before you switch to a production 
 
 ### ACME Account Management
 
+Most ACME operations are bound to an account that an ACME client maintains with an ACME server.
+However, account self-registration is possible and `certbot` takes care of it automatically.
+It will simply create a new account key-pair and register a new account when your first request a new certificate from an ACME server.
+That said, you can also register an ACME account explicitly, by running this command:
+
+```
+tp acme account register
+```
+
+All ACME operations that can be done with an existing account, can also be done with a new one.
+However, reusing an account has some benefits.
+Once you've completed domain ownership challenges, the ACME server may store the resulting authorizations with your account and skip further challenges.
+E.g., [Let's Encrypt caches these authorizations for 30 days](https://letsencrypt.org/docs/faq/#i-successfully-renewed-a-certificate-but-validation-didn-t-happen-this-time-how-is-that-possible).
+An existing account can also be used for revoking certificates that have been issued to the account.
+However, there are other alternative for authorizing certificate revocation through ACME.
+
+Once you don't need an account anymore, you can unregister (i.e. close, deactivate) it through ACME.
+Note that this will not revoke certificates that have been issued to the account.
+Run the following TP CLI command to unregister an ACME account:
+
+```
+tp acme account unregister
+```
+
 ### Controlling ACME http-01 Challenge Server
 
 TODO document lack of suppport for dns-01 challanges, and possible impact on wildcard certificates
@@ -93,7 +117,7 @@ Available commands:
 
   challenges  Control the TP built-in challenges web-server.
             The challenges web-server listens to http (not https) traffic
-            and helps resolving ACME http-01 challenges.
+            and helps completing ACME http-01 challenges.
             (At this time TP does not support other types of challenges, such as
             dns-01.)
             You should start the challenges web-server before calling the sign
@@ -108,10 +132,10 @@ Available commands:
   sign      Use 'certbot' and the ACME protocol to send a <request> to a CA
             and obtain a signed certificate. The CA will issue challenges to
             verify control of the DNS domain names listed in the request.
-            TP and 'certbot' will resolve ACME http-01 challenges automatically.
+            TP and 'certbot' will complete ACME http-01 challenges automatically.
             But you'll have to start the TPbuilt-in challenges web-server
             before invoking the sign command, see above.
-            Alternatively, use the --manual option to resolve challenges
+            Alternatively, use the --manual option to complete challenges
             manually, see below.
 
   renew     Use 'certbot' and the ACME protocol to renew an existing <cert>.
@@ -156,12 +180,12 @@ Options:
             Without this option, let 'certbot' generate an CSR internally.
 
   -m, --manual
-            When running the sign command, manually resolve ACME challenges.
+            When running the sign command, manually complete ACME challenges.
             This can be useful when running TP on a host with with a different
             DNS domain name or with no DNS domain name at all. 'certbot' will
-            print instructions on how to resolve the challenges.
+            print instructions on how to complete the challenges.
             Without this option, 'certbot' will use the TP built-in challenges
-            web-server to resolve challenges. You will need to start the
+            web-server to complete challenges. You will need to start the
             challenges web-server beforehand though, see 'challenges' commands
             above.
 
