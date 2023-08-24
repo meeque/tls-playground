@@ -77,17 +77,60 @@ Run the following TP CLI command to unregister an ACME account:
 tp acme account unregister
 ```
 
-### Controlling ACME http-01 Challenge Server
+### Controlling the ACME http-01 Challenges Server
 
-TODO document lack of suppport for dns-01 challanges, and possible impact on wildcard certificates
+Currently, TP ACME utilities only support `http-01`, not `dns-01` challenges.
+Unfortunately, this means that TP cannot obtain wildcard certificates from Let's Encrypt, because their policies mandate `dns-01` for wildcards.
 
-TODO document manual challenge solving
+While `certbot` provides numerous integrations to automate `http-01` challenges, TP ACME utilities only support the simple [Webroot](https://eff-certbot.readthedocs.io/en/stable/using.html#webroot) integration.
+For this integration, `certbot` will simply drop challenge files into some pre-configured directory in the local file-system.
+It is up to the `certbot` user to ensure that these challenge files are exposed through a webserver so that the ACME server can verify them through HTTP.
+
+The TP ACME utilities expose challenges through a dedicated nginx webserver, which works quite similar to the nginx servers in the [TP Demo Servers](../server/README.md) module.
+While the Demo Servers only accept HTTPS traffic, the Challenges Server only accepts plain HTTP traffic.
+In scenarios where only ACME challenges need to be exposed through plain HTTP, this setup of having separate servers for HTTP and HTTPS can be beneficial.
+This allows a bootstrapping sequence like the following:
+
+1. Start the plain HTTP server for challenges.
+2. Obtain X.509 certificates through ACME.
+3. Install the X.509 certificates and corresponding private keys into the configuration of the HTTPS server.
+4. Start the HTTPS server with all necessary certificates in place.
+
+Before starting the Challenges Server, you can configure it through the `${TP_SERVER_LISTEN_ADDRESS}` and `${TP_SERVER_HTTP_PORT}` environment variables.
+These default to `127.0.0.1` and `8080` respectively.
+You will need to adjust them to listen on your Internet-facing IP address (or `0.0.0.0` to listen on all addresses) and on the standard HTTP port `80`.
+Alternatively, you can setup some sort of port forwarding to the Callenges Server, e.g. when running TP CLI in a Docker container.
+Note that listening to ports below `1000` requires administrative privileges on most Unix systems. 
+
+After changing the above env-vars you will have to initialize TP ACME utilities again, as described in the previous section.
+Then you can start the Challenges Server with this command:
+
+```
+tp acme challenges start
+```
+
+Note that the Challenges Server will accept HTTP requests for all DNS domains that point to its address.
+That's why you can use it to obtain certificates for all the TP Demo Servers and their numerous sub-domains.
+The server will only serve requests to the challenge files and a simple index page.
+It will respond with a generic error page to all other request, mostly with HTTP response status code 404 (Not Found).
+
+The above command starts the Challenges Server in the background, so that you can run other TP commands afterwards.
+For example, you could move on to the next section and start obtaining certificates with ACME.
+Once you do not need the challenges Server anymore, you can stop it with this command:
+
+```
+tp acme challenges start
+```
+
+If you cannot run the TP ACME utilties Challenges Server as documented here, you may still be able to complete ACME challenges manually, see instructions in the next section...
 
 ### Signing a certificate with ACME
 
 TODO document domain based vs. custom CSR
 
 TODO Document certbot deviations from TP file naming conventions.
+
+TODO document manual challenges
 
 ### Revoking a certificate with ACME
 
