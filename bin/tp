@@ -773,6 +773,8 @@ function tp_acme_sign {
 
     # TODO add support for signing multiple certs? similar to 'tp cert selfsign'?
 
+    # TODO allow dns-01 challenges when using --manual mode?
+
     if [[ -n "${tp_acme_certbot_custom_csr}" ]]
     then
         tp_acme_sign_csr "$@"
