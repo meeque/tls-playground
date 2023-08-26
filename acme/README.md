@@ -26,6 +26,8 @@ The easiest way is running `tp acme` on the host itself (possibly inside a Docke
 If you want to run the TP CLI on a different host, or if port 80 is already taken, you can still use TP ACME utilities.
 It will just need to do some manual interaction, so watch out for the `--manual` flag in the sections below.
 
+TODO Explain that TP uses a custom certbot config and data directory within TP iself and does not touch /etc
+
 ### Initializing ACME Utilities
 
 Before using the TP ACME utilities, you will have to initialize them by running the `init` command.
@@ -124,15 +126,68 @@ tp acme challenges start
 
 If you cannot run the TP ACME utilties Challenges Server as documented here, you may still be able to complete ACME challenges manually, see instructions in the next section...
 
-### Signing a certificate with ACME
+### Signing a Certificate with ACME
 
+Once you've come this far, it's time to order your first certificate with ACME.
+In this section we'll use the `ecdsa-brainpoolP320r1` sample certificate from the [TP Certificate Utilities](../cert/README.md) module as an example.
+
+First, you'll have to set `${TP_SERVER_DOMAIN}` environment variable to your public DNS domain and initialize the CSR config file:
+
+```
+tp cert init cert/good/ecdsa-brainpoolP320r1.cert.conf
+```
+
+Note that the resulting CSR config file will actually use a sub-domain of `${TP_SERVER_DOMAIN}`.
+If your DNS zone does not resolve arbitrary sub-domains to the same `A` or `AAAA` record, you may need to adjust the domain name in the CSR config file manually.
+
+Now you can place an new ACME order and obtain a signed certificate from the ACME server with this command:
+
+```
+tp acme sign cert/good/ecdsa-brainpoolP320r1.cert.conf
+```
+
+If your ACME `http-01` Challenges Server is running as per the previous section, the whole process should not take longer than a few seconds.
+Like other TP commands, the TP ACME uilities will show how they invoke the `certbot` CLI tool in order to obtain the certificates.
+The outputs of `certbot` itself will also be visible, so you can follow what's going on.
+Moreover the command will print the locations where the new certificate and related files will be located.
+And it will print a textual representation of the certificate and the certificate fingerprint.
+
+Note that `certbot` has it's own file naming conventions, which are slightly different from [TP Filenames and Extensions](../bin/REDME.md#Filenames-and-Extensions).
+First, `certbot` puts new certificates into an `archive` directory, which will contain subsequent certificates for the same domains.
+`certbot` calls these subsequent certificates a *lineage* and will create an `archive` sub-directory based on the *lineage* name (usually the primary domain name of the certificate).
+Then, `certbot` also maintains a `live` directory for each *lineage* and symlinks the latest certificate (and related files) into it.
+After running the above command, you should be able to see something like the following symlink files:
+
+```
+acme/certbot/conf/live/ecdsa-320.example.tls-playground.example/cert.pem -> ../../archive/ecdsa-320.example.tls-playground.example/cert1.pem
+acme/certbot/conf/live/ecdsa-320.example.tls-playground.example/chain.pem -> ../../archive/ecdsa-320.example.tls-playground.example/chain1.pem
+acme/certbot/conf/live/ecdsa-320.example.tls-playground.example/fullchain.pem -> ../../archive/ecdsa-320.example.tls-playground.example/fullchain1.pem
+acme/certbot/conf/live/ecdsa-320.example.tls-playground.example/privkey.pem -> ../../archive/ecdsa-320.example.tls-playground.example/privkey1.pem
+```
+
+Moreover, TP ACME utilties will create additional symlinks next to the original CSR config file:
+
+```
+cert/good/ecdsa-brainpoolP320r1.cert.pem -> ../../acme/certbot/conf/archive/ecdsa-320.example.tls-playground.example/cert1.pem
+cert/good/ecdsa-brainpoolP320r1.chain.pem -> ../../acme/certbot/conf/archive/ecdsa-320.example.tls-playground.example/chain1.pem
+cert/good/ecdsa-brainpoolP320r1.fullchain.pem -> ../../acme/certbot/conf/archive/ecdsa-320.example.tls-playground.example/fullchain1.pem
+cert/good/private/ecdsa-brainpoolP320r1.key.pem -> ../../../acme/certbot/conf/archive/ecdsa-320.example.tls-playground.example/privkey1.pem
+```
+
+This allows other TP modules to always find certificates and related files in the same locations, following TP file naming conventions.
+No matter whether the certificate has self-signed, signed by a TP demo CA, or signed by an ACME CA.
+For example, you can use the [TP Demo Servers](../server/README.md) with any of these certificates, just specify the respective CLI option when initializing a demo server.
+
+
+### Signing a Custom CSR with ACME
+
+TODO State that certbot does not encrypt private keys.
 TODO document domain based vs. custom CSR
 
-TODO Document certbot deviations from TP file naming conventions.
+### Completing ACME Challenges Manually
 
-TODO document manual challenges
 
-### Revoking a certificate with ACME
+### Revoking a Certificate with ACME
 
 
 
