@@ -178,11 +178,32 @@ This allows other TP modules to always find certificates and related files in th
 No matter whether the certificate has self-signed, signed by a TP demo CA, or signed by an ACME CA.
 For example, you can use the [TP Demo Servers](../server/README.md) with any of these certificates, just specify the respective CLI option when initializing a demo server.
 
-
 ### Signing a Custom CSR with ACME
 
-TODO State that certbot does not encrypt private keys.
-TODO document domain based vs. custom CSR
+When ordering a certificate through ACME, there's still a CSR involved.
+However, most `certbot` users will hardly notice, because `certbot` takes care of generating a key-pair and a CSR under the hood.
+In the example in the previous section, TP does not deal with the CSR either.
+TP just extracts the DNS domain names from the CSR config file and passes them to the `certbot` CLI.
+TP doesn't pass any other certificate-specific configuration (e.g. key parameters) to `certbot`, but relies on the defaults from the `certbot` config file (`acme/certbot/cli.ini`).
+Also note that `certbot` does not encrypt generated private-key files with a passphrase.
+
+This is convenient for most users, who do not want to think too much about such details.
+However, `certbot` offers more control to users who want it - they can simply create a CSR themselves and let `certbot` take it from there.
+This is what TP ACME utilities do, when you use the `--csr` option (which makes use of `certbot`'s own `--csr` option):
+
+```
+tp acme sign --csr cert/good/ecdsa-brainpoolP320r1.cert.conf
+```
+
+When using a custom CSR, `certbot` does not manage certificates and related files in its `archive` directory.
+Therefore, TP keeps its own archive directory for ACME certificates obtained through custom CSRs in `acme/certbot/custom/archive/`.
+Again, TP creates symlinks according to TP file naming conventions next to the CSR config file:
+
+```
+cert/good/ecdsa-brainpoolP320r1.cert.pem -> ../../acme/certbot/custom/archive/00000017.cert.pem
+cert/good/ecdsa-brainpoolP320r1.chain.pem -> ../../acme/certbot/custom/archive/00000001.chain.pem
+cert/good/ecdsa-brainpoolP320r1.fullchain.pem -> ../../acme/certbot/custom/archive/00000001.fullchain.pem
+```
 
 ### Completing ACME Challenges Manually
 
