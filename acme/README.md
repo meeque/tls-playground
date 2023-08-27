@@ -243,6 +243,38 @@ If you web-server violates this principle, you overthink your security concept: 
 
 ### Revoking a Certificate with ACME
 
+The ACME protocol can also be used for revoking certificates, and you should always revoke certificates when their private key leaks.
+To revoke the certificate from the examples in the previous sections, simply run the following command (which will use `certbot` under the hood and print the `certbot` CLI arguments and outputs):
+
+```
+tp acme revoke cert/good/ecdsa-brainpoolP320r1.cert.pem
+```
+
+The ACME server will need to authorize the revocation request, otherwise everyone could revoke everyone else's certificates.
+The ACME standard mandates that [revocation requests must be authorized](https://www.rfc-editor.org/rfc/rfc8555.html#section-7.6) by one of the following:
+
+* The private key corresponding to the public key in the certificate.
+* The private key of the account that issued the certificate.
+* The private key of an account that holds authorizations for all of the identifiers in the certificate.
+
+TP ACME utilities first try the private key of the current ACME account for the target ACME server, then the private key of the certificate.
+If both are absent or invalid, revocation will fail.
+
+Note that revocation may fail for a variety of other reasons, e.g. sending a revocation request to the wrong ACME server.
+In this particular case, change the value of `${TP_ACME_SERVER_URL}`, initialize TP ACME utilities, and try revocation again.
+
+Revocation will also fail for expired certificates and certificates that have already been revoked.
+TP ACME utilities will report this as an error (because `certbot` reports this as an error).
+However, you can consider this a success, because either way the certificate is not valid anymore.
+Read CLI outputs carefully to distinguish between these different kinds of errors!
+
+You should consider to revoking certificates once you do not need them anymore, in particular certificates issued by a production ACME server or a public CA.
+For your convenience, TP ACME utilities offer a command that helps you revoke all certificates issued to TP by the currently configured ACME server:
+
+```
+tp acme revoke all
+```
+
 
 
 ## TP ACME Commands Reference
