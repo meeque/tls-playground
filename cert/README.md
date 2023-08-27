@@ -168,7 +168,7 @@ tp cert selfsign ugly
 You can also run `tp cert` commands on individual certs from these sets, e.g. like so:
 
 ```
-tp cert selfsign good/ecdsa-brainpoolP320r1.cert.conf
+tp cert selfsign good/ecdsa-256.cert.conf
 tp cert selfsign bad/rsa-short-key-1337.cert.conf
 tp cert selfsign ugly/domain-wildcard-public-suffix.cert.conf
 ```

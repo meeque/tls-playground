@@ -130,12 +130,12 @@ If you cannot run the TP ACME utilties Challenges Server as documented here, you
 ### Signing a Certificate with ACME
 
 Once you've come this far, it's time to order your first certificate with ACME.
-In this section we'll use the `ecdsa-brainpoolP320r1` sample certificate from the [TP Certificate Utilities](../cert/README.md) module as an example.
+In this section we'll use the `ecdsa-256` sample certificate from the [TP Certificate Utilities](../cert/README.md) module as an example.
 
 First, you'll have to set `${TP_SERVER_DOMAIN}` environment variable to your public DNS domain and initialize the CSR config file:
 
 ```
-tp cert init cert/good/ecdsa-brainpoolP320r1.cert.conf
+tp cert init cert/good/ecdsa-256.cert.conf
 ```
 
 Note that the resulting CSR config file will actually use a sub-domain of `${TP_SERVER_DOMAIN}`.
@@ -144,7 +144,7 @@ If your DNS zone does not resolve arbitrary sub-domains to the same `A` or `AAAA
 Now you can place an new ACME order and obtain a signed certificate from the ACME server with this command:
 
 ```
-tp acme sign cert/good/ecdsa-brainpoolP320r1.cert.conf
+tp acme sign cert/good/ecdsa-256.cert.conf
 ```
 
 If your ACME `http-01` Challenges Server is running as per the previous section, the whole process should not take longer than a few seconds.
@@ -169,10 +169,10 @@ acme/certbot/conf/live/ecdsa-320.example.tls-playground.example/privkey.pem -> .
 Moreover, TP ACME utilties will create additional symlinks next to the original CSR config file:
 
 ```
-cert/good/ecdsa-brainpoolP320r1.cert.pem -> ../../acme/certbot/conf/archive/ecdsa-320.example.tls-playground.example/cert1.pem
-cert/good/ecdsa-brainpoolP320r1.chain.pem -> ../../acme/certbot/conf/archive/ecdsa-320.example.tls-playground.example/chain1.pem
-cert/good/ecdsa-brainpoolP320r1.fullchain.pem -> ../../acme/certbot/conf/archive/ecdsa-320.example.tls-playground.example/fullchain1.pem
-cert/good/private/ecdsa-brainpoolP320r1.key.pem -> ../../../acme/certbot/conf/archive/ecdsa-320.example.tls-playground.example/privkey1.pem
+cert/good/ecdsa-256.cert.pem -> ../../acme/certbot/conf/archive/ecdsa-320.example.tls-playground.example/cert1.pem
+cert/good/ecdsa-256.chain.pem -> ../../acme/certbot/conf/archive/ecdsa-320.example.tls-playground.example/chain1.pem
+cert/good/ecdsa-256.fullchain.pem -> ../../acme/certbot/conf/archive/ecdsa-320.example.tls-playground.example/fullchain1.pem
+cert/good/private/ecdsa-256.key.pem -> ../../../acme/certbot/conf/archive/ecdsa-320.example.tls-playground.example/privkey1.pem
 ```
 
 This allows other TP modules to always find certificates and related files in the same locations, following TP file naming conventions.
@@ -193,7 +193,7 @@ However, `certbot` offers more control to users who want it - they can simply cr
 This is what TP ACME utilities do, when you use the `--csr` option (which makes use of `certbot`'s own `--csr` option):
 
 ```
-tp acme sign --csr cert/good/ecdsa-brainpoolP320r1.cert.conf
+tp acme sign --csr cert/good/ecdsa-256.cert.conf
 ```
 
 When using a custom CSR, `certbot` does not manage certificates and related files in its `archive` directory.
@@ -201,9 +201,9 @@ Therefore, TP keeps its own archive directory for ACME certificates obtained thr
 Again, TP creates symlinks according to TP file naming conventions next to the CSR config file:
 
 ```
-cert/good/ecdsa-brainpoolP320r1.cert.pem -> ../../acme/certbot/custom/archive/00000017.cert.pem
-cert/good/ecdsa-brainpoolP320r1.chain.pem -> ../../acme/certbot/custom/archive/00000001.chain.pem
-cert/good/ecdsa-brainpoolP320r1.fullchain.pem -> ../../acme/certbot/custom/archive/00000001.fullchain.pem
+cert/good/ecdsa-256.cert.pem -> ../../acme/certbot/custom/archive/00000017.cert.pem
+cert/good/ecdsa-256.chain.pem -> ../../acme/certbot/custom/archive/00000001.chain.pem
+cert/good/ecdsa-256.fullchain.pem -> ../../acme/certbot/custom/archive/00000001.fullchain.pem
 ```
 
 ### Completing ACME Challenges Manually
@@ -215,7 +215,7 @@ If this is not your setup, you may still be able obtain a certificate with ACME,
 Just use the TP ACME uilities `--manual` option (which makes use of `certbot`'s own `--manual` option):
 
 ```
-tp acme sign --manual tp acme sign --csr cert/good/ecdsa-brainpoolP320r1.cert.conf
+tp acme sign --manual tp acme sign --csr cert/good/ecdsa-256.cert.conf
 ```
 
 Then, follow the instructions that `certbot` prints, which might look something like this:
@@ -247,7 +247,7 @@ The ACME protocol can also be used for revoking certificates, and you should alw
 To revoke the certificate from the examples in the previous sections, simply run the following command (which will use `certbot` under the hood and print the `certbot` CLI arguments and outputs):
 
 ```
-tp acme revoke cert/good/ecdsa-brainpoolP320r1.cert.pem
+tp acme revoke cert/good/ecdsa-256.cert.pem
 ```
 
 The ACME server will need to authorize the revocation request, otherwise everyone could revoke everyone else's certificates.
