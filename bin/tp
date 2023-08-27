@@ -1097,7 +1097,7 @@ function tp_server {
     local command="$1"
     shift || true
 
-    tp_help_if_needed "${tp_base_dir}/server/README.md" || return 0
+    tp_help_if_needed "${tp_base_dir}/server/README.md" '-1' || return 0
 
     case "${command}" in
 
