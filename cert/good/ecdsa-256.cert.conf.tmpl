@@ -1,0 +1,20 @@
+[ req ]
+
+prompt = no
+utf8 = yes
+default_md = sha384
+encrypt_key = yes
+
+distinguished_name = req_distinguished_name
+
+[ req_distinguished_name ]
+
+C = DE
+ST = Bavaria
+L = Munich
+O  = TLS Playground
+CN = ecdsa-256.good.example.tls-playground.${TP_SERVER_DOMAIN}
+
+# Note
+# This certificate request configuration has an associated public key parameters file that has been generated with the following command:
+# $ openssl genpkey -genparam -algorithm ec -pkeyopt ec_paramgen_curve:secp256k1 -out ecdsa-256.key.params.pem
