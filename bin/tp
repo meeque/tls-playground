@@ -446,7 +446,7 @@ function tp_cert_pkcs8 {
     tp_util_files_check 'files' 'file_stat' "Given private key file '${key_file}' does not exist!" || return $?
     tp_util_files_check 'files' 'key_pass_stat' "Looked for matching pass-phrase file '${files[key_pass_path]}' for the given private key! But it does not exist!" || return $?
 
-    local pkcs8_file="${files[path]}.key.pkcs8.der"
+    local pkcs8_file="${files[dir]}/private/${files[name]}.key.pkcs8.der"
 
     tp_msg "Converting private key '${key_file}' to PKCS8 format..."
 
@@ -493,7 +493,7 @@ function tp_cert_clean {
     tp_util_files 'files' "${cert_config}"
     tp_msg "Cleaning up certificates and other files related to '${files[cert_conf_path]}'..."
 
-    for file in "${files[key_pass_path]}" "${files[key_pem_path]}" "${files[csr_pem_path]}" "${files[cert_pem_path]}" "${files[chain_pem_path]}" "${files[fullchain_pem_path]}"
+    for file in "${files[key_pass_path]}" "${files[key_pem_path]}" "${files[csr_pem_path]}" "${files[cert_pem_path]}" "${files[chain_pem_path]}" "${files[fullchain_pem_path]}" "${files[dir]}/private/${files[name]}.key.pkcs8.der" "${files[dir]}/private/${files[name]}.pfx"
     do
         if [[ -f "${file}" ]]
         then
