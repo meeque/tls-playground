@@ -1,0 +1,21 @@
+# Nothing wrong with this CSR config, but 10000 bits are a little excessive for an RSA key.
+# Key generation will take a long time and the certificate file will be rather big.
+# Keep in mind that the full certificate chain is transferred over the network during a TLS handshake.
+
+[ req ]
+
+prompt = no
+utf8 = yes
+default_bits = 10000
+default_md = sha384
+encrypt_key = yes
+
+distinguished_name = cert_distinguished_name
+
+[ cert_distinguished_name ]
+
+C = DE
+ST = Bavaria
+L = Munich
+O  = TLS Playground
+CN = rsa-10000.ugly.example.tls-playground.${TP_SERVER_DOMAIN}
