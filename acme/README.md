@@ -24,7 +24,7 @@ To make full use of the TP ACME utilities, you will need a **registered DNS doma
 The easiest way is running `tp acme` on the host itself (possibly inside a Docker container), in particular, when there is no other server listening to port 80, the standard HTTP port.
 
 If you want to run the TP CLI on a different host, or if port 80 is already taken, you can still use TP ACME utilities.
-It will just need to do some manual interaction, so watch out for the `--manual` flag in the sections below.
+See the section on [Completing ACME Challenges Manually](#Completing-ACME-Challenges-Manually) further below.
 
 TODO Explain that TP uses a custom certbot config and data directory within TP iself and does not touch /etc
 
@@ -207,6 +207,38 @@ cert/good/ecdsa-brainpoolP320r1.fullchain.pem -> ../../acme/certbot/custom/archi
 
 ### Completing ACME Challenges Manually
 
+The above sections assume that you have an ACME challenges server running to complete ACME `http-01` challenges fully automated.
+This implies that you are running TP ACME utilities on a server with a public IP address and public DNS record.
+
+If this is not your setup, you may still be able obtain a certificate with ACME, with some manual interaction.
+Just use the TP ACME uilities `--manual` option (which makes use of `certbot`'s own `--manual` option):
+
+```
+tp acme sign --manual tp acme sign --csr cert/good/ecdsa-brainpoolP320r1.cert.conf
+```
+
+Then, follow the instructions that `certbot` prints, which might look something like this:
+
+```
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Create a file containing just this data:
+
+wRK1mDaqhVye7x1Or5jeaOqqKfmgc1vtbefKH0gvRoc.6wRdliXxdUlzXz2JsX3kq5wnrsj0uUOfmawtmllw5HM
+
+And make it available on your web server at this URL:
+
+http://ecdsa-320.example.tls-playground.example/.well-known/acme-challenge/wRK1mDaqhVye7x1Or5jeaOqqKfmgc1vtbefKH0gvRoc
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Press Enter to Continue
+```
+
+Note that you'll still need administrative access to a web-server that runs on the DNS domain listed in the CSR.
+But this can be different host than the one where you're running the TP CLI.
+
+The [ACME standard mandates](https://www.rfc-editor.org/rfc/rfc8555.html#section-8.3) that `http-01` challenges must be exposed under URL path `/.well-known/acme-challenge/`.
+Web-servers should not allow ordinary users to freely manipulate resources hosted under `/.well-known/`, only administrators be able to do this.
+If you web-server violates this principle, you overthink your security concept: anyone who is capable of deploying challenges on your web-server can also obtain publicly trusted X.509 certificates for your DNS domain!
 
 ### Revoking a Certificate with ACME
 
