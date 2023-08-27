@@ -21,18 +21,19 @@ Observe the outputs of the TP CLI to find out how it makes use of `certbot`.
 ## ACME Utilities Usage
 
 To make full use of the TP ACME utilities, you will need a **registered DNS domain** and **administrative access to the corresponding host**.
-The easiest way is running `tp acme` on the host itself (possibly inside a Docker container), in particular, when there is no other server listening to port 80, the standard HTTP port.
+The easiest way is running `tp acme` on that host itself (possibly inside a Docker container), in particular, when there is no other server listening to port 80, the standard HTTP port.
 
 If you want to run the TP CLI on a different host, or if port 80 is already taken, you can still use TP ACME utilities.
 See the section on [Completing ACME Challenges Manually](#Completing-ACME-Challenges-Manually) further below.
 
-TODO Explain that TP uses a custom certbot config and data directory within TP iself and does not touch /etc
-
 ### Initializing ACME Utilities
 
 Before using the TP ACME utilities, you will have to initialize them by running the `init` command.
-This creates necessary directories and `certbot` configuration files.
-Certbot configuration can be customized can be customized using the `${TP_ACME_SERVER_URL}` and `${TP_ACME_ACCOUNT_EMAIL}` environment variables.
+This creates necessary directories and `certbot` configuration files under `acme/certbot/`.
+TP ACME utilities always pass the custom configuration in `acme/certbot/cli.ini` to `certbot`, which instructs `certbot` to work with files in the `acme/certbot/` directory.
+This ensures isolation from other uses of `certbot` on your host, e.g. from global `certbot` configuration and data files (often in `/etc/certbot/` or `/etc/letsencrypt/`).
+
+TP `certbot` configuration can be customized can be customized using the `${TP_ACME_SERVER_URL}` and `${TP_ACME_ACCOUNT_EMAIL}` environment variables.
 Run `tp --help env` to learn more about these env-vars and their defaults.
 Then run the following to initialize the TP ACME utilities:
 
@@ -45,7 +46,7 @@ When you point `${TP_ACME_SERVER_URL}` to a different ACME server, you will have
 Most TP ACME utilities functionality should keep working after switching to a new server.
 However, some functionality like certificate renewal or certificate revocation may not work as expected.
 
-It's highly recommended that you first try out TP ACME utilities (or any other ACME client) against a non-production ACME server.
+It's highly recommended that you first try out TP ACME utilities (or any other ACME client) against a **non-production ACME server**.
 Such server can be used like any other ACME server, but will not issue certificates that standard TLS clients will accept.
 This is because a non-production servers use different CA root certificates, which OS and browser vendors do not add to their lists of trusted CAs.
 
