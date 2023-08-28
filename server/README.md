@@ -17,23 +17,46 @@ Therefore, you'll the same detailed outputs, in particular when invoking interes
 
 ## Demo Servers Usage
 
-You can use the TP demo servers either locally or on an Internet-facing host, ideally a host with a public DNS entry.
+You can use the TP demo servers either locally or on an Internet-facing host, ideally a host with a public DNS record.
 The TP Demo Servers use very little server-side web application logic, no client-side JavaScript code, and no cookies either.
-They do not manage any assets whose confidentiality, integrity, or availability needs to be protected, except for their X.509 certificates and their respective private keys.
-Nevertheless, when exposing TP Demo Servers to the Internet, it is recommended to run them on a non-production host, or at least on in an isolated Docker container.
-It is also recommended to use the TP Demo Servers on a dedicated, non-production DNS domain (though a dedicated non-production sub-domain should also do).
+They do not manage any assets whose confidentiality, integrity, or availability needs to be protected, except for their X.509 certificates and the respective private keys.
+Nevertheless, when exposing TP Demo Servers to the Internet, it is recommended to run them on a non-production host (or at least on in an isolated Docker container).
+It is also recommended to use the TP Demo Servers on a dedicated, non-production DNS domain (though a sub-domain should do).
 
 ### Initializing the Demo Servers
 
-All nginx virtual hosts come with a working out-of-the-box TLS configuration. However, this project does not ship with hardcoded server certificates. Thus you will first need to bootstrap the [TLS Playground CA](../ca/), then create appropriate server certificates. After CA bootstrapping, run the following commands in the root directory of the TLS Playground.
+Before you can use a TP demo server, you need to initialize them.
+Like other TP initialization commands, this will create the necessary directory structures and create config files from templates.
+Unlike most other TP initialization commands, this will also create all certificates that are necessary for running the demo server.
+These certificates will be based on the OpenSSL CSR config files that are part of the demo server configuration.
 
-This will use the TLS certificate configuration that comes with TLS playground nginx server, and use `ca1` to generate appropriate keys and certificates. It will also create file `trusted-clients-cas.pem`, which contains the root certificates of both `ca1` and `ca2`.  Whenever these certificates expire, just rerun the above commands.
+All TP demo servers can be configured with the `${TP_SERVER_DOMAIN}`, `${TP_SERVER_LISTEN_ADDRESS}`, and `${TP_SERVER_HTTPS_PORT}` environment variables.
+Run `tp --help env` to learn more about these env-vars and their defaults.
+Then run the following command to initialize a TP demo server:
 
-Once all this is in place, you can run the nginx server like so:
+```
+tp server init nginx-simple
+```
 
-    nginx -p ./server-nginx/ -c nginx.conf
+The above example initializes the demo server named `nginx-simple`, another option would be `nginx-complex`.
+You can also omit the server name in the above command to initialize all TP demo servers at once.
 
-Again, this command must be issued from the root directory of the TLS Playground, that is the parent of this directory. If everything has worked, nginx will not emit any outputs on startup.
+Moreover, you can chose what flavor of certificates to use.
+TP demo servers offer these flavors, each based on a specific TP module:
+
+| Certificate Flavor  | Init Option | Related TP Module                          | Prerequisites                                                         |
+| ------------------- | ----------- | ------------------------------------------ | --------------------------------------------------------------------- |
+| Self-Signed         | *none*      | [Certificate Utilities](../cert/README.md) | none                                                                  |
+| Built-In Private CA | `--ca`      | [Demo CAs](../ca/README.md)                | configure and initialize the demo CA                                  |
+| ACME CA             | `--acme`    | [ACME Utilities](../acme/README.md)        | configure and initialize the ACME module, start the challenges server |
+
+In the earlier example, we didn't use any initialization option, which means that the demo server would be initialized with self-signed server certificates.
+The `--ca` option can be used together with the CA name to use, but this is optional.
+For example, if you wish to initialize the TP demo server with the TP demo CA named `ca4all`run this command:
+
+```
+tp server init --ca=ca4all nginx-simple
+```
 
 ### Running the Demo Servers
 
