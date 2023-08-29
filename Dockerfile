@@ -39,6 +39,7 @@ RUN apt-get update \
 
 COPY . "/opt/tls-playground/"
 
+RUN ln --symbolic --force /opt/tls-playground/.bashrc /etc/bash.bashrc
 
 # define interface
 
@@ -46,7 +47,7 @@ WORKDIR "/opt/tls-playground"
 
 ENV EDITOR="/usr/bin/nano"
 ENV TP_COLOR="yes"
-ENV TP_PASS="1234"
+ENV TP_PASS=""
 ENV TP_SERVER_DOMAIN="localhost"
 ENV TP_SERVER_LISTEN_ADDRESS="127.0.0.1"
 ENV TP_SERVER_HTTP_PORT=8080
@@ -55,7 +56,7 @@ ENV TP_ACME_SERVER_URL="https://acme-staging-v02.api.letsencrypt.org/directory"
 ENV TP_ACME_ACCOUNT_EMAIL=""
 
 ENTRYPOINT ["/usr/bin/bash"]
-CMD ["--rcfile", ".bashrc"]
+CMD []
 
 VOLUME ["/opt/tls-playground"]
 
