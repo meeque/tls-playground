@@ -60,27 +60,66 @@ tp server init --ca=ca4all nginx-simple
 
 ### Running the Demo Servers
 
-Here's some suggestions on how you can use the pre-configured TLS Playground nginx virtual servers.
+While you can initialize all TP demo servers with a single command, you can only run one of them at a time.
+This is because the demo servers are all designed to listen to the same IP port, as configured with `${TP_SERVER_HTTPS_PORT}`.
 
-### Using the Demo Servers
+To run a demo server in the foreground, use the `run` command:
 
-TODO Move this section to the clients module?
+```
+tp server run nginx-simple
+```
 
-#### Hostname Setup for Local Demo Servers
+Running in foreground can help you see any error messages and other outputs from the server.
+On the other hand, it will block the terminal where you've started the server.
+To stop the server again, press `Ctrl+C`.
 
-The virtual servers of the TLS Playground all run on the same IP (localhost) and port. In order to address them, it is recommended that you add the following to your `/etc/hosts` file:
+Alternatively, you can run a demo server in the background, using the `start`, `stop`, and `reload` commands.
+See the TP Server Commands Reference below for details.
 
-    # TLS Playground hosts
-    127.0.0.1       server1.tls-playground.localhost
-    127.0.0.1       server1a.tls-playground.localhost
-    127.0.0.1       server1b.tls-playground.localhost
-    127.0.0.1       server1c.tls-playground.localhost
-    127.0.0.1       foo.server1.tls-playground.localhost
-    127.0.0.1       bar.server1.tls-playground.localhost
-    127.0.0.1       foo.bar.server1.tls-playground.localhost
-    127.0.0.1       server2.tls-playground.localhost
+Note that the Challenges Server of the [ACME Utilities](../acme/README.md) module support `run`, `start`, `stop`, and `reload` commands that work in analogy to the ones described here.
 
-Since `server1` is the default virtual server, you can also access is via `localhost` from your machine.
+### Hostname Configuration for the Demo Servers
+
+The TP demo servers are configured to handle all HTTPS traffic, regardless of the `Host` header in the HTTPS request.
+Or, more precisely, regardless of the [Server Name Indication (SNI)](https://datatracker.ietf.org/doc/html/rfc6066#page-6) extension seen during the TLS handshake.
+
+In fact, demo server `nginx-simple` is entirely agnostic to the requested host name.
+Demo server `nginx-complex` on the other hand, support multiple virtual hosts.
+It will dispatch requests to the virtual host that is configured to handle requests for the host name specified through SNI.
+
+In order to make full use of the `nginx-complex` demo server you will need to some form of host name configuration.
+This will bind the relevant host names to the IP address where you're running the demo server.
+
+Then running the demo servers on `localhost` (which is the default value of `${TP_SERVER_DOMAIN}`) you can simply add entries to your local `/etc/hosts` file.
+The following entries are recommended:
+
+```
+127.0.0.1    tls-playground.localhost
+127.0.0.1    server1.tls-playground.localhost
+127.0.0.1    server1a.tls-playground.localhost
+127.0.0.1    server1b.tls-playground.localhost
+127.0.0.1    server1c.tls-playground.localhost
+127.0.0.1    sub.server1.tls-playground.localhost
+127.0.0.1    server2.tls-playground.localhost
+```
+
+Obviously, this only works when accessing the TP demo servers with clients running on the same host.
+
+When running TP on an Internet-facing host, you can set up public DNS records for the supported virtual hosts instead.
+Simply replace all occurrences of `localhost` from above `/etc/hosts` file with the name of your own DNS domain.
+Then add the resulting host names to your DNS configuration and point their `A`-records (or `AAAA`-records) to the public IP address where you're running TP demo servers.
+
+Alternatively, you can add wild-card entries for all of the above host names to your DNS configuration.
+For example, when you configure your domain through a zone file, add the following entries, but replace `192.0.2.0` with the public IP address of your server:
+
+```
+tls-playground      IN    A    192.0.2.0
+*.tls-playground    IN    A    192.0.2.0
+```
+
+### Accessing the Demo Servers
+
+TODO Move to the client module?
 
 #### Accessing with Web-Browsers
 
@@ -135,12 +174,13 @@ Available commands:
             TP_SERVER_HTTPS_PORT.
 
   start     Start the given TP demo <server> in the background.
-            See run command for details.
+            In all other aspects, this behaves same as the run command.
 
   reload    Reload configuration of the given TP demo <server> running in the
-            background. See start command.
+            background, see start command. This will also load new certificates
+            and private key files, if they have changed.
 
-  stop      Stop the given TP demo <server> running in the background. See start
+  stop      Stop the given TP demo <server> running in the background, see start
             command.
 
   clean     Clean up the given TP demo <server>:
