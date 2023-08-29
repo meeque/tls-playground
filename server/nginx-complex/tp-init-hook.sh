@@ -1,6 +1,6 @@
 
 tp_msg "Configuring trusted CAs for client certificates that the 'nginx-complex' demo server accepts..."
-local trusted_clients_cas_file="${tp_base_dir}/server/nginx-complex/virtual/server2/tls/trusted-clients-cas.certs.pem"
+local trusted_clients_cas_file="${tp_base_dir}/server/nginx-complex/virtual/host2/tls/trusted-clients-cas.certs.pem"
 :> "${trusted_clients_cas_file}"
 
 for ca_name in 'ca4all' 'ca4clients'
@@ -21,7 +21,7 @@ if [[ ! -s ${trusted_clients_cas_file} ]]
 then
     echo
     tp_msg "Looks like no trusted clients CAs are available. Using self-signed fallback certificate instead..."
-    local fallback_cert_path="${tp_base_dir}/server/nginx-complex/virtual/server2/tls/trusted-clients-fallback"
+    local fallback_cert_path="${tp_base_dir}/server/nginx-complex/virtual/host2/tls/trusted-clients-fallback"
     tp_cert_selfsign "${fallback_cert_path}.cert.conf"
     tp_msg "Adding self-signed fallback certificate to trusted clients CAs file '${trusted_clients_cas_file}'..."
     cat "${fallback_cert_path}.cert.pem" > "${trusted_clients_cas_file}"

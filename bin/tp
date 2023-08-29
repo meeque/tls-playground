@@ -1160,8 +1160,7 @@ function tp_server_init {
 
     echo
     tp_msg "Creating server certificates for demo server '${server_name}' using certificate provider '${tp_cert_provider}'..."
-    # TODO simply pass the "${server_dir}" to the cert-provider, once all providers support signing multiple certificates in a directory
-    for config_file in $( find "${server_dir}" -path '*/tls/*' -name 'server*.cert.conf' | sort )
+    for config_file in $( find "${server_dir}" -path '*/tls/*' '(' -name 'server*.cert.conf' -or -name 'host*.cert.conf' ')' | sort )
     do
         "tp_server_cert_${tp_cert_provider}" "${config_file}" "$@"
     done
