@@ -15,7 +15,9 @@ C = DE
 ST = Bavaria
 L = Munich
 O  = TLS Playground
-CN = tls-playground.${TP_SERVER_DOMAIN}
+CN = host1.tls-playground.${TP_SERVER_DOMAIN}
+# using host1.tls-playground as the CN name because demo server nginx-simple already uses tls-playground itself.
+# this can lead to confusion between certbot lineages, because TP the CN as the name of the certbot lineage
 
 [ req_extensions ]
 
