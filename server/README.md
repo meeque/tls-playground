@@ -78,7 +78,22 @@ See the TP Server Commands Reference below for details.
 
 Note that the Challenges Server of the [ACME Utilities](../acme/README.md) module support `run`, `start`, `stop`, and `reload` commands that work in analogy to the ones described here.
 
-### Hostname Configuration for the Demo Servers
+### Accessing the Demo Servers
+
+Once you have started a TP demo server, you can access it with an arbitrary HTTPS client, such as a web-browser or [cURL](https://curl.se/).
+You can access the demo server either through its IP address or through its host name (see next section for the latter).
+When using the default values of `${TP_SERVER_DOMAIN}`, `${TP_SERVER_LISTEN_ADDRESS}`, and `${TP_SERVER_HTTPS_PORT}`, you can access either demo server at the following URL:
+
+```
+https://localhost:8443/
+```
+
+This URL only works for access from the same host where the demo server is running.
+To access from a different host, you will need to replace `localhost` with the IP-address or host name where the demo server is running.
+
+
+
+### Host Name Configuration for the Demo Servers
 
 The TP demo servers are configured to handle all HTTPS traffic, regardless of the `Host` header in the HTTPS request.
 Or, more precisely, regardless of the [Server Name Indication (SNI)](https://datatracker.ietf.org/doc/html/rfc6066#page-6) extension seen during the TLS handshake.
@@ -117,35 +132,15 @@ tls-playground      IN    A    192.0.2.0
 *.tls-playground    IN    A    192.0.2.0
 ```
 
-### Accessing the Demo Servers
+Once your DNS configuration is in place, you should set the `${TP_SERVER_DOMAIN}` env-var to your domain, then reinitialize and restart the server as described in previous sections.
+Note that the demo servers' host name configuration will always prepend the `tls-playground` sub-domain to the configured `${TP_SERVER_DOMAIN}`.
+Assuming you've set `${TP_SERVER_DOMAIN}` to `example.net`, you will need DNS records for `tls-playground.example.net` and its sub-domains.
 
-TODO Move to the client module?
+If you also set `${TP_SERVER_HTTPS_PORT}` to the HTTP default port `443` (or set up suitable port forwarding) you should be able to access the demo servers at this URL:
 
-#### Accessing with Web-Browsers
-
-You can access the TLS Playground nginx server at one of the above hosts. Use the `https` protocol and port `8443`. For example:
-
-    https://localhost:8443/
-
-Please be aware that your browser will issue a TLS warning at first. This is because the browser does not trust the private TLS Playground CA that has issued the server certificates. You can ask your browser to ignore the TLS Certificate warning and continue to the server. However, the browser will still show the connection as insecure. Also, it may not warn you about other TLS problems that may occur.
-
-Instead, you can install the root certificate of TLS Playground `ca1` in your operating system or web browser and establish full trust. Most browsers (e.g. Chrome) take trusted root certificates from the underlying operating system configuration. You can install TLS Playground `ca1` there, but this will affect all software on your machine.
-
-In contrast, the Firefox web-browser manages its own certificates, which makes it an ideal candidate for testing. To install the TLS Playground `ca1` root certificate there, do the following:
-
-1. Open the Firefox *Certificate Manager* by going to *Preferences* >> *Privacy & Security* >> *View Certificates...*
-2. Go to the *Authorities* tab, and click on *Import...*
-3. Now select the root certificate of TLS Playground `ca1`. It is located at:<br>
-`ca/ca1/ca-cert.pem`
-4. Confirm that you want to trust this certificate for websites.
-
-You can now find this certificate under in the *Authorities* list under *TLS Playground* / *PlayCA1*. Here you can review the details of the certificate, for example its validity period. You can also uninstall the certificate if you do not want to trust it any longer. (You should do so, once you stop using the TLS Playground!)
-
-#### Accessing with curl
-
-CLI clients like `curl` typically rely on the trusted CA root certificates that are installed in the operating system. However, you can also specify a trust root as an argument. Here is how to securely request the TLS Playground nginx server with `curl`. Run this in the root directory of the TLS playground:
-
-    curl --cacert ca/ca1/ca-cert.pem https://server1.tls-playground.localhost:8443/
+```
+https://tls-playground.example.net/
+```
 
 
 
