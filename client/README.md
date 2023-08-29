@@ -55,5 +55,5 @@ Here is how to securely request the TLS Playground nginx server with `curl`.
 Run this in the root directory of the TLS playground:
 
 ```
-curl --cacert ca/ca1/ca-cert.pem https://server1.tls-playground.localhost:8443/
+curl --cacert ca/ca1/ca-cert.pem https://host1.tls-playground.localhost:8443/
 ```

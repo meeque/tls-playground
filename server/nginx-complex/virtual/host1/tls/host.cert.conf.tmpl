@@ -15,7 +15,7 @@ C = DE
 ST = Bavaria
 L = Munich
 O  = TLS Playground
-CN = server1.tls-playground.${TP_SERVER_DOMAIN}
+CN = host1.tls-playground.${TP_SERVER_DOMAIN}
 
 [ req_extensions ]
 
@@ -24,6 +24,6 @@ subjectAltName=@alt_names
 [ alt_names ]
 
 DNS.1 = tls-playground.${TP_SERVER_DOMAIN}
-DNS.2 = server1.tls-playground.${TP_SERVER_DOMAIN}
-DNS.3 = server1a.tls-playground.${TP_SERVER_DOMAIN}
-DNS.4 = server1b.tls-playground.${TP_SERVER_DOMAIN}
+DNS.2 = host1.tls-playground.${TP_SERVER_DOMAIN}
+DNS.3 = host1a.tls-playground.${TP_SERVER_DOMAIN}
+DNS.4 = host1b.tls-playground.${TP_SERVER_DOMAIN}

@@ -110,12 +110,12 @@ The following entries are recommended:
 
 ```
 127.0.0.1    tls-playground.localhost
-127.0.0.1    server1.tls-playground.localhost
-127.0.0.1    server1a.tls-playground.localhost
-127.0.0.1    server1b.tls-playground.localhost
-127.0.0.1    server1c.tls-playground.localhost
-127.0.0.1    sub.server1.tls-playground.localhost
-127.0.0.1    server2.tls-playground.localhost
+127.0.0.1    host1.tls-playground.localhost
+127.0.0.1    host1a.tls-playground.localhost
+127.0.0.1    host1b.tls-playground.localhost
+127.0.0.1    host1c.tls-playground.localhost
+127.0.0.1    sub.host1.tls-playground.localhost
+127.0.0.1    host2.tls-playground.localhost
 ```
 
 Obviously, this only works when accessing the TP demo servers with clients running on the same host.
