@@ -61,7 +61,7 @@ fi
 
 # TLS Playground
 # add TP script to path
-tp_bin="$( realpath "$( dirname "${BASH_SOURCE}" )/bin" )"
+tp_bin="$( dirname "$( realpath "${BASH_SOURCE}" )" )/bin"
 if [[ -d "${tp_bin}" && -x "${tp_bin}/tp" && ":$PATH:" != *":${tp_bin}:"* ]]
 then
     PATH="${tp_bin}:${PATH}"
