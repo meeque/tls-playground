@@ -64,7 +64,11 @@ Just execute these three commands:
 
 ```
 docker image pull debian:testing-slim
+```
+```
 docker build --tag "${DOCKER_HUB_USER}/tls-playground:latest" .
+```
+```
 docker image push "${DOCKER_HUB_USER}/tls-playground:latest" .
 ```
 
@@ -115,10 +119,24 @@ Once you do not need the TLS Playground anymore, you can stop the TP Docker cont
 docker container stop tls-playground
 ```
 
-#### Volume Mounts
-
-TODO
-
 ### Developing with Docker
 
-TODO
+The TP Docker image and container described in the last two sections will not contain any Git repository information.
+Even when you've created the Docker image based on a local clone of the [official TP Git repo](https://github.com/meeque/tls-playground/) or your own fork of the same.
+This is because of the default Docker ignores that come with the TLS Playground.
+Besides, the TP Docker image does not contain any Git client by design and does not encourage exposing Git server credentials into a TP Docker container.
+
+If you want to develop changes to the TLS Playground yourself (e.g. adjust CSR config files) it is recommended that you do this directly on the underlying Docker host.
+You can still run TP CLI commands in a Docker container though.
+The easiest way to achieve this is a [Docker bind-mount](https://docs.docker.com/storage/bind-mounts/).
+For example, when you have cloned the TP Git repository into the current working directory, you can use the following `--mount` option to create the TP Docker container:
+
+```
+docker container create --name 'tls-playground' --env 'TP_SERVER_DOMAIN=tls-playground.example' --env 'TP_SERVER_LISTEN_ADDRESS=*' --env 'TP_ACME_SERVER_URL=lets-encrypt-staging' --publish '0.0.0.0:80:8080' --publish '0.0.0.0:443:8443' --mount 'type=bind,source=.,target=/opt/tls-playground' "${DOCKER_HUB_USER}/tls-playground:latest" -c 'sleep infinity'
+```
+
+See the previous section for information on the other container creation options, and on running and using the resulting TP Docker container.
+
+Note that code running inside this TP Docker container will have full access to bind-mounted portion of your local file-system.
+If you do not trust the TP Docker image at all, you should consider using a [Docker volume](https://docs.docker.com/storage/volumes/) rather than a bind-mount.
+You can then attach the Docker volume to different container that can perform the necessary Git operations.
