@@ -24,19 +24,19 @@ These can all be controlled with the **[TP CLI Tool](bin/README.md)**.
 
 ### Certificate Utilities
 
-Utilities for dealing with [CSRs and certificates](cert/README.md) using openssl.
+Utilities for dealing with [CSRs and self-signed X.509 certificates](cert/README.md) using *OpenSSL*.
 
 ### Demo CAs
 
-Configuration samples and utilities for running [Certificate Authorities (CA)](ca/README.md) based on `openssl ca`.
+Configuration samples and utilities for running private [Certificate Authorities (CA)](ca/README.md) and signing certificates with it.
 
 ### ACME Utilities
 
-Configuation samples and utilities for obtaining certificates through the [ACME](acme/README.md) protocol using Certbot.
+Configuration samples and utilities for ordering certificates with the [ACME](acme/README.md) protocol using *Certbot* and *Let's Encrypt*.
 
 ### Demo Servers
 
-Demo [(web) servers](server/README.md) using various configurations and certificates.
+Demo [web servers](server/README.md) using various configurations and certificates.
 
 ### Demo Clients
 
@@ -53,8 +53,6 @@ TODO limitations: need internet facing host with public DNS record
 
 
 ## Using TP with Docker
-
-
 
 ### Building a TP Docker Image
 
@@ -88,7 +86,10 @@ Therefore, it is preferable to create the container once and reuse it for all TL
 You can do so with the following command:
 
 ```
-docker container create --name 'tls-playground' --env 'TP_SERVER_DOMAIN=tls-playground.example' --env 'TP_SERVER_LISTEN_ADDRESS=*' --env 'TP_ACME_SERVER_URL=lets-encrypt-staging' --publish '0.0.0.0:80:8080' --publish '0.0.0.0:443:8443' "${DOCKER_HUB_USER}/tls-playground:latest" -c 'sleep infinity'
+docker container create --name 'tls-playground' \
+  --env 'TP_SERVER_DOMAIN=tls-playground.example' --env 'TP_SERVER_LISTEN_ADDRESS=*' --env 'TP_ACME_SERVER_URL=lets-encrypt-staging' \
+  --publish '0.0.0.0:80:8080' --publish '0.0.0.0:443:8443' \
+  "${DOCKER_HUB_USER}/tls-playground:latest" -c 'sleep infinity'
 ```
 
 Though you may want to replace `tls-playground.example` in the above with your own domain name.
@@ -112,7 +113,7 @@ sudo docker container exec --tty --interactive tls-playground bash
 By default, the shell inside the container displays `[TP]` in the prompt.
 Once you `exit` the shell in the TP Docker container, you should fall back to your regular shell outside the container.
 
-However, the container will keep running, including an TP demo servers that you've started in the container.
+However, the container will keep running, including a TP demo server that you may have started in the container.
 Once you do not need the TLS Playground anymore, you can stop the TP Docker container with the following command:
 
 ```
@@ -132,7 +133,11 @@ The easiest way to achieve this is a [Docker bind-mount](https://docs.docker.com
 For example, when you have cloned the TP Git repository into the current working directory, you can use the following `--mount` option to create the TP Docker container:
 
 ```
-docker container create --name 'tls-playground' --env 'TP_SERVER_DOMAIN=tls-playground.example' --env 'TP_SERVER_LISTEN_ADDRESS=*' --env 'TP_ACME_SERVER_URL=lets-encrypt-staging' --publish '0.0.0.0:80:8080' --publish '0.0.0.0:443:8443' --mount 'type=bind,source=.,target=/opt/tls-playground' "${DOCKER_HUB_USER}/tls-playground:latest" -c 'sleep infinity'
+docker container create --name 'tls-playground' \
+  --env 'TP_SERVER_DOMAIN=tls-playground.example' --env 'TP_SERVER_LISTEN_ADDRESS=*' --env 'TP_ACME_SERVER_URL=lets-encrypt-staging' \
+  --publish '0.0.0.0:80:8080' --publish '0.0.0.0:443:8443' \
+  --mount 'type=bind,source=.,target=/opt/tls-playground' \
+  "${DOCKER_HUB_USER}/tls-playground:latest" -c 'sleep infinity'
 ```
 
 See the previous section for information on the other container creation options, and on running and using the resulting TP Docker container.
