@@ -100,7 +100,7 @@ TP tries to address this by using two levels of filename extensions, which toget
 
 #### File Types
 
-These are the most important file types that TP uses, with their filename extensions in parentheses:
+These are the most important file types that TP uses, with their TP filename extensions in parentheses:
 
 * **cryptographic parameters** (`.params`)
 * **cryptographic keys** (`.key`)
