@@ -46,9 +46,25 @@ Demo [clients](client/README.md) using various configurations and certificates.
 
 ## Using TP Locally
 
-TODO list pre-requisites
+You should be able to run TP on any Unixy operating system, including Linux and Mac OS.
+If you're using Windows or some other unsupported OS, consider running TP in a Linux VM.
+Or, run TP in a Docker container, as described in the next section.
 
-TODO limitations: need internet facing host with public DNS record
+If you plan to use TP to order X.509 certificates from a public Certificate Authority (CA), its best to run TP on an Internet-facing host with a public DNS record.
+Even then, you can run TP on a host in a private network or even fully offline.
+You'll just have to do some steps manually, see the [TP ACME utilities](acme/README.md) for details.
+
+When running TP locally, you'll need to install the following prerequisites (tested versions in parentheses):
+
+* **[GNU Bash](https://www.gnu.org/software/bash/)** (5.2.15)
+* Assorted **Unix utilities**:
+  `awk`, `basename`, `cat`, `chmod`, `cp`, `dd`, `dirname`, `envsubst`, `find`, `getopt`, `grep`, `id`, `ln`, `mkdir`, `printf`, `rm`, `sed`, `shred`, `sort`, `touch`, `xargs`, `tr`, `true`, `xargs`
+  (Tested with recent versions from the [GNU](https://www.gnu.org/software/software.html) project.
+  Note: TP is incompatible with`getopt` implementations based on non-GNU libraries, which make cause trouble on BSD-ish Unix systems, incl. Mac OS. In the latter, this can be fixed by installing the `[gnu-getopt](https://formulae.brew.sh/formula/gnu-getopt)` package through [Homebrew](https://brew.sh/).)
+* **[OpenSSL](https://www.openssl.org/)** (3.0.10)
+* **[Certbot](https://certbot.eff.org/)** (2.1.0)
+* [nginx](https://nginx.org/) (1.24.0)
+* Java, e.g. [OpenJDK](https://openjdk.org/) (17.0.9-ea)
 
 
 
@@ -86,9 +102,13 @@ Therefore, it is preferable to create the container once and reuse it for all TL
 You can do so with the following command:
 
 ```
-docker container create --name 'tls-playground' \
-  --env 'TP_SERVER_DOMAIN=tls-playground.example' --env 'TP_SERVER_LISTEN_ADDRESS=*' --env 'TP_ACME_SERVER_URL=lets-encrypt-staging' \
-  --publish '0.0.0.0:80:8080' --publish '0.0.0.0:443:8443' \
+docker container create \
+  --name 'tls-playground' \
+  --env 'TP_SERVER_DOMAIN=tls-playground.example' \
+  --env 'TP_SERVER_LISTEN_ADDRESS=*' \
+  --env 'TP_ACME_SERVER_URL=lets-encrypt-staging' \
+  --publish '0.0.0.0:80:8080' \
+  --publish '0.0.0.0:443:8443' \
   "${DOCKER_HUB_USER}/tls-playground:latest" -c 'sleep infinity'
 ```
 
@@ -133,9 +153,13 @@ The easiest way to achieve this is a [Docker bind-mount](https://docs.docker.com
 For example, when you have cloned the TP Git repository into the current working directory, you can use the following `--mount` option to create the TP Docker container:
 
 ```
-docker container create --name 'tls-playground' \
-  --env 'TP_SERVER_DOMAIN=tls-playground.example' --env 'TP_SERVER_LISTEN_ADDRESS=*' --env 'TP_ACME_SERVER_URL=lets-encrypt-staging' \
-  --publish '0.0.0.0:80:8080' --publish '0.0.0.0:443:8443' \
+docker container create \
+  --name 'tls-playground' \
+  --env 'TP_SERVER_DOMAIN=tls-playground.example' \
+  --env 'TP_SERVER_LISTEN_ADDRESS=*' \
+  --env 'TP_ACME_SERVER_URL=lets-encrypt-staging' \
+  --publish '0.0.0.0:80:8080' \
+  --publish '0.0.0.0:443:8443' \
   --mount 'type=bind,source=.,target=/opt/tls-playground' \
   "${DOCKER_HUB_USER}/tls-playground:latest" -c 'sleep infinity'
 ```
