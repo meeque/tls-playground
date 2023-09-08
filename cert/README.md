@@ -221,5 +221,5 @@ Environment:
   Set ${TP_PASS} to conigure the passphrase for private key files encryption.
   Set ${TP_SERVER_DOMAIN} to control the base domain name of some sample certificates.
 
-  Run 'tp --help env' to learn more about this env-var.
+  Run 'tp --help env' to learn more about these env-vars.
 ```
