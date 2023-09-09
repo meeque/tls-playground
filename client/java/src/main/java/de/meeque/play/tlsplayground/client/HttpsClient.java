@@ -1,4 +1,4 @@
-package com.sap.cx.jester.tlsplayground.client;
+package de.meeque.play.tlsplayground.client;
 
 import java.io.InputStream;
 import java.util.concurrent.TimeUnit;

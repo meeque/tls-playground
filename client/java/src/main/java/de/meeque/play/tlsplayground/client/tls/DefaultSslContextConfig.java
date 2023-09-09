@@ -1,4 +1,4 @@
-package com.sap.cx.jester.tlsplayground.client.tls;
+package de.meeque.play.tlsplayground.client.tls;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;

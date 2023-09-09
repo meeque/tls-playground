@@ -1,4 +1,4 @@
-package com.sap.cx.jester.tlsplayground.client;
+package de.meeque.play.tlsplayground.client;
 
 import java.util.List;
 
@@ -9,7 +9,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 
-import com.sap.cx.jester.tlsplayground.client.tls.TlsProperties;
+import de.meeque.play.tlsplayground.client.tls.TlsProperties;
 
 @SpringBootApplication
 @EnableConfigurationProperties(TlsProperties.class)

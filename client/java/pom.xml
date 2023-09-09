@@ -8,8 +8,8 @@
         <version>2.5.3</version>
     </parent>
 
-    <groupId>com.sap.cx.jester.tlsplayground</groupId>
-    <artifactId>tls-playground-client</artifactId>
+    <groupId>de.meeque.play</groupId>
+    <artifactId>tls-playground</artifactId>
     <version>0.0.1-SNAPSHOT</version>
 
     <name>TLS Playground Client</name>

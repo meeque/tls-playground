@@ -8,7 +8,7 @@ This TLS Playground component helps you with configuring Java TLS clients. This 
 
 This client supports making HTTPS GET requests to arbitrary URLs. Specify one or more URLs in non-option arguments.
 
-Use option arguments (those in the form `--foo=bar`) to control the TLS configuration. The client is implemented in Spring Boot – for supported configuration options see the [TlsProperties](src/main/java/com/sap/cx/jester/tlsplayground/client/tls/TlsProperties.java) file.
+Use option arguments (those in the form `--foo=bar`) to control the TLS configuration. The client is implemented in Spring Boot, for supported configuration options see the [TlsProperties](src/main/java/de/meeque/play/tlsplayground/client/tls/TlsProperties.java) file.
 
 Usage examples:
 

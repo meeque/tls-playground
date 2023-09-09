@@ -1,4 +1,4 @@
-package com.sap.cx.jester.tlsplayground.client.tls;
+package de.meeque.play.tlsplayground.client.tls;
 
 import java.io.File;
 import java.io.FileInputStream;
