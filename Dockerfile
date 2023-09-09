@@ -21,6 +21,7 @@ RUN apt-get update \
     util-linux \
     less \
     nano \
+    man-db \
     && \
     rm -rf /var/lib/apt/lists/*
 
