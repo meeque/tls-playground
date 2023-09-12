@@ -15,10 +15,22 @@ th { text-align: right; }
 
 <h3>Client Certificate Info</h3>
 <table>
-<tr><th>Subject</th><td><!--# echo var="ssl_client_s_dn" --></td></tr>
-<tr><th>Issuer</th><td><!--# echo var="ssl_client_i_dn" --></td></tr>
-<tr><th>Valid Until</th><td><!--# echo var="ssl_client_v_end" --></td></tr>
-<tr><th>Fingerprint (SHA1)</th><td><!--# echo var="ssl_client_fingerprint" --></td></tr>
+  <tr>
+    <th>Subject</th>
+    <td><!--# echo var="ssl_client_s_dn" encoding="entity" --></td>
+  </tr>
+  <tr>
+    <th>Issuer</th>
+    <td><!--# echo var="ssl_client_i_dn" encoding="entity" --></td>
+  </tr>
+  <tr>
+    <th>Valid Until</th>
+    <td><!--# echo var="ssl_client_v_end" encoding="entity" --></td>
+  </tr>
+  <tr>
+    <th>Fingerprint (SHA1)</th>
+    <td><!--# echo var="ssl_client_fingerprint" encoding="entity" --></td>
+  </tr>
 </table>
 
 </body>

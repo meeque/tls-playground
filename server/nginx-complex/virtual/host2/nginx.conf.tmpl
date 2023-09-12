@@ -21,8 +21,6 @@ server {
     # enable HSTS (HTTP Strict Transport Security)
     add_header Strict-Transport-Security "max-age=15768000; includeSubdomains;";
 
-    # TODO Validate or HTML encode ssl_ varibles that will be displayed in the web page
-
     # ...
     root virtual/host2/public;
     ssi on;
