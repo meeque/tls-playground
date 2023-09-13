@@ -27,13 +27,6 @@ shopt -s checkwinsize
 # set a fancy prompt, assume we want color
 PS1='\[\e[1;34m\][TP] \[\e[0m\]\$ '
 
-# If this is an xterm set the title to user@host:dir
-case "$TERM" in
-xterm*|rxvt*)
-    PS1="\[\e]0;TLS Playground\]${PS1}"
-    ;;
-esac
-
 # enable color support of ls and also add handy aliases
 if [ -x /usr/bin/dircolors ]; then
     test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
