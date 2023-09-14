@@ -1644,7 +1644,7 @@ function tp_help_extract_markdown_code_block {
 function tp_msg {
     if [[ -n "${TP_COLOR}" ]]
     then
-        echo $'\e[1;34m[TP]\e[0;36m'" $@"$'\e[0m'
+        echo $'\e[0;34m[TP]\e[0;36m'" $@"$'\e[0m'
     else
         echo "[TP] $@"
     fi
@@ -1653,7 +1653,7 @@ function tp_msg {
 function tp_prompt {
     if [[ -n "${TP_COLOR}" ]]
     then
-        echo $'\e[1;34m[TP]\e[0;35m'" $@"$'\e[0m'
+        echo $'\e[0;34m[TP]\e[0;35m'" $@"$'\e[0m'
     else
         echo "[TP][?] $@"
     fi
@@ -1662,7 +1662,7 @@ function tp_prompt {
 function tp_succ {
     if [[ -n "${TP_COLOR}" ]]
     then
-        echo $'\e[1;34m[TP]\e[0;32m'" $@"$'\e[0m'
+        echo $'\e[0;34m[TP]\e[0;32m'" $@"$'\e[0m'
     else
         echo "[TP] $@"
     fi
@@ -1671,7 +1671,7 @@ function tp_succ {
 function tp_warn {
     if [[ -n "${TP_COLOR}" ]]
     then
-        echo $'\e[1;34m[TP]\e[0;33m'" $@"$'\e[0m'
+        echo $'\e[0;34m[TP]\e[0;33m'" $@"$'\e[0m'
     else
         echo "[TP][WARN]" "$@"
     fi
@@ -1680,7 +1680,7 @@ function tp_warn {
 function tp_err {
     if [[ -n "${TP_COLOR}" ]]
     then
-        echo $'\e[1;34m[TP]\e[0;31m'" $@"$'\e[0m'
+        echo $'\e[0;34m[TP]\e[0;31m'" $@"$'\e[0m'
     else
         echo "[TP][ERR]" "$@"
     fi
