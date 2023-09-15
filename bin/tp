@@ -115,6 +115,7 @@ function tp_main_env_global {
                  ;;
              * )
                  TP_COLOR=''
+                 ;;
         esac
     fi
 }
