@@ -24,9 +24,6 @@ shopt -s checkwinsize
 # make less more friendly for non-text input files, see lesspipe(1)
 [ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"
 
-# set a fancy prompt, assume we want color
-PS1='\[\e[1;34m\][TP] \[\e[0m\]\$ '
-
 # enable color support of ls and also add handy aliases
 if [ -x /usr/bin/dircolors ]; then
     test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
@@ -53,11 +50,31 @@ if ! shopt -oq posix; then
 fi
 
 # TLS Playground
+
 # add TP script to path
-tp_bin="$( dirname "$( realpath "${BASH_SOURCE}" )" )/bin"
-if [[ -d "${tp_bin}" && -x "${tp_bin}/tp" && ":$PATH:" != *":${tp_bin}:"* ]]
+tp_bin="$( dirname "$( realpath "$BASH_SOURCE" )" )/bin"
+if [[ -d "$tp_bin" && -x "$tp_bin/tp" && ":$PATH:" != *":$tp_bin:"* ]]
 then
-    PATH="${tp_bin}:${PATH}"
+    PATH="$tp_bin:$PATH"
 fi
 unset tp_bin
 
+# set up a minimalist TP prompt
+if [[ -v TP_COLOR ]]
+then
+    tp_color="$TP_COLOR"
+else
+    case "$TERM" in
+        xterm-color | *-256color )
+            tp_color='yes';;
+        * )
+            tp_color='';;
+    esac
+fi
+if [[ -n "$tp_color" ]]
+then
+    PS1='\[\e[1;34m\][TP] \[\e[0m\]\$ '
+else
+    PS1='[TP] \$ '
+fi
+unset tp_color
