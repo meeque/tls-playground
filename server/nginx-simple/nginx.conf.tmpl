@@ -17,7 +17,7 @@ http {
 
     # supported protocol versions and cipher suites (in Open-SSL notation)
     ssl_protocols TLSv1.3;
-    ssl_conf_command Ciphersuites TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:DHE-RSA-AES256-GCM-SHA384;
+    ssl_conf_command Ciphersuites TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256;
     ssl_prefer_server_ciphers on;
 
     # server certificate and its private key
