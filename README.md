@@ -83,7 +83,7 @@ docker image pull debian:testing-slim
 docker build --tag "${DOCKER_HUB_USER}/tls-playground:latest" .
 ```
 ```
-docker image push "${DOCKER_HUB_USER}/tls-playground:latest" .
+docker image push "${DOCKER_HUB_USER}/tls-playground:latest"
 ```
 
 You may also find a pre-built TLS PLayground image at [meeque/tls-playground:latest](https://hub.docker.com/r/meeque/tls-playground), but no guarantees that it's actually based on the latest sources.
