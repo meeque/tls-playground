@@ -264,10 +264,9 @@ function tp_cert_show {
                 openssl req -in "${file}" -noout -text
             ;;
         'key.pem' )
-            # TODO Add support for other key type, not just RSA
             tp_msg "Showing contents of private key in '${file}'..."
             tp_util_run \
-                openssl rsa -in "${file}" -passin "file:${files[key_pass_path]}" -noout -text
+                openssl pkey -in "${file}" -passin "file:${files[key_pass_path]}" -noout -text
 
             tp_warn "***************************************************************************************"
             tp_warn "Attention:"
@@ -309,7 +308,7 @@ function tp_cert_fingerprint {
         'key.pem' )
             tp_msg "Calculating fingerprint of private key in '${file}'..."
             tp_util_run \
-                openssl rsa -in ${file} -passin "file:${files[key_pass_path]}" -outform DER | openssl dgst -sha256 | tr 'a-z' 'A-Z'
+                openssl pkey -in ${file} -passin "file:${files[key_pass_path]}" -outform DER | openssl dgst -sha256 | tr 'a-z' 'A-Z'
             ;;
         * )
             tp_warn "Not sure how to caculate fingerprints of files with suffix '.${files[suffix]}'!"
