@@ -13,6 +13,7 @@ RUN apt-get update \
     certbot \
     nginx \
     curl \
+    sslscan \
     gettext-base \
     coreutils \
     lsof \
