@@ -6,6 +6,7 @@ default_md = sha384
 encrypt_key = yes
 
 distinguished_name = req_distinguished_name
+req_extensions = req_extensions
 
 [ req_distinguished_name ]
 
@@ -14,6 +15,14 @@ ST = Bavaria
 L = Munich
 O  = TLS Playground
 CN = tls-playground.${TP_SERVER_DOMAIN}
+
+[ req_extensions ]
+
+subjectAltName=@alt_names
+
+[ alt_names ]
+
+DNS.1 = tls-playground.${TP_SERVER_DOMAIN}
 
 # Note
 # This certificate request configuration has an associated public key parameters file that has been generated with the following command:
