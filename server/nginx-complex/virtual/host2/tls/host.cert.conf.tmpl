@@ -21,3 +21,8 @@ CN = host2.tls-playground.${TP_SERVER_DOMAIN}
 
 basicConstraints=CA:FALSE
 subjectKeyIdentifier = hash
+subjectAltName=@alt_names
+
+[ alt_names ]
+
+DNS.1 = host2.tls-playground.${TP_SERVER_DOMAIN}
