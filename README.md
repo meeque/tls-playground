@@ -60,7 +60,7 @@ When running TP locally, you'll need to install the following prerequisites (tes
 * Assorted **Unix utilities**:
   `awk`, `basename`, `cat`, `chmod`, `cp`, `dd`, `dirname`, `envsubst`, `find`, `getopt`, `grep`, `id`, `ln`, `mkdir`, `printf`, `rm`, `sed`, `shred`, `sort`, `touch`, `xargs`, `tr`, `true`, `xargs`
   (Tested with recent versions from the [GNU](https://www.gnu.org/software/software.html) project.
-  Note: TP is incompatible with`getopt` implementations based on non-GNU libraries, which make cause trouble on BSD-ish Unix systems, incl. Mac OS. In the latter, this can be fixed by installing the [`gnu-getopt`](https://formulae.brew.sh/formula/gnu-getopt) package through [Homebrew](https://brew.sh/).)
+  Note: TP is incompatible with`getopt` implementations based on non-GNU libraries, which may cause trouble on BSD-ish Unix systems, incl. Mac OS. In the latter, this can be fixed by installing the [`gnu-getopt`](https://formulae.brew.sh/formula/gnu-getopt) package through [Homebrew](https://brew.sh/).)
 * **[OpenSSL](https://www.openssl.org/)** (3.0.10)
 * **[Certbot](https://certbot.eff.org/)** (2.1.0)
 * [nginx](https://nginx.org/) (1.24.0)
