@@ -3,45 +3,52 @@ error_log var/logs/error.log;
 
 worker_processes 3;
 events {
-    worker_connections  1024;
+    worker_connections 512;
 }
 
-# Most of the following SSL configuration is based on the ngx_http_ssl_module.
-# This module makes use of the Open SSL library.
-# See here for more information:
-# https://nginx.org/en/docs/http/ngx_http_ssl_module.html
-
 http {
-
-    #### TLS Configuration #### 
-
-    # supported protocol versions and cipher suites (in Open-SSL notation)
-    ssl_protocols TLSv1.3;
-    ssl_conf_command Ciphersuites TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256;
-    ssl_prefer_server_ciphers on;
-
-    # server certificate and its private key
-    ssl_certificate        tls/server.fullchain.pem;
-    ssl_certificate_key    tls/private/server.key.pem;
-    ssl_password_file      tls/private/server.key.pass.txt;
-
-    # enable HSTS (HTTP Strict Transport Security)
-    add_header Strict-Transport-Security "max-age=15768000; includeSubdomains;";
-
-    # improve HTTPS performance, use connection keep-alive
-    keepalive_timeout 5s;
 
     # log http(s) requests to file
     access_log var/logs/access.log;
 
+    #### TLS Configuration ####
+
+    # Most of the following TLS configuration is based on the ngx_http_ssl_module.
+    # This module makes use of the Open SSL library.
+    # Both use SSL as a synonym for TLS, for historical reasons.
+    # See here for more information:
+    # https://nginx.org/en/docs/http/ngx_http_ssl_module.html
+
+    # Supported protocol versions and cipher suites (in Open-SSL notation).
+    # Note that the ssl_ciphers directive does not support TLS 1.3 cipher suites yet,
+    # so we're using ssl_conf_command instead.
+    ssl_protocols TLSv1.3;
+    ssl_conf_command Ciphersuites TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256;
+    ssl_prefer_server_ciphers on;
+
+    # Server certificate and corresponding private key.
+    # The ssl_certificate directive can be used to provide a full certificate chain.
+    # In case of self-signed certificates the chain will only contain one certificate.
+    ssl_certificate        tls/server.fullchain.pem;
+    ssl_certificate_key    tls/private/server.key.pem;
+    ssl_password_file      tls/private/server.key.pass.txt;
+
+    # Enable HSTS (HTTP Strict Transport Security).
+    add_header Strict-Transport-Security "max-age=15768000; includeSubdomains;";
+
+    # Improve HTTPS performance:
+    # Use connection keep-alive to avoid new TLS handshakes for subsequent requests.
+    keepalive_timeout 5s;
+
     server {
-        # listen on the default HTTPS port and enable SSL
+        # Listen on configured local address and HTTPS port, and enable TLS
         listen ${TP_SERVER_LISTEN_ADDRESS}:${TP_SERVER_HTTPS_PORT} ssl default_server;
 
-        # the server name (should match the server name in the certificate, see ssl_certificate directive in the http section above)
+        # The server name (should match a server name in the certificate,
+        # see ssl_certificate directive in the http section above).
         server_name tls-playground.${TP_SERVER_DOMAIN};
 
-        # ...
+        # path to the web-root directory for serving static files
         root public;
     }
 
