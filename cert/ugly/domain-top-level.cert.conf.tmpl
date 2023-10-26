@@ -1,3 +1,8 @@
+# The domain in the Subject Common Name (CN) here is problematic.
+# Top level domains (TLD) are not allowed in server certificates.
+# Reputable CAs will not accept this CSR.
+# And even self-signed certificates with this CN will get rejected by clients.
+
 [ req ]
 
 prompt = no

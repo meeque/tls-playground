@@ -1,3 +1,9 @@
+# The 320 bit ECDSA curve here may be secure, but it's not widely supported.
+# You can use it for self-signed certs or with a private CA, but common clients will not accept it.
+# Tested with Firefox, Chrome, and curl, which all reject this curve.
+# Public CAs may refuse to issue certificates with this curve in the first place.
+# Tested with Let's Encypt, using ACME with certbot and a custom CSR, which reports an error.
+
 [ req ]
 
 prompt = no

@@ -1,3 +1,8 @@
+# The domain in the Subject Common Name (CN) here is problematic.
+# Wildcards (*) are only allowed as the left-most DNS label.
+# Reputable CAs will not accept this CSR.
+# And even self-signed certificates with this CN will get rejected by clients.
+
 [ req ]
 
 prompt = no

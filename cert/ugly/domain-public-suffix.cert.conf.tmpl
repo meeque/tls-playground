@@ -1,3 +1,10 @@
+# The domain in the Subject Common Name (CN) here is problematic.
+# The given 2nd-level domain .co.uk is shared by many different domains owned by unrelated parties.
+# Therefore it is treated like a top-level domain (TLD) as per the Public Suffix List:
+# https://publicsuffix.org/
+# Reputable CAs will not accept this CSR.
+# And even self-signed certificates with this CN will get rejected by clients.
+
 [ req ]
 
 prompt = no
