@@ -502,7 +502,7 @@ function tp_cert_clean {
     tp_util_files 'files' "${cert_config}"
     tp_msg "Cleaning up certificates and other files related to '${files[cert_conf_path]}'..."
 
-    for file in "${files[key_pass_path]}" "${files[key_pem_path]}" "${files[csr_pem_path]}" "${files[cert_pem_path]}" "${files[chain_pem_path]}" "${files[fullchain_pem_path]}" "${files[dir]}/private/${files[name]}.key.pkcs8.der" "${files[dir]}/private/${files[name]}.pfx"
+    for file in "${files[key_pem_path]}" "${files[key_pass_path]}" "${files[key_params_pem_path]}" "${files[csr_pem_path]}" "${files[cert_pem_path]}" "${files[chain_pem_path]}" "${files[fullchain_pem_path]}" "${files[dir]}/private/${files[name]}.key.pkcs8.der" "${files[dir]}/private/${files[name]}.pfx"
     do
         if [[ -f "${file}" ]]
         then
@@ -676,7 +676,7 @@ function tp_ca_clean {
     if [[ ! -d "${ca_dir}" ]]
     then
         tp_err "Failed to clean up CA '${ca_name}'! Could not find expected CA directory '${ca_dir}'!"
-        tp_msg "Omit the CA name to clean up all ot them. Or, try one of the following instead:"
+        tp_msg "Omit the CA name to clean up all of them. Or, try one of the following instead:"
         tp_ca_list
         return 1
     fi
@@ -685,7 +685,7 @@ function tp_ca_clean {
     (
         cd "${ca_dir}"
         find . -type d -and '(' -name 'archive' -or -name 'private' ')' | xargs rm -rf
-        find . -type f -and -not '(' -name '*.conf' -or -name '*.md' -or -name '*.key.params.pem' ')' | xargs rm -f
+        find . -type f -and -not '(' -name '*.conf' -or -name '*.md' ')' | xargs rm -f
     )
 }
 

@@ -7,7 +7,6 @@
 *.der
 *.pfx
 *.pass.txt
-!*.params.pem
 
 /cert/**/*.conf
 
