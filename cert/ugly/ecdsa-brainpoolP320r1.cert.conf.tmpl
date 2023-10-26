@@ -15,6 +15,6 @@ L = Munich
 O  = TLS Playground
 CN = ecdsa-320.example.tls-playground.${TP_SERVER_DOMAIN}
 
-# Note
-# This certificate request configuration has an associated public key parameters file that has been generated with the following command:
-# $ openssl genpkey -genparam -algorithm ec -pkeyopt ec_paramgen_curve:brainpoolP320r1 -out ecdsa-brainpoolP320r1.key.params.pem
+[ tp_custom ]
+
+tp_ec_curve = brainpoolP320r1

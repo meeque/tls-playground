@@ -19,6 +19,6 @@ L = Munich
 O  = TLS Playground
 CN = short-ecdsa-key-122-bits.ugly.example.tls-playground.${TP_SERVER_DOMAIN}
 
-# Note
-# This certificate request configuration has an associated public key parameters file that has been generated with the following command:
-# $ openssl genpkey -genparam -algorithm ec -pkeyopt ec_paramgen_curve:secp112r2 -out ecdsa-short-key-112.key.params.pem
+[ tp_custom ]
+
+tp_ec_curve = secp112r2

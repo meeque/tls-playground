@@ -341,9 +341,18 @@ function tp_cert_request {
     cat "${files[cert_conf_path]}"
     echo
 
-    if [[ "${files[key_params_pem_stat]}" = 'f' ]]
+    local ec_curve=( $( tp_util_get_config_values "${files[cert_conf_path]}" 'tp_ec_curve' ) )
+    if [[ -n "${ec_curve}" ]]
     then
-        tp_msg "Using private key parameters file '${files[key_params_pem_path]}':"
+        tp_msg "Found configuration 'tp_ec_curve = ${ec_curve}' in certificate config file '${files[cert_conf_path]}'."
+        tp_msg "Generating elastic curve key parameters file for named curve '${ec_curve}'..."
+        tp_util_run \
+            openssl genpkey -genparam \
+                -algorithm ec \
+                -pkeyopt "ec_paramgen_curve:${ec_curve}" \
+                -out "${files[key_params_pem_path]}"
+
+        tp_msg "Using elastic curve key parameters file '${files[key_params_pem_path]}':"
         tp_util_run \
             openssl pkeyparam \
             -in "${files[key_params_pem_path]}" \
@@ -351,7 +360,7 @@ function tp_cert_request {
     fi
 
     tp_msg "Generating key-pair and CSR..."
-    if [[ "${files[key_params_pem_stat]}" = 'f' ]]
+    if [[ -n "${ec_curve}" ]]
     then
         tp_util_run \
             openssl req -new \
