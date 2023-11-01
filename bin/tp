@@ -279,6 +279,10 @@ function tp_cert_show {
             tp_util_run \
                 openssl pkeyparam -in "${file}" -noout -text
             ;;
+        'conf' | *'.conf' )
+            tp_msg "Showing configuration file '${file}'..."
+            cat "${file}"
+            ;;
         * )
             tp_err "Sorry, don't know how to show contents of files with suffix '.${files[suffix]}'!"
             return 1
