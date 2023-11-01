@@ -535,7 +535,6 @@ function tp_cert_selfsign {
 
     tp_util_files 'files' "${cert_config_or_csr}"
     tp_util_files_check 'files' 'file_path' "Nothing to self-sign. Specify a certificate config file or a CSR file!" || return $?
-    # TODO check that either cert config or CSR is given, not something else
 
     tp_cert_request_if_missing "${cert_config_or_csr}"
 
@@ -1432,8 +1431,10 @@ function tp_server_list {
 # TP clean command
 
 function tp_clean {
-    # TODO Fix --help option for the clean command
+    tp_help_if_needed "${tp_base_dir}/bin/README.md" '1' || return 0
+
     tp_msg "Cleaning up everything..."
+
     tp_server clean
     tp_acme clean
     tp_ca clean
