@@ -20,7 +20,7 @@ function tp_main {
     tp_main_arg_defaults
 
     # parse arguments
-    local tp_arguments="$( getopt --options 'shc::amr' --longoptions 'step,help,ca::,acme,manual,request,csr' --name '[TP]' -- "$@" )"
+    local tp_arguments="$( getopt --options 'hsc::amr' --longoptions 'help,step,disclose,ca::,acme,manual,request,csr' --name '[TP]' -- "$@" )"
     eval set -- ${tp_arguments}
 
     # process arguments
@@ -32,6 +32,9 @@ function tp_main {
                 ;;
             -s | --step )
                 tp_step='true'
+                ;;
+            --disclose )
+                tp_disclose='true'
                 ;;
             -c | --ca )
                 tp_cert_provider='ca'
@@ -140,6 +143,7 @@ function tp_main_env_check {
 function tp_main_arg_defaults {
     tp_help=''
     tp_step=''
+    tp_disclose=''
     tp_cert_shown=( conf='' params='' key='' csr='' cert='' chain='' fullchain='' )
     tp_cert_provider='selfsign'
     tp_cert_provider_opt=''
@@ -267,16 +271,22 @@ function tp_cert_show {
                 openssl req -in "${file}" -noout -text
             ;;
         'key.pem' )
-            # TODO only show public components with -text_pub unless explicitly requested
             tp_cert_shown[key]="${file}"
-            tp_msg "Showing contents of private key in '${file}':"
-            tp_util_run \
-                openssl pkey -in "${file}" -passin "file:${files[key_pass_path]}" -noout -text
+            if [[ -n "${tp_disclose}" ]]
+            then
+                tp_msg "Showing ALL contents of private key in '${file}':"
+                tp_util_run \
+                    openssl pkey -in "${file}" -passin "file:${files[key_pass_path]}" -noout -text
 
-            tp_warn "***************************************************************************************"
-            tp_warn "Attention:"
-            tp_warn "If anyone has seen this, you should stop using this key and corresponding certificates!"
-            tp_warn "***************************************************************************************"
+                tp_warn "***************************************************************************************"
+                tp_warn "Attention:"
+                tp_warn "If anyone has seen this, you should stop using this key and corresponding certificates!"
+                tp_warn "***************************************************************************************"
+            else
+                tp_msg "Showing public contents of private key in '${file}':"
+                tp_util_run \
+                    openssl pkey -in "${file}" -passin "file:${files[key_pass_path]}" -noout -text_pub
+            fi
             ;;
         'key.params.pem' )
             tp_cert_shown[params]="${file}"
@@ -427,6 +437,20 @@ function tp_cert_key {
 
     tp_succ "New private key in '${files[key_pem_path]}'."
     tp_succ "Pass-phrase for new private key in '${files[key_pass_path]}'."
+}
+
+function tp_cert_key_if_missing {
+    local cert_config="$1"
+
+    tp_util_files 'files' "${cert_config}"
+
+    if [[ -f "${files[key_pem_path]}" ]]
+    then
+        tp_msg "Private key file '${files[key_pem_path]}' already exists. Skipping generation of a new one."
+        tp_cert_show_if_not_shown_yet "${files[key_pem_path]}"
+    else
+        tp_cert_key "${cert_config}"
+    fi
 }
 
 function tp_cert_request {
