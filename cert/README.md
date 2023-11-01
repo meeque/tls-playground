@@ -194,9 +194,13 @@ Available Commands:
 
   fingerprint  Calculate a cryptographic checksum (a.k.a. fingerprint) of a cert, CSR, or key <file>.
 
-  request      Create a key-pair and a CSR based on a config <file>.
+  params       Create key parameters based on config <file>.
 
-  selfsign     Create a self-signed certificate based on a config <file> file or an existing CSR <file>.
+  key          Create key parameters and private key based on config <file>.
+
+  request      Create key parameters, private key, and CSR based on config <file>.
+
+  selfsign     Create a self-signed certificate based on config <file> file or existing CSR <file>.
 
   pkcs8        Convert a private key <file> into PKCS8 format.
 

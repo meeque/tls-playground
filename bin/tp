@@ -157,11 +157,11 @@ function tp_cert {
     tp_help_if_needed "${tp_base_dir}/cert/README.md" '-1' || return 0
 
     case "${command}" in
-        'init' | 'show' | 'fingerprint' | 'request' | 'selfsign' | 'pkcs8' | 'pkcs12' | 'clean' )
+        'init' | 'show' | 'fingerprint' | 'params' | 'key' | 'request' | 'selfsign' | 'pkcs8' | 'pkcs12' | 'clean' )
             tp_cert_handle_multiple "${command}" "$@"
             ;;
         * )
-            tp_help_with_commands 'tp cert' 'TP Certificate Utilities' "${command}" 'init show fingerprint request selfsign pkcs8 pkcs12 clean'
+            tp_help_with_commands 'tp cert' 'TP Certificate Utilities' "${command}" 'init show fingerprint params key request selfsign pkcs8 pkcs12 clean'
             ;;
     esac
 }
@@ -204,7 +204,7 @@ function tp_cert_handle_multiple {
                 'show' | 'fingerprint' )
                     files_to_handle+=( $( find "${arg}" -type f -and '(' -name '*.cert.pem' -or -name '*.csr.pem' ')' | sort ) )
                     ;;
-                'request' | 'selfsign' )
+                'params' | 'key' | 'request' | 'selfsign' )
                     files_to_handle+=( $( find "${arg}" -type f -and -name '*.cert.conf' | sort ) )
                     ;;
                 'pkcs8' )
@@ -264,6 +264,7 @@ function tp_cert_show {
                 openssl req -in "${file}" -noout -text
             ;;
         'key.pem' )
+            # TODO only show public components with -text_pub unless explicitly requested
             tp_msg "Showing contents of private key in '${file}'..."
             tp_util_run \
                 openssl pkey -in "${file}" -passin "file:${files[key_pass_path]}" -noout -text
@@ -322,6 +323,96 @@ function tp_cert_fingerprint {
 #openssl req -in example.csr.pem -noout -verify
 #openssl verify -CAfile ca-root.cert.pem example.cert.pem
 
+function tp_cert_params {
+    local cert_config="$1"
+
+    tp_util_files 'files' "${cert_config}"
+    tp_util_files_check 'files' 'file_path' "No certificate config file name specified. Specify the OpenSSL config file for the key parameters!" || return $?
+    tp_util_files_check 'files' 'suffix=cert.conf' "Creating key parameters from given file '${cert_config}' is not supported! Specify a certificate config (.cert.conf) file!" || return $?
+    tp_util_files_check 'files' 'cert_conf_stat' "Given certificate config file '${cert_config}' does not exist!" || return $?
+
+    tp_msg "Using OpenSSL certificate config file '${files[cert_conf_path]}':"
+    echo
+    cat "${files[cert_conf_path]}"
+    echo
+
+    local ec_curve=( $( tp_util_get_config_values "${files[cert_conf_path]}" 'tp_ec_curve' ) )
+    if [[ -n "${ec_curve}" ]]
+    then
+        tp_msg "Found configuration 'tp_ec_curve = ${ec_curve}' in certificate config file '${files[cert_conf_path]}'."
+        tp_msg "Generating elastic curve key parameters file for named curve '${ec_curve}'..."
+
+        tp_util_run \
+            openssl genpkey -genparam \
+                -algorithm ec \
+                -pkeyopt "ec_paramgen_curve:${ec_curve}" \
+                -out "${files[key_params_pem_path]}"
+
+        tp_succ "New key parameters in '${files[key_params_pem_path]}'."
+    else
+        tp_msg "This certificate config file does not require a key parameters file."
+    fi
+}
+
+function tp_cert_params_if_missing {
+    local cert_config="$1"
+
+    tp_util_files 'files' "${cert_config}"
+    tp_util_files_check 'files' 'file_path' "No file name specified. Specify an OpenSSL certificate config file!" || return $?
+    tp_util_files_check 'files' 'suffix=cert.conf' "Creating a key parameters from given file '${cert_config}' is not supported! Specify a certificate config (.cert.conf) file!" || return $?
+
+    if [[ -f "${files[key_params_pem_path]}" ]]
+    then
+        tp_msg "Key parameters file '${files[key_params_pem_path]}' already exists. Skipping generation of a new one." && return
+    else
+        tp_cert_params "${cert_config}"
+    fi
+}
+
+function tp_cert_key {
+    local cert_config="$1"
+
+    tp_util_files 'files' "${cert_config}"
+    tp_util_files_check 'files' 'file_path' "No certificate config file name specified. Specify the OpenSSL config file for the private key!" || return $?
+    tp_util_files_check 'files' 'suffix=cert.conf' "Creating a private key from given file '${cert_config}' is not supported! Specify a certificate config (.cert.conf) file!" || return $?
+    tp_util_files_check 'files' 'cert_conf_stat' "Given certificate config file '${cert_config}' does not exist!" || return $?
+
+    mkdir -p "${files[dir]}/private"
+    tp_util_remove_symlinks "${files[key_pass_path]}" "${files[key_pem_path]}" "${files[csr_pem_path]}"
+    touch "${files[key_pass_path]}"
+    chmod 'og-rwx' "${files[dir]}/private" "${files[key_pass_path]}"
+    echo -n "${TP_PASS}" > "${files[key_pass_path]}"
+
+    tp_msg "Using OpenSSL certificate config file '${files[cert_conf_path]}':"
+    echo
+    cat "${files[cert_conf_path]}"
+    echo
+
+    tp_cert_params_if_missing "${cert_config}"
+
+    tp_msg "Generating key-pair..."
+    if [[ -f "${files[key_params_pem_path]}" ]]
+    then
+        tp_util_run \
+            openssl genpkey \
+                -config "${files[cert_conf_path]}" \
+                -paramfile "${files[key_params_pem_path]}" \
+                -pass "file:${files[key_pass_path]}" \
+                -out "${files[key_pem_path]}"
+
+    else
+        tp_util_run \
+            openssl genpkey \
+                -config "${files[cert_conf_path]}" \
+                -algorithm rsa \
+                -pass "file:${files[key_pass_path]}" \
+                -out "${files[key_pem_path]}"
+    fi
+
+    tp_succ "New private key in '${files[key_pem_path]}'."
+    tp_succ "Pass-phrase for new private key in '${files[key_pass_path]}'."
+}
+
 function tp_cert_request {
     local cert_config="$1"
 
@@ -341,23 +432,8 @@ function tp_cert_request {
     cat "${files[cert_conf_path]}"
     echo
 
-    local ec_curve=( $( tp_util_get_config_values "${files[cert_conf_path]}" 'tp_ec_curve' ) )
-    if [[ -n "${ec_curve}" ]]
-    then
-        tp_msg "Found configuration 'tp_ec_curve = ${ec_curve}' in certificate config file '${files[cert_conf_path]}'."
-        tp_msg "Generating elastic curve key parameters file for named curve '${ec_curve}'..."
-        tp_util_run \
-            openssl genpkey -genparam \
-                -algorithm ec \
-                -pkeyopt "ec_paramgen_curve:${ec_curve}" \
-                -out "${files[key_params_pem_path]}"
-
-        tp_msg "Using elastic curve key parameters file '${files[key_params_pem_path]}':"
-        tp_util_run \
-            openssl pkeyparam \
-            -in "${files[key_params_pem_path]}" \
-            -noout -text
-    fi
+    # TODO optionally generate private key separately
+    # openssl req -new -config 'server/nginx-simple/tls/server.cert.conf' -key 'server/nginx-simple/tls/private/server.key.pem' -passin 'file:server/nginx-simple/tls/private/server.key.pass.txt' -out 'server/nginx-simple/tls/server.csr.pem'
 
     tp_msg "Generating key-pair and CSR..."
     if [[ -n "${ec_curve}" ]]
