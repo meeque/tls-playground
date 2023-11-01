@@ -20,7 +20,7 @@ function tp_main {
     tp_main_arg_defaults
 
     # parse arguments
-    local tp_arguments="$( getopt --options 'hsc::amr' --longoptions 'help,step,disclose,ca::,acme,manual,request,csr' --name '[TP]' -- "$@" )"
+    local tp_arguments="$( getopt --options 'hsec::amr' --longoptions 'help,step,disclose,explicit,ca::,acme,manual,request,csr' --name '[TP]' -- "$@" )"
     eval set -- ${tp_arguments}
 
     # process arguments
@@ -35,6 +35,9 @@ function tp_main {
                 ;;
             --disclose )
                 tp_disclose='true'
+                ;;
+            -e | --explicit )
+                tp_explicit='true'
                 ;;
             -c | --ca )
                 tp_cert_provider='ca'
@@ -407,6 +410,7 @@ function tp_cert_key {
     tp_util_files_check 'files' 'suffix=cert.conf' "Creating a private key from given file '${cert_config}' is not supported! Specify a certificate config (.cert.conf) file!" || return $?
     tp_util_files_check 'files' 'cert_conf_stat' "Given certificate config file '${cert_config}' does not exist!" || return $?
 
+    # TODO copied over from tp_cert_request, extract to util function
     mkdir -p "${files[dir]}/private"
     tp_util_remove_symlinks "${files[key_pass_path]}" "${files[key_pem_path]}" "${files[csr_pem_path]}"
     touch "${files[key_pass_path]}"
@@ -437,6 +441,8 @@ function tp_cert_key {
 
     tp_succ "New private key in '${files[key_pem_path]}'."
     tp_succ "Pass-phrase for new private key in '${files[key_pass_path]}'."
+    echo
+    tp_cert_show_if_not_shown_yet "${files[key_pem_path]}"
 }
 
 function tp_cert_key_if_missing {
@@ -461,37 +467,48 @@ function tp_cert_request {
     tp_util_files_check 'files' 'suffix=cert.conf' "Creating a CSR from given file '${cert_config}' is not supported! Specify a certificate config (.cert.conf) file!" || return $?
     tp_util_files_check 'files' 'cert_conf_stat' "Given certificate config file '${cert_config}' does not exist!" || return $?
 
-    mkdir -p "${files[dir]}/private"
-    tp_util_remove_symlinks "${files[key_pass_path]}" "${files[key_pem_path]}" "${files[csr_pem_path]}"
-    touch "${files[key_pass_path]}"
-    chmod 'og-rwx' "${files[dir]}/private" "${files[key_pass_path]}"
-    echo -n "${TP_PASS}" > "${files[key_pass_path]}"
-
     tp_cert_show_if_not_shown_yet "${files[cert_conf_path]}"
-    tp_cert_params_if_missing "${cert_config}"
 
-    # TODO optionally generate private key separately
-    # openssl req -new -config 'server/nginx-simple/tls/server.cert.conf' -key 'server/nginx-simple/tls/private/server.key.pem' -passin 'file:server/nginx-simple/tls/private/server.key.pass.txt' -out 'server/nginx-simple/tls/server.csr.pem'
-
-    tp_msg "Generating key-pair and CSR..."
-    if [[ -f "${files[key_params_pem_path]}" ]]
+    if [[ -n "${tp_explicit}" ]]
     then
+        tp_cert_key "${cert_config}"
+
+        tp_msg "Generating CSR..."
         tp_util_run \
             openssl req -new \
                 -config "${files[cert_conf_path]}" \
-                -newkey "param:${files[key_params_pem_path]}" \
-                -passout "file:${files[key_pass_path]}" -keyout "${files[key_pem_path]}" -out "${files[csr_pem_path]}"
+                -key "${files[key_pem_path]}" -passin "file:${files[key_pass_path]}" \
+                -out "${files[csr_pem_path]}"
     else
-        tp_util_run \
-            openssl req -new \
-                -config "${files[cert_conf_path]}" \
-                -passout "file:${files[key_pass_path]}" -keyout "${files[key_pem_path]}" -out "${files[csr_pem_path]}"
+        mkdir -p "${files[dir]}/private"
+        tp_util_remove_symlinks "${files[key_pass_path]}" "${files[key_pem_path]}" "${files[csr_pem_path]}"
+        touch "${files[key_pass_path]}"
+        chmod 'og-rwx' "${files[dir]}/private" "${files[key_pass_path]}"
+        echo -n "${TP_PASS}" > "${files[key_pass_path]}"
+        tp_cert_params_if_missing "${cert_config}"
+
+        tp_msg "Generating key-pair and CSR..."
+        if [[ -f "${files[key_params_pem_path]}" ]]
+        then
+            tp_util_run \
+                openssl req -new \
+                    -config "${files[cert_conf_path]}" \
+                    -newkey "param:${files[key_params_pem_path]}" \
+                    -passout "file:${files[key_pass_path]}" -keyout "${files[key_pem_path]}" \
+                    -out "${files[csr_pem_path]}"
+        else
+            tp_util_run \
+                openssl req -new \
+                    -config "${files[cert_conf_path]}" \
+                    -passout "file:${files[key_pass_path]}" -keyout "${files[key_pem_path]}" \
+                    -out "${files[csr_pem_path]}"
+        fi
+
+        tp_succ "New private key in '${files[key_pem_path]}'."
+        tp_succ "Pass-phrase for new private key in '${files[key_pass_path]}'."
     fi
 
-    tp_succ "New private key in '${files[key_pem_path]}'."
-    tp_succ "Pass-phrase for new private key in '${files[key_pass_path]}'."
     tp_succ "New CSR in '${files[csr_pem_path]}'."
-
     echo
     tp_cert_show_if_not_shown_yet "${files[csr_pem_path]}"
 }

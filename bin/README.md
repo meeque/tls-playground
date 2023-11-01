@@ -162,27 +162,37 @@ Usage:     tp [<global options>] <command> [...]
 
 Available commands:
 
-  cert     Manage keys, CSRs, certificates, etc.
+  cert      Manage keys, CSRs, certificates, etc.
 
-  ca       Manage and use built-in private Certificate Authorities (CA).
+  ca        Manage and use built-in private Certificate Authorities (CA).
 
-  acme     Obtain and manage certificates from external CAs using the ACME protocol.
+  acme      Obtain and manage certificates from external CAs using the ACME protocol.
 
-  server   Use demo servers with certificates and TLS.
+  server    Use demo servers with certificates and TLS.
 
-  clean    Delete transient data.
+  clean     Delete transient data.
 
 Global options:
 
-  -s, --step  Step through invocation of external commands (e.g. openssl, certbot) one-by-one.
+  -s, --step
+           Step through invocation of external commands (e.g. openssl, certbot) one-by-one.
 
-  --disclose  Disclose confidential information such as private keys to stdout, i.e. to the console.
-              Without this option, no confidential data will be disclosed.
+  --disclose
+            Disclose confidential information such as private keys to stdout, i.e. to the console.
+            Without this option, no confidential data will be disclosed.
 
-  -h, --help  Print this global help text, a command help text, or a topic help text.
-              Run 'tp --help <command>' to learn more about individual commands and their arguments.
-              Run 'tp --help env' to learn more about supported environment variables.
-              Run 'tp --help files' to learn more about files and file naming conventions.
+  --e, --explicit
+            Use longer, more explicit sequeneces of tool invocations, even when a specific task
+            could also be achieved with fewer, but more complex invocations. This may make it
+            easier to understand how specific tools are being utilized.
+            Impact of this option is currently limited to 'tp cert request' commands, but may
+            be extended in the future.
+
+  -h, --help
+            Print this global help text, a command help text, or a topic help text.
+            Run 'tp --help <command>' to learn more about individual commands and their arguments.
+            Run 'tp --help env' to learn more about supported environment variables.
+            Run 'tp --help files' to learn more about files and file naming conventions.
 ```
 
 ### Environment Variables
