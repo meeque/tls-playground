@@ -176,6 +176,9 @@ Global options:
 
   -s, --step  Step through invocation of external commands (e.g. openssl, certbot) one-by-one.
 
+  --disclose  Disclose confidential information such as private keys to stdout, i.e. to the console.
+              Without this option, no confidential data will be disclosed.
+
   -h, --help  Print this global help text, a command help text, or a topic help text.
               Run 'tp --help <command>' to learn more about individual commands and their arguments.
               Run 'tp --help env' to learn more about supported environment variables.
