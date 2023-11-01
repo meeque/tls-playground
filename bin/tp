@@ -410,22 +410,16 @@ function tp_cert_key {
     tp_util_files_check 'files' 'suffix=cert.conf' "Creating a private key from given file '${cert_config}' is not supported! Specify a certificate config (.cert.conf) file!" || return $?
     tp_util_files_check 'files' 'cert_conf_stat' "Given certificate config file '${cert_config}' does not exist!" || return $?
 
-    # TODO copied over from tp_cert_request, extract to util function
-    mkdir -p "${files[dir]}/private"
-    tp_util_remove_symlinks "${files[key_pass_path]}" "${files[key_pem_path]}" "${files[csr_pem_path]}"
-    touch "${files[key_pass_path]}"
-    chmod 'og-rwx' "${files[dir]}/private" "${files[key_pass_path]}"
-    echo -n "${TP_PASS}" > "${files[key_pass_path]}"
-
-    tp_cert_show_if_not_shown_yet "${files[cert_conf_path]}"
+    tp_cert_show_if_not_shown_yet "${cert_config}"
     tp_cert_params_if_missing "${cert_config}"
+    tp_cert_key_prepare "${cert_config}"
 
     tp_msg "Generating key-pair..."
     if [[ -f "${files[key_params_pem_path]}" ]]
     then
         tp_util_run \
             openssl genpkey \
-                -config "${files[cert_conf_path]}" \
+                -config "${cert_config}" \
                 -paramfile "${files[key_params_pem_path]}" \
                 -pass "file:${files[key_pass_path]}" \
                 -out "${files[key_pem_path]}"
@@ -433,7 +427,7 @@ function tp_cert_key {
     else
         tp_util_run \
             openssl genpkey \
-                -config "${files[cert_conf_path]}" \
+                -config "${cert_config}" \
                 -algorithm rsa \
                 -pass "file:${files[key_pass_path]}" \
                 -out "${files[key_pem_path]}"
@@ -459,6 +453,18 @@ function tp_cert_key_if_missing {
     fi
 }
 
+function tp_cert_key_prepare {
+    local cert_config="$1"
+
+    tp_util_files 'files' "${cert_config}"
+
+    mkdir -p "${files[dir]}/private"
+    tp_util_remove_symlinks "${files[key_pass_path]}" "${files[key_pem_path]}" "${files[csr_pem_path]}"
+    touch "${files[key_pass_path]}"
+    chmod 'og-rwx' "${files[dir]}/private" "${files[key_pass_path]}"
+    echo -n "${TP_PASS}" > "${files[key_pass_path]}"
+}
+
 function tp_cert_request {
     local cert_config="$1"
 
@@ -467,7 +473,7 @@ function tp_cert_request {
     tp_util_files_check 'files' 'suffix=cert.conf' "Creating a CSR from given file '${cert_config}' is not supported! Specify a certificate config (.cert.conf) file!" || return $?
     tp_util_files_check 'files' 'cert_conf_stat' "Given certificate config file '${cert_config}' does not exist!" || return $?
 
-    tp_cert_show_if_not_shown_yet "${files[cert_conf_path]}"
+    tp_cert_show_if_not_shown_yet "${cert_config}"
 
     if [[ -n "${tp_explicit}" ]]
     then
@@ -480,12 +486,8 @@ function tp_cert_request {
                 -key "${files[key_pem_path]}" -passin "file:${files[key_pass_path]}" \
                 -out "${files[csr_pem_path]}"
     else
-        mkdir -p "${files[dir]}/private"
-        tp_util_remove_symlinks "${files[key_pass_path]}" "${files[key_pem_path]}" "${files[csr_pem_path]}"
-        touch "${files[key_pass_path]}"
-        chmod 'og-rwx' "${files[dir]}/private" "${files[key_pass_path]}"
-        echo -n "${TP_PASS}" > "${files[key_pass_path]}"
         tp_cert_params_if_missing "${cert_config}"
+        tp_cert_key_prepare "${cert_config}"
 
         tp_msg "Generating key-pair and CSR..."
         if [[ -f "${files[key_params_pem_path]}" ]]
