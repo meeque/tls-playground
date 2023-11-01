@@ -140,6 +140,7 @@ function tp_main_env_check {
 function tp_main_arg_defaults {
     tp_help=''
     tp_step=''
+    tp_cert_shown=( conf='' params='' key='' csr='' cert='' chain='' fullchain='' )
     tp_cert_provider='selfsign'
     tp_cert_provider_opt=''
     tp_acme_certbot_opts=( '--webroot' '--non-interactive' )
@@ -254,18 +255,21 @@ function tp_cert_show {
 
     case "${files[suffix]}" in
         'cert.pem' | 'pem' )
-            tp_msg "Showing contents of certificate in '${file}'..."
+            tp_cert_shown[cert]="${file}"
+            tp_msg "Showing contents of certificate in '${file}':"
             tp_util_run \
                 openssl x509 -in "${file}" -noout -text
             ;;
         'csr.pem' )
-            tp_msg "Showing contents of CSR in '${file}'..."
+            tp_cert_shown[csr]="${file}"
+            tp_msg "Showing contents of CSR in '${file}':"
             tp_util_run \
                 openssl req -in "${file}" -noout -text
             ;;
         'key.pem' )
             # TODO only show public components with -text_pub unless explicitly requested
-            tp_msg "Showing contents of private key in '${file}'..."
+            tp_cert_shown[key]="${file}"
+            tp_msg "Showing contents of private key in '${file}':"
             tp_util_run \
                 openssl pkey -in "${file}" -passin "file:${files[key_pass_path]}" -noout -text
 
@@ -275,19 +279,34 @@ function tp_cert_show {
             tp_warn "***************************************************************************************"
             ;;
         'key.params.pem' )
-            tp_msg "Showing public key algorithm parameters in '${file}'..."
+            tp_cert_shown[params]="${file}"
+            tp_msg "Showing public key algorithm parameters in '${file}':"
             tp_util_run \
                 openssl pkeyparam -in "${file}" -noout -text
             ;;
         'conf' | *'.conf' )
-            tp_msg "Showing configuration file '${file}'..."
+            tp_cert_shown[conf]="${file}"
+            tp_msg "Showing configuration file '${file}':"
+            echo
             cat "${file}"
+            echo
             ;;
         * )
             tp_err "Sorry, don't know how to show contents of files with suffix '.${files[suffix]}'!"
             return 1
             ;;
     esac
+}
+
+function tp_cert_show_if_not_shown_yet {
+    local file="$1"
+
+    for i in "${!tp_cert_shown[@]}"
+    do
+        [[ "${tp_cert_shown[${i}]}" == "${file}" ]] && return 0 || true
+    done
+
+    tp_cert_show "${file}"
 }
 
 # TODO Add support fingerprints with other hash functions
@@ -335,10 +354,7 @@ function tp_cert_params {
     tp_util_files_check 'files' 'suffix=cert.conf' "Creating key parameters from given file '${cert_config}' is not supported! Specify a certificate config (.cert.conf) file!" || return $?
     tp_util_files_check 'files' 'cert_conf_stat' "Given certificate config file '${cert_config}' does not exist!" || return $?
 
-    tp_msg "Using OpenSSL certificate config file '${files[cert_conf_path]}':"
-    echo
-    cat "${files[cert_conf_path]}"
-    echo
+    tp_cert_show_if_not_shown_yet "${files[cert_conf_path]}"
 
     local ec_curve=( $( tp_util_get_config_values "${files[cert_conf_path]}" 'tp_ec_curve' ) )
     if [[ -n "${ec_curve}" ]]
@@ -353,6 +369,7 @@ function tp_cert_params {
                 -out "${files[key_params_pem_path]}"
 
         tp_succ "New key parameters in '${files[key_params_pem_path]}'."
+        tp_cert_show_if_not_shown_yet "${files[key_params_pem_path]}"
     else
         tp_msg "This certificate config file does not require a key parameters file."
     fi
@@ -362,12 +379,11 @@ function tp_cert_params_if_missing {
     local cert_config="$1"
 
     tp_util_files 'files' "${cert_config}"
-    tp_util_files_check 'files' 'file_path' "No file name specified. Specify an OpenSSL certificate config file!" || return $?
-    tp_util_files_check 'files' 'suffix=cert.conf' "Creating a key parameters from given file '${cert_config}' is not supported! Specify a certificate config (.cert.conf) file!" || return $?
 
     if [[ -f "${files[key_params_pem_path]}" ]]
     then
-        tp_msg "Key parameters file '${files[key_params_pem_path]}' already exists. Skipping generation of a new one." && return
+        tp_msg "Key parameters file '${files[key_params_pem_path]}' already exists. Skipping generation of a new one."
+        tp_cert_show_if_not_shown_yet "${files[key_params_pem_path]}"
     else
         tp_cert_params "${cert_config}"
     fi
@@ -387,11 +403,7 @@ function tp_cert_key {
     chmod 'og-rwx' "${files[dir]}/private" "${files[key_pass_path]}"
     echo -n "${TP_PASS}" > "${files[key_pass_path]}"
 
-    tp_msg "Using OpenSSL certificate config file '${files[cert_conf_path]}':"
-    echo
-    cat "${files[cert_conf_path]}"
-    echo
-
+    tp_cert_show_if_not_shown_yet "${files[cert_conf_path]}"
     tp_cert_params_if_missing "${cert_config}"
 
     tp_msg "Generating key-pair..."
@@ -431,10 +443,7 @@ function tp_cert_request {
     chmod 'og-rwx' "${files[dir]}/private" "${files[key_pass_path]}"
     echo -n "${TP_PASS}" > "${files[key_pass_path]}"
 
-    tp_msg "Using OpenSSL certificate config file '${files[cert_conf_path]}':"
-    echo
-    cat "${files[cert_conf_path]}"
-    echo
+    tp_cert_show_if_not_shown_yet "${files[cert_conf_path]}"
 
     # TODO optionally generate private key separately
     # openssl req -new -config 'server/nginx-simple/tls/server.cert.conf' -key 'server/nginx-simple/tls/private/server.key.pem' -passin 'file:server/nginx-simple/tls/private/server.key.pass.txt' -out 'server/nginx-simple/tls/server.csr.pem'
@@ -459,7 +468,7 @@ function tp_cert_request {
     tp_succ "New CSR in '${files[csr_pem_path]}'."
 
     echo
-    tp_cert_show "${files[csr_pem_path]}"
+    tp_cert_show_if_not_shown_yet "${files[csr_pem_path]}"
 }
 
 function tp_cert_request_if_missing {
