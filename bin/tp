@@ -468,12 +468,13 @@ function tp_cert_request {
     echo -n "${TP_PASS}" > "${files[key_pass_path]}"
 
     tp_cert_show_if_not_shown_yet "${files[cert_conf_path]}"
+    tp_cert_params_if_missing "${cert_config}"
 
     # TODO optionally generate private key separately
     # openssl req -new -config 'server/nginx-simple/tls/server.cert.conf' -key 'server/nginx-simple/tls/private/server.key.pem' -passin 'file:server/nginx-simple/tls/private/server.key.pass.txt' -out 'server/nginx-simple/tls/server.csr.pem'
 
     tp_msg "Generating key-pair and CSR..."
-    if [[ -n "${ec_curve}" ]]
+    if [[ -f "${files[key_params_pem_path]}" ]]
     then
         tp_util_run \
             openssl req -new \
