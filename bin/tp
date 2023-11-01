@@ -286,7 +286,7 @@ function tp_cert_show {
                 tp_warn "If anyone has seen this, you should stop using this key and corresponding certificates!"
                 tp_warn "***************************************************************************************"
             else
-                tp_msg "Showing public contents of private key in '${file}':"
+                tp_msg "Showing PUBLIC contents of private key in '${file}':"
                 tp_util_run \
                     openssl pkey -in "${file}" -passin "file:${files[key_pass_path]}" -noout -text_pub
             fi
@@ -471,7 +471,7 @@ function tp_cert_request {
 
     if [[ -n "${tp_explicit}" ]]
     then
-        tp_cert_key "${cert_config}"
+        tp_cert_key_if_missing "${cert_config}"
 
         tp_msg "Generating CSR..."
         tp_util_run \
