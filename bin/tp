@@ -20,7 +20,7 @@ function tp_main {
     tp_main_arg_defaults
 
     # parse arguments
-    local tp_arguments="$( getopt --options 'hsec::amr' --longoptions 'help,step,disclose,explicit,ca::,acme,manual,request,csr' --name '[TP]' -- "$@" )"
+    local tp_arguments="$( getopt --options 'hsed:c::amr' --longoptions 'help,step,disclose,explicit,digests:,ca::,acme,manual,request,csr' --name '[TP]' -- "$@" )"
     eval set -- ${tp_arguments}
 
     # process arguments
@@ -38,6 +38,10 @@ function tp_main {
                 ;;
             -e | --explicit )
                 tp_explicit='true'
+                ;;
+            -d | --digests )
+                shift
+                tp_cert_digests="${1}"
                 ;;
             -c | --ca )
                 tp_cert_provider='ca'
@@ -147,6 +151,7 @@ function tp_main_arg_defaults {
     tp_help=''
     tp_step=''
     tp_disclose=''
+    tp_cert_digests='sha1,sha256'
     tp_cert_shown=( conf='' params='' key='' csr='' cert='' chain='' fullchain='' )
     tp_cert_provider='selfsign'
     tp_cert_provider_opt=''
@@ -322,8 +327,6 @@ function tp_cert_show_if_not_shown_yet {
     tp_cert_show "${file}"
 }
 
-# TODO Add support fingerprints with other hash functions
-
 function tp_cert_fingerprint {
     local file="$1"
 
@@ -331,28 +334,34 @@ function tp_cert_fingerprint {
     tp_util_files_check 'files' 'file_path' "No file given. Specify a key, csr, or certificate whose fingerprint to calculate!" || return $?
     tp_util_files_check 'files' 'file_stat' "Given file '${file}' does not exist!" || return $?
 
-    case "${files[suffix]}" in
-        'cert.pem' | 'pem' )
-            tp_msg "Calculating fingerprint of certificate in '${file}'..."
-            tp_util_run \
-                openssl x509 -in "${file}" -noout -fingerprint -sha256
-            ;;
-        'csr.pem' )
-            tp_msg "Calculating fingerprint of CSR in '${file}'..."
-            tp_util_run \
-                openssl req -in ${file} -outform DER | openssl dgst -sha256 | tr 'a-z' 'A-Z'
-            ;;
-        'key.pem' )
-            tp_msg "Calculating fingerprint of private key in '${file}'..."
-            tp_util_run \
-                openssl pkey -in ${file} -passin "file:${files[key_pass_path]}" -outform DER | openssl dgst -sha256 | tr 'a-z' 'A-Z'
-            ;;
-        * )
-            tp_warn "Not sure how to caculate fingerprints of files with suffix '.${files[suffix]}'!"
-            tp_warn "Will just calculate checksum of the file as-is..."
-            cat "${file}" | tp_util_run openssl dgst -sha256
-            ;;
-    esac
+    (
+        IFS="${IFS},"
+        for digest in ${tp_cert_digests}
+        do
+            case "${files[suffix]}" in
+                'cert.pem' | 'pem' )
+                    tp_msg "Calculating fingerprint of certificate in '${file}'..."
+                    tp_util_run \
+                        openssl x509 -in "${file}" -noout -fingerprint "-${digest}"
+                    ;;
+                'csr.pem' )
+                    tp_msg "Calculating fingerprint of CSR in '${file}'..."
+                    tp_util_run \
+                        openssl req -in "${file}" -outform DER | openssl dgst "-${digest}" | tr 'a-z' 'A-Z'
+                    ;;
+                'key.pem' )
+                    tp_msg "Calculating fingerprint of private key in '${file}'..."
+                    tp_util_run \
+                        openssl pkey -in "${file}" -passin "file:${files[key_pass_path]}" -outform DER | openssl dgst "-${digest}" | tr 'a-z' 'A-Z'
+                    ;;
+                * )
+                    tp_warn "Not sure how to caculate fingerprints of files with suffix '.${files[suffix]}'!"
+                    tp_warn "Will just calculate checksum of the file as-is..."
+                    cat "${file}" | tp_util_run openssl dgst "-${digest}"
+                    ;;
+            esac
+        done
+    )
 }
 
 # TODO Add a verify command for CSRs and certs (and maybe other files)

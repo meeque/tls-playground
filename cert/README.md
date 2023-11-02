@@ -216,6 +216,13 @@ Arguments:
           Commands that support multiple file types ('show', 'fingerpint') will deduce file type from naming conventions.
           Run 'tp --help files' to learn more about naming conventions for certificate files.
 
+Options:
+
+  -d, --digests <alg>[,<alg> ...]
+               Use the specified message digest <alg> for the 'fingerprint' command.
+               Multiple <alg> can be specified separated by commas, fingerprints will be displayed for all of them.
+               Defaults to 'sha1,sha256'.
+
 Global Options:
 
   Run 'tp --help' to learn more about global options, in particular the '--step' option.
