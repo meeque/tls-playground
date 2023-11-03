@@ -14,6 +14,7 @@ RUN apt-get update \
     nginx \
     curl \
     sslscan \
+    testssl.sh \
     gettext-base \
     coreutils \
     lsof \
