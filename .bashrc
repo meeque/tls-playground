@@ -73,7 +73,7 @@ else
 fi
 if [[ -n "$tp_color" ]]
 then
-    PS1='\[\e[1;34m\][TP] \[\e[0m\]\$ '
+    PS1='\[\e[1;44m\][TP]\[\e[0m\]\[\e[1;34m\]▶ \[\e[0m\]\$ '
 else
     PS1='[TP] \$ '
 fi
