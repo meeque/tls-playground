@@ -720,6 +720,8 @@ function tp_ca_init {
 
     tp_ca_clean "$@"
 
+    tp_cert_show_if_not_shown_yet "${ca_dir}/ca.conf"
+
     local serial="$( tp_util_generate_hex_token "tls-playground-ca-${ca_name}-$( date '+%s' )" 8 )00000001"
     tp_msg "Creating scaffolding for CA '${ca_name}' with initial certificate serial number '${serial}'..."
     (
