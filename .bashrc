@@ -71,9 +71,12 @@ else
             tp_color='';;
     esac
 fi
-if [[ -n "$tp_color" ]]
+if [[ "$tp_color" == 'powerlinefonts' ]]
 then
     PS1='\[\e[1;44m\]\[\e[1;37m\][TP]\[\e[0m\]\[\e[1;34m\]\[\e[0m\] \$ '
+elif [[ -n "$tp_color" ]]
+then
+    PS1='\[\e[1;44m\]\[\e[1;37m\][TP]\[\e[0m\] \$ '
 else
     PS1='[TP] \$ '
 fi
