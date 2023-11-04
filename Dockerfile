@@ -48,6 +48,7 @@ RUN ln --symbolic --force /opt/tls-playground/.bashrc /etc/bash.bashrc
 
 WORKDIR "/opt/tls-playground"
 
+ENV LANG=C.UTF-8
 ENV EDITOR="/usr/bin/nano"
 ENV TP_COLOR="yes"
 ENV TP_PASS=""
