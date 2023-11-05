@@ -302,7 +302,7 @@ function tp_cert_show {
             tp_util_run \
                 openssl pkeyparam -in "${file}" -noout -text
             ;;
-        'conf' | *'.conf' )
+        'conf' | *'.conf' | 'ini' | *'.ini' )
             tp_cert_shown[conf]="${file}"
             tp_msg "Showing configuration file '${file}':"
             echo
@@ -858,8 +858,11 @@ function tp_acme_init {
     mkdir -p "${tp_base_dir}/acme/challenges/http-01/public/.well-known/acme-challenge"
     mkdir -p "${tp_base_dir}/acme/certbot/custom/archive/private"
     chmod 'go-rwx' "${tp_base_dir}/acme/certbot/custom/archive/private"
+
     tp_acme_check_env
     tp_util_template "${tp_base_dir}/acme/certbot/cli.ini.tmpl" TP_ACME_SERVER_URL TP_ACME_ACCOUNT_EMAIL
+
+    tp_cert_show_if_not_shown_yet "${tp_base_dir}/acme/certbot/cli.ini"
     tp_server_nginx_init "${tp_base_dir}/acme/challenges/http-01"
 }
 
