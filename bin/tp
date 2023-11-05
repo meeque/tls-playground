@@ -642,12 +642,12 @@ function tp_cert_clean {
 
     for file in "${files[key_pem_path]}" "${files[key_pass_path]}" "${files[key_params_pem_path]}" "${files[csr_pem_path]}" "${files[cert_pem_path]}" "${files[chain_pem_path]}" "${files[fullchain_pem_path]}" "${files[dir]}/private/${files[name]}.key.pkcs8.der" "${files[dir]}/private/${files[name]}.pfx"
     do
-        if [[ -f "${file}" ]]
-        then
-            shred --remove "${file}"
-        elif [[ -L "${file}" ]]
+        if [[ -L "${file}" ]]
         then
             rm "${file}"
+        elif [[ -f "${file}" ]]
+        then
+            shred --remove "${file}"
         fi
     done
     find "${files[dir]}" -mindepth 1 -maxdepth 1 -type d -name 'private' -empty | xargs --no-run-if-empty rmdir
