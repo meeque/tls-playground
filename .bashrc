@@ -59,18 +59,22 @@ then
 fi
 unset tp_bin
 
-# set up a minimalist TP prompt
-if [[ -v TP_COLOR ]]
+# use colored TP outputs?
+# if $TP_COLOR is not set, try to guess by $TERM value
+# if clause is same as [[ ! -v TP_COLOR ]], but -v is not available in older bash versions and other shells
+if [[ -z "${TP_COLOR+varIsSet}" ]]
 then
-    tp_color="$TP_COLOR"
-else
     case "$TERM" in
         xterm-color | *-256color )
             tp_color='yes';;
         * )
             tp_color='';;
     esac
+else
+    tp_color="$TP_COLOR"
 fi
+
+# set up a minimalistic TP prompt
 if [[ "$tp_color" == 'powerlinefonts' ]]
 then
     PS1='\[\e[1;44m\]\[\e[1;37m\][TP]\[\e[0m\]\[\e[1;34m\]\[\e[0m\] \$ '
