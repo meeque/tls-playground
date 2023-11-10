@@ -117,7 +117,9 @@ function tp_main_env_global {
     fi
 
     # colored outputs
-    if [[ ! -v TP_COLOR ]]
+    # if $TP_COLOR is not set, try to guess by $TERM value
+    # if clause is same as [[ ! -v TP_COLOR ]], but -v is not available in older bash versions and other shells
+    if [[ -z "${TP_COLOR+varIsSet}" ]]
     then
         case "$TERM" in
              xterm-color | *-256color )
