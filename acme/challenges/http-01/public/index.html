@@ -12,6 +12,11 @@
   This <strong>plain HTTP</strong> web-server is only here to complete <a href="https://datatracker.ietf.org/doc/html/rfc8555/">ACME</a> <code>http-01</code> challenges.
 </p>
 <p>
+  As mandated by <code>ACME</code>, challenges will be exposed unter <a href="/.well-known/acme-challenge/">/.well-known/acme-challenge/</a>.
+  <br>
+  Note that this directory will be empty, unless you are currently in the process of ordering an certificate through <code>ACME</code>.
+</p>
+<p>
   Once challenges have been completed and certificates have been installed, check out the <strong>HTTPS Demo Servers</strong> instead!
   <br>
   Simply go to your web-browser's address bar, replace the initial <tt>http://</tt> with <tt>https://</tt> and press enter or click the <em>Go</em> button.

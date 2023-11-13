@@ -20,6 +20,10 @@ http {
     # serve acme challenges from the webroot
     root public;
 
+    location /.well-known/acme-challenge/ {
+        autoindex on;
+    }
+
     # log http(s) requests to file
     access_log var/logs/access.log;
   }
