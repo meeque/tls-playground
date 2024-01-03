@@ -50,7 +50,7 @@ You should be able to run TP on any Unixy operating system, including Linux and 
 If you're using Windows or some other unsupported OS, consider running TP in a Linux VM.
 Or, run TP in a Docker container, as described in the next section.
 
-If you plan to use TP to order X.509 certificates from a public Certificate Authority (CA), its best to run TP on an Internet-facing host with a public DNS record.
+If you plan to use TP to order X.509 certificates from a public Certificate Authority (CA), it's best to run TP on an Internet-facing host with a public DNS record.
 Even then, you can run TP on a host in a private network or even fully offline.
 You'll just have to do some steps manually, see the [TP ACME utilities](acme/README.md) for details.
 
@@ -58,9 +58,9 @@ When running TP locally, you'll need to install the following prerequisites (tes
 
 * **[GNU Bash](https://www.gnu.org/software/bash/)** (5.2.15)
 * Assorted **Unix utilities**:
-  `awk`, `basename`, `cat`, `chmod`, `cp`, `dd`, `dirname`, `envsubst`, `find`, `getopt`, `grep`, `id`, `ln`, `mkdir`, `printf`, `rm`, `sed`, `shred`, `sort`, `touch`, `xargs`, `tr`, `true`, `xargs`
+  `awk`, `basename`, `cat`, `chmod`, `cp`, `dd`, `dirname`, `envsubst`, `find`, `getopt`, `grep`, `id`, `ln`, `mkdir`, `printf`, `rm`, `sed`, `shred`, `sort`, `touch`, `tr`, `true`, `xargs`
   (Tested with recent versions from the [GNU](https://www.gnu.org/software/software.html) project.
-  Note: TP is incompatible with`getopt` implementations based on non-GNU libraries, which may cause trouble on BSD-ish Unix systems, incl. Mac OS. In the latter, this can be fixed by installing the [`gnu-getopt`](https://formulae.brew.sh/formula/gnu-getopt) package through [Homebrew](https://brew.sh/).)
+  Note: TP is incompatible with `getopt` implementations based on non-GNU libraries, which may cause trouble on BSD-ish Unix systems, incl. Mac OS. In the latter, this can be fixed by installing the [`gnu-getopt`](https://formulae.brew.sh/formula/gnu-getopt) package through [Homebrew](https://brew.sh/).)
 * **[OpenSSL](https://www.openssl.org/)** (3.0.10)
 * **[Certbot](https://certbot.eff.org/)** (2.1.0)
 * [nginx](https://nginx.org/) (1.24.0)
@@ -86,7 +86,7 @@ docker build --tag "${DOCKER_HUB_USER}/tls-playground:latest" .
 docker image push "${DOCKER_HUB_USER}/tls-playground:latest"
 ```
 
-You may also find a pre-built TLS PLayground image at [meeque/tls-playground:latest](https://hub.docker.com/r/meeque/tls-playground), but no guarantees that it's actually based on the latest sources.
+You may also find a pre-built TLS Playground image at [meeque/tls-playground:latest](https://hub.docker.com/r/meeque/tls-playground), but no guarantees that it's actually based on the latest sources.
 
 ### Running with Docker
 
