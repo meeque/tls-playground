@@ -1,6 +1,6 @@
 # TLS Playground Java Client
 
-This TLS Playground component helps you with configuring Java TLS clients. This includes configuration of client certificates, which is particularly useful when accessing [TLS Playground nginx server2](../server-nginx/).
+This TLS Playground component helps you with configuring Java TLS clients. This includes configuration of certificate revocation checks and client certificates. The latter is useful when accessing [TP demo server `nginx-complex`](../../server/nginx-complex/).
 
 
 
