@@ -23,7 +23,11 @@ http {
     ssl_prefer_server_ciphers on;
 
     # use custom Diffie-Hellman parameters from a file for DHE cipher suites (use 2048 bit params, rather than the default 1024 bit)
-    #ssl_dhparam test.dhparam;
+    # looks like neither openssl nor nginx have defaults for this, omitting this directive will silently disable all configured DHE cipher suites
+    # the file can be generated with e.g.:
+    # openssl dhparam -out nginx.dhparams.pem 3072
+    # TODO Generate this on server init? Seems to take about half a minute:(
+    ssl_dhparam nginx.dhparams.pem;
 
     # improve HTTPS performance:
     # use connection keep-alive and session resumption (but disable session tickets for now)
