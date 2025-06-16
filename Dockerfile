@@ -32,7 +32,7 @@ RUN apt-get update \
     apt-get upgrade --assume-yes \
     && \
     apt-get install --assume-yes --option 'APT::Install-Recommends=false' \
-    openjdk-17-jdk-headless \
+    openjdk-25-jdk-headless \
     maven \
     && \
     rm -rf /var/lib/apt/lists/*
