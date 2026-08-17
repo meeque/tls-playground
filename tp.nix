@@ -72,8 +72,6 @@ in
       mkdir -p opt/tls-playground
       cp -r ${tpSource}/. opt/tls-playground/
       cp ${tpBashRcSource}/.bashrc opt/tls-playground/
-
-      ln --symbolic --force /opt/tls-playground/.bashrc etc/profile
     '';
 
     config = {
@@ -81,6 +79,7 @@ in
       Env = [
         "LANG=C.UTF-8"
         "EDITOR=/usr/bin/nano"
+        "HOME=/opt/tls-playground"
         "TP_COLOR=yes"
         "TP_PASS="
         "TP_SERVER_DOMAIN=localhost"
@@ -92,7 +91,6 @@ in
       ];
       Entrypoint = [
         "/bin/bash"
-        "--login"
       ];
       Command = [];
       Volumes = {
