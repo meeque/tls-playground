@@ -20,6 +20,7 @@
   getopt,
   gnused,
   gettext,
+  pstree,
   less,
   nano,
   man,
@@ -36,6 +37,27 @@ let
     lib.fileset.toSource {
       root = ./.;
       fileset = ./.bashrc;
+    };
+
+  rootUid = "0";
+  rootGid = "0";
+  nobodyUid = "65534";
+  nogroupGid = "65534";
+  nginxUid = "101";
+  nginxGid = "101";
+
+  tpFakeNss =
+    dockerTools.fakeNss.override {
+      extraPasswdLines = [
+        "root:x:${rootUid}:${rootGid}:root:/root:/bin/bash"
+        "nobody:x:${nobodyUid}:${nogroupGid}:nginx user:/var/empty:/bin/false"
+        "nginx:x:${nginxUid}:${nginxGid}:nginx user:/var/empty:/bin/false"
+      ];
+      extraGroupLines = [
+        "root:x:${rootGid}:"
+        "nogroup:x:${nogroupGid}:"
+        "nginx:x:${nginxGid}:"
+      ];
     };
 
 in
@@ -64,14 +86,21 @@ in
       gnused
       gettext
       less
+      pstree
       nano
       man
+
+      # tp config
+      tpFakeNss
     ];
 
     extraCommands = ''
       mkdir -p opt/tls-playground
       cp -r ${tpSource}/. opt/tls-playground/
       cp ${tpBashRcSource}/.bashrc opt/tls-playground/
+
+      mkdir tmp/
+      mkdir -p var/log/nginx/
     '';
 
     config = {
