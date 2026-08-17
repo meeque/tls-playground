@@ -1,8 +1,6 @@
 {
-  lib,
   dockerTools,
   nix-gitignore,
-  runCommand,
 
   cacert,
   openssl,
@@ -24,16 +22,9 @@
 }:
 
 let
-  fs = lib.fileset;
 
   tlsPlaygroundSource =
     nix-gitignore.gitignoreSource [ ./.dockerignore ] ./. ;
-
-  tlsPlaygroundFiles =
-    runCommand "tls-playground-files" {} ''
-      mkdir -p $out/opt/tls-playground
-      cp -r ${tlsPlaygroundSource}/. $out/opt/tls-playground/
-    '';
 
 in
 
@@ -62,9 +53,12 @@ in
       nano
       man
 
-      # custom files
-      tlsPlaygroundFiles
     ];
+
+    extraCommands = ''
+      mkdir -p opt/tls-playground
+      cp -r ${tlsPlaygroundSource}/. opt/tls-playground/
+    '';
 
     config = {
       WorkingDir = "/opt/tls-playground";
