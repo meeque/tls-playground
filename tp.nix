@@ -1,6 +1,8 @@
 {
+  lib,
   dockerTools,
   nix-gitignore,
+  runCommand,
 
   cacert,
   openssl,
@@ -25,8 +27,16 @@
 
 let
 
-  tlsPlaygroundSource =
-    nix-gitignore.gitignoreSource [ ./.dockerignore ] ./. ;
+  tpSource =
+    nix-gitignore.gitignoreSource
+      [ ./.dockerignore ]
+      ./.;
+
+  tpBashRcSource =
+    lib.fileset.toSource {
+      root = ./.;
+      fileset = ./.bashrc;
+    };
 
 in
 
@@ -56,12 +66,14 @@ in
       less
       nano
       man
-
     ];
 
     extraCommands = ''
       mkdir -p opt/tls-playground
-      cp -r ${tlsPlaygroundSource}/. opt/tls-playground/
+      cp -r ${tpSource}/. opt/tls-playground/
+      cp ${tpBashRcSource}/.bashrc opt/tls-playground/
+
+      ln --symbolic --force /opt/tls-playground/.bashrc etc/profile
     '';
 
     config = {
@@ -79,7 +91,8 @@ in
         "TP_ACME_ACCOUNT_EMAIL="
       ];
       Entrypoint = [
-        "/bin/sh"
+        "/bin/bash"
+        "--login"
       ];
       Command = [];
       Volumes = {
