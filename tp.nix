@@ -1,6 +1,7 @@
 {
   lib,
   dockerTools,
+  nix-gitignore,
   runCommand,
 
   cacert,
@@ -23,23 +24,10 @@
 }:
 
 let
-
   fs = lib.fileset;
 
   tlsPlaygroundSource =
-    fs.toSource {
-      root = ./.;
-      fileset = fs.difference
-        (
-          fs.gitTracked ./.
-        )
-        (
-          fs.unions [
-            ./Dockerfile
-            (fs.fileFilter (file: lib.hasPrefix "." file.name || file.hasExt "nix") ./.)
-          ]
-        );
-    };
+    nix-gitignore.gitignoreSource [ ./.dockerignore ] ./. ;
 
   tlsPlaygroundFiles =
     runCommand "tls-playground-files" {} ''
