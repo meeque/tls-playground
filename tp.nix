@@ -16,6 +16,8 @@
   lsof,
   procps,
   getopt,
+  gnused,
+  gettext,
   less,
   nano,
   man,
@@ -49,6 +51,8 @@ in
       lsof
       procps
       getopt
+      gnused
+      gettext
       less
       nano
       man
