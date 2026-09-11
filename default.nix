@@ -9,5 +9,5 @@ let
 
 in
   {
-    tp = pkgs.callPackage ./tp.nix {};
+    tp = pkgs.callPackage ./.nix/docker.nix {};
   }
