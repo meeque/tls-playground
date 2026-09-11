@@ -1,26 +1,27 @@
 { pkgs ? import <nixpkgs> {} }:
 
+with pkgs;
 [
   # tls dependencies
-  pkgs.cacert
-  pkgs.openssl
-  pkgs.certbot
-  pkgs.nginx
-  pkgs.curl
-  pkgs.sslscan
-  pkgs.testssl
+  cacert
+  openssl
+  certbot
+  nginx
+  curl
+  sslscan
+  testssl
 
   # baseline dependencies
-  pkgs.bash
-  pkgs.coreutils
-  pkgs.findutils
-  pkgs.lsof
-  pkgs.procps
-  pkgs.getopt
-  pkgs.gnused
-  pkgs.gettext
-  pkgs.less
-  pkgs.pstree
-  pkgs.nano
-  pkgs.man
+  bash
+  coreutils
+  findutils
+  lsof
+  procps
+  getopt
+  gnused
+  gettext
+  less
+  pstree
+  nano
+  man
 ]
