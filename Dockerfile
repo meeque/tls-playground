@@ -50,6 +50,7 @@ WORKDIR "/opt/tls-playground"
 
 ENV LANG=C.UTF-8
 ENV EDITOR="/usr/bin/nano"
+ENV HOME="/opt/tls-playground"
 ENV TP_COLOR="yes"
 ENV TP_PASS=""
 ENV TP_SERVER_DOMAIN="localhost"

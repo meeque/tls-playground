@@ -1,19 +1,30 @@
+# hidden, temp, backup, log, archive files
 .*
 *~
+*.tmp
 *.bak
 *.old
+*.log
+*.zip
+*.tar
+*.tar.*
+*.tgz
+*.tbz
 
+# transient certificate files
 *.pem
 *.der
 *.pfx
 *.pass.txt
 
+# transient CA files
 /ca/**/db.txt
 /ca/**/db.txt.*
 /ca/**/serial
 /ca/**/serial.*
 /ca/**/archive/
 
+# transient ACME files
 /acme/**/*.conf
 /acme/**/*.ini
 /acme/certbot/conf/
@@ -21,10 +32,15 @@
 /acme/certbot/log/
 !/acme/letsencrypt/*.pem
 
+# transient TLS server files
 /server/**/*.conf
 
+# transient build files
 var/
 target/
+/result*
 
-Dockerfile
-!.bashrc
+# Docker and Nix build files
+/Dockerfile
+/*.nix
+!/.bashrc
