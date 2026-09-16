@@ -1,36 +1,11 @@
-@Given a valid template file
-  ls ../cert/good/rsa-4096.cert.conf.tmpl
+@Then CN in CSR file `{csr_file}` should match CN in certificate config file `{config_file}`
+  . ../bin/tp
+  config_cn="$( tp_util_get_config_values "${config_file}" 'CN' '.*' )"
+  csr_cn="$( tp cert show "${csr_file}" | grep -E '^(\s)+Subject:' | grep -o -E 'CN=(\S)+' | sed -e 's/^CN=//' )"
+  [[ "${csr_cn}" == "${config_cn}" ]] || fail "CN in CSR is \`${csr_cn}\`, but CN in certificate config is \`${config_cn}\`"
 
-@Given a valid OpenSSL certificate config file
-  ls ../cert/good/rsa-4096.cert.conf
-
-@Given a valid CSR
-  ls ../cert/good/rsa-4096.csr.pem
-
-
-
-@When I pass the template file to `tp cert init`
-  tp cert init ../cert/good/rsa-4096.cert.conf.tmpl
-
-@When I pass the config file to `tp cert request`
-  tp cert request ../cert/good/rsa-4096.cert.conf
-
-@When I pass the CSR file to `tp cert selfsign`
-  tp cert selfsign ../cert/good/rsa-4096.csr.pem
-
-
-
-@Then `tp` should generate a certificate config file next to the template file
-  ls ../cert/good/rsa-4096.cert.conf
-
-@Then `tp` should create a private key in a `private` directory next to the config file
-  ls ../cert/good/private/rsa-4096.key.pem
-
-@Then `tp` should create a key password file in a `private` directory next to the config file
-  ls ../cert/good/private/rsa-4096.key.pass.txt
-
-@Then `tp` should create a CSR next to the config file
-  ls ../cert/good/rsa-4096.csr.pem
-
-@Then `tp` should create a certificate next to the config file
-  ls ../cert/good/rsa-4096.cert.pem
+@Then CN in certificate file `{cert_file}` should match CN in CSR file `{csr_file}`
+  . ../bin/tp
+  csr_cn="$( tp cert show "${csr_file}" | grep -E '^(\s)+Subject:' | grep -o -E 'CN=(\S)+' | sed -e 's/^CN=//' )"
+  cert_cn="$( tp cert show "${cert_file}" | grep -E '^(\s)+Subject:' | grep -o -E 'CN=(\S)+' | sed -e 's/^CN=//' )"
+  [[ "${cert_cn}" == "${csr_cn}" ]] || fail "CN in certificate is \`${cert_cn}\`, but CN in CSR is \`${csr_cn}\`"
