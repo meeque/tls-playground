@@ -4,14 +4,14 @@
 
 
 @Given {file_role} file `{file_name}`
-  ls ${file_name}
+  run ls ${file_name}
 
 
 
 @When I run `tp {command} {arg}`
-  tp ${command} "${arg}"
+  run tp ${command} "${arg}"
 
 
 
 @Then `tp` should generate {file_role} file `{file_path}`
-  ls "${file_path}"
+  run ls "${file_path}"
