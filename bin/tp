@@ -97,7 +97,7 @@ function tp_main {
 
 function tp_main_env_global {
 
-    # password handling, for private key files
+    # passphrase handling, for private key files
     if [[ -z "${TP_PASS}" ]]
     then
         local pass_file="${tp_base_dir}/.tp.pass.txt"
