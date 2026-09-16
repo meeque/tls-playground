@@ -1,3 +1,8 @@
+@BeforeAll
+  . ../bin/tp
+
+
+
 @Given {file_role} file `{file_name}`
   ls ${file_name}
 
