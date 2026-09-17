@@ -4,41 +4,42 @@ Feature: cert
 
 
 Scenario Outline: Create a certificate config file from template
-  Given template file `<template>`
-  When I run `tp cert init <template>`
-  Then `tp` should generate config file `<config>`
+  Given template file `<file>.cert.conf.tmpl`
+  When I run `tp cert init "<file>.cert.conf.tmpl"`
+  Then the command should succeed
+  And `tp` should generate config file `<file>.cert.conf`
 
   Examples:
-    | template                              | config                           |
-    | ../cert/good/rsa-4096.cert.conf.tmpl  | ../cert/good/rsa-4096.cert.conf  |
-    | ../cert/good/ecdsa-256.cert.conf.tmpl | ../cert/good/ecdsa-256.cert.conf |
+    | file                   |
+    | ../cert/good/rsa-4096  |
+    | ../cert/good/ecdsa-256 |
 
 
 
 Scenario Outline: Create a certifcate signing request (CSR)
-  Given OpenSSL certificate config file `<config>`
-  When I run `tp cert request <config>`
-  Then `tp` should generate private key file `<key>`
-  And `tp` should generate key passphrase file `<pass>`
-  And `tp` should generate CSR file `<csr>`
-  And CN in CSR file `<csr>` should match CN in certificate config file `<config>`
+  Given OpenSSL certificate config file `<file>.cert.conf`
+  When I run `tp cert request <file>.cert.conf`
+  Then the command should succeed
+  And `tp` should generate private key file `<private>.key.pem`
+  And `tp` should generate key passphrase file `<private>.key.pass.txt`
+  And `tp` should generate CSR file `<file>.csr.pem`
+  And CN in CSR file `<file>.csr.pem` should match CN in certificate config file `<file>.cert.conf`
 
   Examples:
-    | config                           | key                                    | pass                                        | csr                            |
-    | ../cert/good/rsa-4096.cert.conf  | ../cert/good/private/rsa-4096.key.pem  | ../cert/good/private/rsa-4096.key.pass.txt  | ../cert/good/rsa-4096.csr.pem  |
-    | ../cert/good/ecdsa-256.cert.conf | ../cert/good/private/ecdsa-256.key.pem | ../cert/good/private/ecdsa-256.key.pass.txt | ../cert/good/ecdsa-256.csr.pem |
-
-
+    | file                   | private                        |
+    | ../cert/good/rsa-4096  | ../cert/good/private/rsa-4096  |
+    | ../cert/good/ecdsa-256 | ../cert/good/private/ecdsa-256 |
 
 Scenario Outline: Create a self-signed certificate
-  Given CSR file `<csr>`
-  And private key file `<key>`
-  And key passphrase file `<pass>`
-  When I run `tp cert selfsign <csr>`
-  Then `tp` should generate self-signed X.509 certificate file `<cert>`
-  And CN in certificate file `<cert>` should match CN in CSR file `<csr>`
+  Given CSR file `<file>.csr.pem`
+  And private key file `<private>.key.pem`
+  And key passphrase file `<private>.key.pass.txt`
+  When I run `tp cert selfsign <file>.csr.pem`
+  Then the command should succeed
+  And `tp` should generate self-signed X.509 certificate file `<file>.cert.pem`
+  And CN in certificate file `<file>.cert.pem` should match CN in CSR file `<file>.csr.pem`
 
   Examples:
-    | key                                    | pass                                        | csr                            | cert                            |
-    | ../cert/good/private/rsa-4096.key.pem  | ../cert/good/private/rsa-4096.key.pass.txt  | ../cert/good/rsa-4096.csr.pem  | ../cert/good/rsa-4096.cert.pem  |
-    | ../cert/good/private/ecdsa-256.key.pem | ../cert/good/private/ecdsa-256.key.pass.txt | ../cert/good/ecdsa-256.csr.pem | ../cert/good/ecdsa-256.cert.pem |
+    | file                   | private                        |
+    | ../cert/good/rsa-4096  | ../cert/good/private/rsa-4096  |
+    | ../cert/good/ecdsa-256 | ../cert/good/private/ecdsa-256 |
