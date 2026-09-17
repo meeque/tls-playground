@@ -3,21 +3,13 @@ Feature: cert
 
 
 
-Scenario Outline: Create a certificate config file from template
+Scenario Outline: Generate files for certificate config template `{file}.cert.conf.tmpl`
+
   Given template file `<file>.cert.conf.tmpl`
   When I run `tp cert init "<file>.cert.conf.tmpl"`
   Then the command should succeed
   And `tp` should generate config file `<file>.cert.conf`
 
-  Examples:
-    | file                   |
-    | ../cert/good/rsa-4096  |
-    | ../cert/good/ecdsa-256 |
-
-
-
-Scenario Outline: Create a certifcate signing request (CSR)
-  Given OpenSSL certificate config file `<file>.cert.conf`
   When I run `tp cert request <file>.cert.conf`
   Then the command should succeed
   And `tp` should generate private key file `<private>.key.pem`
@@ -25,12 +17,6 @@ Scenario Outline: Create a certifcate signing request (CSR)
   And `tp` should generate CSR file `<file>.csr.pem`
   And CNs in CSR `<file>.csr.pem` and config `<file>.cert.conf` should match
 
-  Examples:
-    | file                   | private                        |
-    | ../cert/good/rsa-4096  | ../cert/good/private/rsa-4096  |
-    | ../cert/good/ecdsa-256 | ../cert/good/private/ecdsa-256 |
-
-Scenario Outline: Create a self-signed certificate
   Given CSR file `<file>.csr.pem`
   And private key file `<private>.key.pem`
   And key passphrase file `<private>.key.pass.txt`
