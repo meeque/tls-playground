@@ -23,7 +23,7 @@ Scenario Outline: Create a certifcate signing request (CSR)
   And `tp` should generate private key file `<private>.key.pem`
   And `tp` should generate key passphrase file `<private>.key.pass.txt`
   And `tp` should generate CSR file `<file>.csr.pem`
-  And CN in CSR file `<file>.csr.pem` should match CN in certificate config file `<file>.cert.conf`
+  And CNs in CSR `<file>.csr.pem` and config `<file>.cert.conf` should match
 
   Examples:
     | file                   | private                        |
@@ -37,7 +37,7 @@ Scenario Outline: Create a self-signed certificate
   When I run `tp cert selfsign <file>.csr.pem`
   Then the command should succeed
   And `tp` should generate self-signed X.509 certificate file `<file>.cert.pem`
-  And CN in certificate file `<file>.cert.pem` should match CN in CSR file `<file>.csr.pem`
+  And CNs in certificate `<file>.cert.pem` and CSR `<file>.csr.pem` should match
 
   Examples:
     | file                   | private                        |

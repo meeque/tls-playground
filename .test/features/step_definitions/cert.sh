@@ -1,4 +1,4 @@
-@Then CN in CSR file `{csr_file}` should match CN in certificate config file `{config_file}`
+@Then CNs in CSR `{csr_file}` and config `{config_file}` should match
 
   local config_cn="$( tp_util_get_config_values "${config_file}" 'CN' '.*' )"
   [[ -n ${config_cn} ]] || fail "could not find a CN field in config file \`${config_file}\`" || return 1
@@ -10,7 +10,7 @@
 
 
 
-@Then CN in certificate file `{cert_file}` should match CN in CSR file `{csr_file}`
+@Then CNs in certificate `{cert_file}` and CSR `{csr_file}` should match
 
   local csr_cn="$( tp cert show "${csr_file}" | grep -E '^(\s)+Subject:' | grep -o -E 'CN=(\S)+' | sed -e 's/^CN=//' )"
   [[ -n "${csr_cn}" ]] || fail "could not find a CN field in CSR file \`${csr_file}\`" || return 1
