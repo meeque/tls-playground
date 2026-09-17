@@ -1,7 +1,14 @@
-@Given {file_role} file `{file_path}`
+@Given {file_role} file `{file_path}` exists
 
   run "ls \"${file_path}\""
-  [[ "${LAST_EXIT_CODE}" == '0' ]] || fail "Expected file \"${file_path}\" does not exits."
+  [[ "${LAST_EXIT_CODE}" == '0' ]] || fail "Expected file \"${file_path}\" does not exit."
+
+
+
+@Given {file_role} file `{file_path}` does not exist
+
+  run "ls \"${file_path}\""
+  [[ "${LAST_EXIT_CODE}" != '0' ]] || fail "Unexpected file \"${file_path}\" exits."
 
 
 
@@ -18,5 +25,6 @@
 
 
 @Then `tp` should generate {file_role} file `{file_path}`
+
   run "ls \"${file_path}\""
   [[ "${LAST_EXIT_CODE}" == '0' ]] || fail "Expected file \"${file_path}\" does not exits."
