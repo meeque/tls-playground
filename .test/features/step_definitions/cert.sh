@@ -1,3 +1,10 @@
+@Before
+
+  run "tp cert clean"
+  [[ "${LAST_EXIT_CODE}" == '0' ]] || fail "Setup commmand \`tp cert clean\` failed with exit code ${LAST_EXIT_CODE}."
+
+
+
 @Then CNs in CSR `{csr_file}` and config `{config_file}` should match
 
   local config_cn="$( tp_util_get_config_values "${config_file}" 'CN' '.*' )"
