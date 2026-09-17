@@ -24,7 +24,7 @@
 
 
 
-@Then `tp` should generate {file_role} file `{file_path}`
+@Then {file_role} file `{file_path}` should exist
 
   run "ls \"${file_path}\""
   [[ "${LAST_EXIT_CODE}" == '0' ]] || fail "Expected file \"${file_path}\" does not exits."
