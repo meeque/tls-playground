@@ -35,21 +35,21 @@
 
 
 
-@Then TP should have run command `{command}`
+@Then TP should run command `{command}`
 
   tpt_extract_commands "${LAST_STDOUT}" | grep -F "${command}" > /dev/null || fail "Could not find the command logged in TP outputs"
 
 
 
-@Then TP should have printed "{output}"
+@Then TP should print "{output}"
 
   tpt_extract_tp_outputs "${LAST_STDOUT}" | grep -F "${output}" > /dev/null || fail "Could not find the expected text"
 
 
 
-@Then a nested command should have printed error "{output}"
+@Then a command run by TP should print error "{error}"
 
-  tpt_extract_command_outputs "${LAST_STDERR}" | grep -F "${output}" > /dev/null || fail "Could not find the expected text"
+  tpt_extract_command_outputs "${LAST_STDERR}" | grep -F "${error}" > /dev/null || fail "Could not find the expected text"
 
 
 

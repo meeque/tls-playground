@@ -24,10 +24,10 @@ Scenario Outline: Generate self-signed certificate `<path>/<name>.cert.pem` and 
 
   When I run `tp cert selfsign <path>/<name>.cert.conf`
   Then the command should succeed
-  And TP should have printed "Generating key-pair and CSR..."
-  And TP should have run command `<csr_command>`
-  And TP should have printed "Signing CSR with it's own private key..."
-  And TP should have run command `<selfsign_command>`
+  And TP should print "Generating key-pair and CSR..."
+  And TP should run command `<csr_command>`
+  And TP should print "Signing CSR with it's own private key..."
+  And TP should run command `<selfsign_command>`
   And private key file `<path>/private/<name>.key.pem` should exist
   And key passphrase file `<path>/private/<name>.key.pass.txt` should exist
   And CSR file `<path>/<name>.csr.pem` should exist
@@ -67,8 +67,8 @@ Scenario Outline: Generate self-signed certificate `<path>/<name>.cert.pem` step
 
   When I run `tp cert request <path>/<name>.cert.conf`
   Then the command should succeed
-  And TP should have printed "Generating key-pair and CSR..."
-  And TP should have run command `<csr_command>`
+  And TP should print "Generating key-pair and CSR..."
+  And TP should run command `<csr_command>`
   And private key file `<path>/private/<name>.key.pem` should exist
   And key passphrase file `<path>/private/<name>.key.pass.txt` should exist
   And CSR file `<path>/<name>.csr.pem` should exist
@@ -77,8 +77,8 @@ Scenario Outline: Generate self-signed certificate `<path>/<name>.cert.pem` step
 
   When I run `tp cert selfsign <path>/<name>.csr.pem`
   Then the command should succeed
-  And TP should have printed "Signing CSR with it's own private key..."
-  And TP should have run command `<selfsign_command>`
+  And TP should print "Signing CSR with it's own private key..."
+  And TP should run command `<selfsign_command>`
   And self-signed X.509 certificate file `<path>/<name>.cert.pem` should exist
   And CNs in certificate `<path>/<name>.cert.pem` and CSR `<path>/<name>.csr.pem` should match
 
@@ -106,8 +106,8 @@ Scenario Outline: Fail generating self-signed certificate from broken config `<p
 
   When I run `tp cert request <path>/<name>.cert.conf`
   Then the command should fail
-  And TP should have printed "Generating key-pair and CSR..."
-  And a nested command should have printed error "<error>"
+  And TP should print "Generating key-pair and CSR..."
+  And a command run by TP should print error "<error>"
   And config file `<path>/<name>.cert.conf` should exist
   And key passphrase file `<path>/private/<name>.key.pass.txt` should exist
   But private key file `<path>/private/<name>.key.pem` should NOT exist
@@ -116,8 +116,8 @@ Scenario Outline: Fail generating self-signed certificate from broken config `<p
 
   When I run `tp cert selfsign "<path>/<name>.cert.conf"`
   Then the command should fail
-  And TP should have printed "Generating key-pair and CSR..."
-  And a nested command should have printed error "<error>"
+  And TP should print "Generating key-pair and CSR..."
+  And a command run by TP should print error "<error>"
   And config file `<path>/<name>.cert.conf` should exist
   And key passphrase file `<path>/private/<name>.key.pass.txt` should exist
   But private key file `<path>/private/<name>.key.pem` should NOT exist
@@ -138,14 +138,14 @@ Scenario Outline: Generate self-signed certificates all configs in `<dir>` and c
 
   When I run `tp cert init "<dir>"`
   Then the command should succeed
-  And TP should have printed "Proceeding to init all certificates in '<dir>'..."
+  And TP should print "Proceeding to init all certificates in '<dir>'..."
   And <count> files in `<dir>` should match wildcard pattern `*.cert.conf`
   But 0 files in `<dir>` should match wildcard pattern `*.key.pass.txt`
   And 0 files in `<dir>` should match wildcard pattern `*.pem`
 
   When I run `tp cert selfsign "<dir>"`
   Then the command should succeed
-  And TP should have printed "Proceeding to selfsign all certificates in '<dir>'..."
+  And TP should print "Proceeding to selfsign all certificates in '<dir>'..."
 
 
   And <count> files in `<dir>` should match wildcard pattern `*.cert.conf`
@@ -156,7 +156,7 @@ Scenario Outline: Generate self-signed certificates all configs in `<dir>` and c
 
   When I run `tp cert clean "<dir>"`
   Then the command should succeed
-  And TP should have printed "Proceeding to clean all certificates in '<dir>'..."
+  And TP should print "Proceeding to clean all certificates in '<dir>'..."
   And 0 files in `<dir>` should match wildcard pattern `*.cert.conf`
   And 0 files in `<dir>` should match wildcard pattern `*.key.pass.txt`
   And 0 files in `<dir>` should match wildcard pattern `*.pem`
