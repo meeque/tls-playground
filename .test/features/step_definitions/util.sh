@@ -64,3 +64,10 @@
 
   run "ls \"${file_path}\""
   [[ "${LAST_EXIT_CODE}" != '0' ]] || fail "Unexpected file exits."
+
+
+
+@Then {number} files in `{directory}` should match wildcard pattern `{pattern}`
+
+  num="$( find "${directory}" -name "${pattern}" | wc -l )"
+  [[ "${num}" -eq "${number}" ]] || fail "${num} files matched the pattern"

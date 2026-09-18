@@ -132,58 +132,34 @@ Scenario Outline: Fail generating self-signed certificate from broken config `<p
 
 Scenario Outline: Generate self-signed certificates all configs in `<dir>` and clean up afterwards
 
-  When I run `find ../cert/good/ -name "*.cert.conf"`
-  Then the command should succeed
-  And the command should print no text
-
-  When I run `find ../cert/good/ -name "*.pem"`
-  Then the command should succeed
-  And the command should print no text
+  Then 0 files in `<dir>` should match wildcard pattern `*.cert.conf`
+  And 0 files in `<dir>` should match wildcard pattern `*.key.pass.txt`
+  And 0 files in `<dir>` should match wildcard pattern `*.pem`
 
   When I run `tp cert init "<dir>"`
   Then the command should succeed
   And TP should have printed "Proceeding to init all certificates in '<dir>'..."
-
-  When I run `find ../cert/good/ -name "*.cert.conf"`
-  Then the command should succeed
-  And the command should print 2 lines of text
-
-  When I run `find ../cert/good/ -name "*.pem"`
-  Then the command should succeed
-  And the command should print no text
+  And <count> files in `<dir>` should match wildcard pattern `*.cert.conf`
+  But 0 files in `<dir>` should match wildcard pattern `*.key.pass.txt`
+  And 0 files in `<dir>` should match wildcard pattern `*.pem`
 
   When I run `tp cert selfsign "<dir>"`
   Then the command should succeed
   And TP should have printed "Proceeding to selfsign all certificates in '<dir>'..."
 
-  When I run `find ../cert/good/ -name "*.key.pass.txt"`
-  Then the command should succeed
-  And the command should print <count> lines of text
 
-  When I run `find ../cert/good/ -name "*.key.pem"`
-  Then the command should succeed
-  And the command should print <count> lines of text
-
-  When I run `find ../cert/good/ -name "*.csr.pem"`
-  Then the command should succeed
-  And the command should print <count> lines of text
-
-  When I run `find ../cert/good/ -name "*.cert.pem"`
-  Then the command should succeed
-  And the command should print <count> lines of text
+  And <count> files in `<dir>` should match wildcard pattern `*.cert.conf`
+  And <count> files in `<dir>` should match wildcard pattern `*.key.pass.txt`
+  And <count> files in `<dir>` should match wildcard pattern `*.key.pem`
+  And <count> files in `<dir>` should match wildcard pattern `*.csr.pem`
+  And <count> files in `<dir>` should match wildcard pattern `*.cert.pem`
 
   When I run `tp cert clean "<dir>"`
   Then the command should succeed
   And TP should have printed "Proceeding to clean all certificates in '<dir>'..."
-
-  When I run `find ../cert/good/ -name "*.key.pass.txt"`
-  Then the command should succeed
-  And the command should print no text
-
-  When I run `find ../cert/good/ -name "*.pem"`
-  Then the command should succeed
-  And the command should print no text
-
+  And 0 files in `<dir>` should match wildcard pattern `*.cert.conf`
+  And 0 files in `<dir>` should match wildcard pattern `*.key.pass.txt`
+  And 0 files in `<dir>` should match wildcard pattern `*.pem`
 
   Examples:
     | dir           | count |
