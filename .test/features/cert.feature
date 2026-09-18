@@ -32,7 +32,8 @@ Scenario Outline: Generate self-signed certificate `<path>/<name>.cert.pem` and 
   And CNs in certificate `<path>/<name>.cert.pem` and CSR `<path>/<name>.csr.pem` should match
 
   When I run `tp cert clean <path>/<name>.cert.pem`
-  Then config file `<path>/<name>.cert.conf` should not exist
+  Then the command should succeed
+  And config file `<path>/<name>.cert.conf` should not exist
   And private key file `<path>/private/<name>.key.pem` should not exist
   And key passphrase file `<path>/private/<name>.key.pass.txt` should not exist
   And CSR file `<path>/<name>.csr.pem` should not exist
@@ -77,3 +78,38 @@ Scenario Outline: Generate self-signed certificate `<path>/<name>.cert.pem` step
     | ../cert/good | rsa-4096                  |
     | ../cert/good | ecdsa-256                 |
     | ../cert/ugly | domain-multiple-wildcards |
+
+
+
+Scenario Outline: Fail generating self-signed certificate from broken config `<path>/<name>.cert.config`
+
+  Then template file `<path>/<name>.cert.conf.tmpl` should exist
+  But config file `<path>/<name>.cert.conf` should not exist
+
+  When I run `tp cert init "<path>/<name>.cert.conf.tmpl"`
+  Then the command should succeed
+  And config file `<path>/<name>.cert.conf` should exist
+  But key passphrase file `<path>/private/<name>.key.pass.txt` should not exist
+  And private key file `<path>/private/<name>.key.pem` should not exist
+  And CSR file `<path>/<name>.csr.pem` should not exist
+  And self-signed X.509 certificate file `<path>/<name>.cert.pem` should not exist
+
+  When I run `tp cert request <path>/<name>.cert.conf`
+  Then the command should fail
+  And config file `<path>/<name>.cert.conf` should exist
+  And key passphrase file `<path>/private/<name>.key.pass.txt` should exist
+  But private key file `<path>/private/<name>.key.pem` should not exist
+  And CSR file `<path>/<name>.csr.pem` should not exist
+  And self-signed X.509 certificate file `<path>/<name>.cert.pem` should not exist
+
+  When I run `tp cert selfsign "<path>/<name>.cert.conf.tmpl"`
+  Then the command should fail
+  And config file `<path>/<name>.cert.conf` should exist
+  And key passphrase file `<path>/private/<name>.key.pass.txt` should exist
+  But private key file `<path>/private/<name>.key.pem` should not exist
+  And CSR file `<path>/<name>.csr.pem` should not exist
+  And self-signed X.509 certificate file `<path>/<name>.cert.pem` should not exist
+
+  Examples:
+    | path        | name               |
+    | ../cert/bad | rsa-short-key-404  |
