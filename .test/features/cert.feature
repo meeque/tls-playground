@@ -24,6 +24,7 @@ Scenario Outline: Generate self-signed certificate `<path>/<name>.cert.pem` and 
 
   When I run `tp cert selfsign <path>/<name>.cert.conf`
   Then the command should succeed
+  And TP should have run command `<csr_command>`
   And private key file `<path>/private/<name>.key.pem` should exist
   And key passphrase file `<path>/private/<name>.key.pass.txt` should exist
   And CSR file `<path>/<name>.csr.pem` should exist
@@ -41,10 +42,10 @@ Scenario Outline: Generate self-signed certificate `<path>/<name>.cert.pem` and 
   But template file `<path>/<name>.cert.conf.tmpl` should exist
 
   Examples:
-    | path         | name                      |
-    | ../cert/good | rsa-4096                  |
-    | ../cert/good | ecdsa-256                 |
-    | ../cert/ugly | domain-multiple-wildcards |
+    | path         | name                      | csr_command |
+    | ../cert/good | rsa-4096                  | openssl req -new -config '../cert/good/rsa-4096.cert.conf' -passout 'file:../cert/good/private/rsa-4096.key.pass.txt' -keyout '../cert/good/private/rsa-4096.key.pem' -out '../cert/good/rsa-4096.csr.pem' |
+    | ../cert/good | ecdsa-256                 | openssl req -new -config '../cert/good/ecdsa-256.cert.conf' -newkey 'param:../cert/good/ecdsa-256.key.params.pem' -passout 'file:../cert/good/private/ecdsa-256.key.pass.txt' -keyout '../cert/good/private/ecdsa-256.key.pem' -out '../cert/good/ecdsa-256.csr.pem' |
+    | ../cert/ugly | domain-multiple-wildcards | openssl req -new -config '../cert/ugly/domain-multiple-wildcards.cert.conf' -passout 'file:../cert/ugly/private/domain-multiple-wildcards.key.pass.txt' -keyout '../cert/ugly/private/domain-multiple-wildcards.key.pem' -out '../cert/ugly/domain-multiple-wildcards.csr.pem' |
 
 
 
