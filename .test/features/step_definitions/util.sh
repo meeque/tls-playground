@@ -1,6 +1,6 @@
-@When I run `tp {command} {arg}`
+@When I run `{command} {arg}`
 
-  run "tp ${command} \"${arg}\""
+  run "${command} \"${arg}\""
 
 
 
@@ -13,6 +13,25 @@
 @Then the command should fail
 
   [[ "${LAST_EXIT_CODE}" != '0' ]] || fail "The previous command ran with a zero exit code, indicating success"
+
+
+
+@Then the command should print {number} lines of text
+
+  num="$( echo "${LAST_STDOUT}" | wc -l )"
+  [[ "${num}" -eq "${number}" ]] || fail "Printed ${num} lines of text"
+
+
+
+@Then the command should print no text
+
+  [[ -z "${LAST_STDOUT}" ]] || fail "Did print more text than expected"
+
+
+
+@Then the command should print "{output}"
+
+  [[ "${LAST_STDOUT}" == "${output}" ]] || fail "Did not print the expected text"
 
 
 

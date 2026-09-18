@@ -127,3 +127,64 @@ Scenario Outline: Fail generating self-signed certificate from broken config `<p
   Examples:
     | path        | name               | error                      |
     | ../cert/bad | rsa-short-key-404  | Error setting keysize      |
+
+
+
+Scenario Outline: Generate self-signed certificates all configs in `<dir>` and clean up afterwards
+
+  When I run `find ../cert/good/ -name "*.cert.conf"`
+  Then the command should succeed
+  And the command should print no text
+
+  When I run `find ../cert/good/ -name "*.pem"`
+  Then the command should succeed
+  And the command should print no text
+
+  When I run `tp cert init "<dir>"`
+  Then the command should succeed
+  And TP should have printed "Proceeding to init all certificates in '<dir>'..."
+
+  When I run `find ../cert/good/ -name "*.cert.conf"`
+  Then the command should succeed
+  And the command should print 2 lines of text
+
+  When I run `find ../cert/good/ -name "*.pem"`
+  Then the command should succeed
+  And the command should print no text
+
+  When I run `tp cert selfsign "<dir>"`
+  Then the command should succeed
+  And TP should have printed "Proceeding to selfsign all certificates in '<dir>'..."
+
+  When I run `find ../cert/good/ -name "*.key.pass.txt"`
+  Then the command should succeed
+  And the command should print <count> lines of text
+
+  When I run `find ../cert/good/ -name "*.key.pem"`
+  Then the command should succeed
+  And the command should print <count> lines of text
+
+  When I run `find ../cert/good/ -name "*.csr.pem"`
+  Then the command should succeed
+  And the command should print <count> lines of text
+
+  When I run `find ../cert/good/ -name "*.cert.pem"`
+  Then the command should succeed
+  And the command should print <count> lines of text
+
+  When I run `tp cert clean "<dir>"`
+  Then the command should succeed
+  And TP should have printed "Proceeding to clean all certificates in '<dir>'..."
+
+  When I run `find ../cert/good/ -name "*.key.pass.txt"`
+  Then the command should succeed
+  And the command should print no text
+
+  When I run `find ../cert/good/ -name "*.pem"`
+  Then the command should succeed
+  And the command should print no text
+
+
+  Examples:
+    | dir           | count |
+    | ../cert/good/ | 2     |
