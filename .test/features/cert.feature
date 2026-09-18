@@ -24,7 +24,9 @@ Scenario Outline: Generate self-signed certificate `<path>/<name>.cert.pem` and 
 
   When I run `tp cert selfsign <path>/<name>.cert.conf`
   Then the command should succeed
+  And TP should have printed "Generating key-pair and CSR..."
   And TP should have run command `<csr_command>`
+  And TP should have printed "Signing CSR with it's own private key..."
   And TP should have run command `<selfsign_command>`
   And private key file `<path>/private/<name>.key.pem` should exist
   And key passphrase file `<path>/private/<name>.key.pass.txt` should exist
@@ -64,6 +66,7 @@ Scenario Outline: Generate self-signed certificate `<path>/<name>.cert.pem` step
 
   When I run `tp cert request <path>/<name>.cert.conf`
   Then the command should succeed
+  And TP should have printed "Generating key-pair and CSR..."
   And TP should have run command `<csr_command>`
   And private key file `<path>/private/<name>.key.pem` should exist
   And key passphrase file `<path>/private/<name>.key.pass.txt` should exist
@@ -73,6 +76,7 @@ Scenario Outline: Generate self-signed certificate `<path>/<name>.cert.pem` step
 
   When I run `tp cert selfsign <path>/<name>.csr.pem`
   Then the command should succeed
+  And TP should have printed "Signing CSR with it's own private key..."
   And TP should have run command `<selfsign_command>`
   And self-signed X.509 certificate file `<path>/<name>.cert.pem` should exist
   And CNs in certificate `<path>/<name>.cert.pem` and CSR `<path>/<name>.csr.pem` should match
@@ -100,7 +104,8 @@ Scenario Outline: Fail generating self-signed certificate from broken config `<p
 
   When I run `tp cert request <path>/<name>.cert.conf`
   Then the command should fail
-  And a nested command should have printed `<error>` to stderr
+  And TP should have printed "Generating key-pair and CSR..."
+  And a nested command should have printed error "<error>"
   And config file `<path>/<name>.cert.conf` should exist
   And key passphrase file `<path>/private/<name>.key.pass.txt` should exist
   But private key file `<path>/private/<name>.key.pem` should NOT exist
@@ -109,7 +114,8 @@ Scenario Outline: Fail generating self-signed certificate from broken config `<p
 
   When I run `tp cert selfsign "<path>/<name>.cert.conf"`
   Then the command should fail
-  And a nested command should have printed `<error>` to stderr
+  And TP should have printed "Generating key-pair and CSR..."
+  And a nested command should have printed error "<error>"
   And config file `<path>/<name>.cert.conf` should exist
   And key passphrase file `<path>/private/<name>.key.pass.txt` should exist
   But private key file `<path>/private/<name>.key.pem` should NOT exist

@@ -22,7 +22,13 @@
 
 
 
-@Then a nested command should have printed `{output}` to stderr
+@Then TP should have printed "{output}"
+
+  tpt_extract_tp_outputs "${LAST_STDOUT}" | grep -F "${output}" > /dev/null || fail "Could not find the expected text"
+
+
+
+@Then a nested command should have printed error "{output}"
 
   tpt_extract_command_outputs "${LAST_STDERR}" | grep -F "${output}" > /dev/null || fail "Could not find the expected text"
 
