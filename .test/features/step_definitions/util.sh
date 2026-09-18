@@ -22,6 +22,12 @@
 
 
 
+@Then a nested command should have printed `{output}` to stderr
+
+  tpt_extract_command_outputs "${LAST_STDERR}" | grep -F "${output}" > /dev/null || fail "Could not find the expected text"
+
+
+
 @Then {file_role} file `{file_path}` should exist
 
   run "ls \"${file_path}\""

@@ -100,14 +100,16 @@ Scenario Outline: Fail generating self-signed certificate from broken config `<p
 
   When I run `tp cert request <path>/<name>.cert.conf`
   Then the command should fail
+  And a nested command should have printed `<error>` to stderr
   And config file `<path>/<name>.cert.conf` should exist
   And key passphrase file `<path>/private/<name>.key.pass.txt` should exist
   But private key file `<path>/private/<name>.key.pem` should NOT exist
   And CSR file `<path>/<name>.csr.pem` should NOT exist
   And self-signed X.509 certificate file `<path>/<name>.cert.pem` should NOT exist
 
-  When I run `tp cert selfsign "<path>/<name>.cert.conf.tmpl"`
+  When I run `tp cert selfsign "<path>/<name>.cert.conf"`
   Then the command should fail
+  And a nested command should have printed `<error>` to stderr
   And config file `<path>/<name>.cert.conf` should exist
   And key passphrase file `<path>/private/<name>.key.pass.txt` should exist
   But private key file `<path>/private/<name>.key.pem` should NOT exist
@@ -115,5 +117,5 @@ Scenario Outline: Fail generating self-signed certificate from broken config `<p
   And self-signed X.509 certificate file `<path>/<name>.cert.pem` should NOT exist
 
   Examples:
-    | path        | name               |
-    | ../cert/bad | rsa-short-key-404  |
+    | path        | name               | error                      |
+    | ../cert/bad | rsa-short-key-404  | Error setting keysize      |
