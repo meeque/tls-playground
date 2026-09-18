@@ -6,7 +6,11 @@
 
 @Then the command should succeed
 
-  [[ "${LAST_EXIT_CODE}" == '0' ]] || fail "Expected a commmand to run successfully, but it ran with exit code ${LAST_EXIT_CODE}."
+  [[ "${LAST_EXIT_CODE}" == '0' ]] || fail "The previous command ran with a non-zero exit code, indicating failure"
+
+@Then the command should fail
+
+  [[ "${LAST_EXIT_CODE}" != '0' ]] || fail "The previous command ran with a zero exit code, indicating success"
 
 
 
