@@ -20,7 +20,7 @@
   [[ "${LAST_EXIT_CODE}" == '0' ]] || fail "Expected file does not exit."
 
 
-@Then {file_role} file `{file_path}` should not exist
+@Then {file_role} file `{file_path}` should NOT exist
 
   run "ls \"${file_path}\""
   [[ "${LAST_EXIT_CODE}" != '0' ]] || fail "Unexpected file exits."
