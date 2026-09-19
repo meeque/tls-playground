@@ -37,25 +37,25 @@
 
 @Then TP should run command `{command}`
 
-  tpt_extract_commands "${LAST_STDOUT}" | grep -F "${command}" > /dev/null || fail "Could not find the command logged in TP outputs"
+  tpt_extract_commands "${LAST_STDOUT}" | grep -q -F "${command}" || fail "Could not find the command logged in TP outputs"
 
 
 
 @Then TP should print "{output}"
 
-  tpt_extract_tp_outputs "${LAST_STDOUT}" | grep -F "${output}" > /dev/null || fail "Could not find the expected text"
+  tpt_extract_tp_outputs "${LAST_STDOUT}" | grep -q -F "${output}" || fail "Could not find the expected text"
 
 
 
 @Then a sub-command should print "{output}"
 
-  tpt_extract_command_outputs "${LAST_STDOUT}" | grep -F "${output}" > /dev/null || fail "Could not find the expected text"
+  tpt_extract_command_outputs "${LAST_STDOUT}" | grep -q -F "${output}" || fail "Could not find the expected text"
 
 
 
 @Then a sub-command should print error "{error}"
 
-  tpt_extract_command_outputs "${LAST_STDERR}" | grep -F "${error}" > /dev/null || fail "Could not find the expected text"
+  tpt_extract_command_outputs "${LAST_STDERR}" | grep -q -F "${error}" || fail "Could not find the expected text"
 
 
 
