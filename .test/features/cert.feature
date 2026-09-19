@@ -23,6 +23,18 @@ Scenario: When called without arguments, `tp cert` should print basic usage info
 
 
 
+Scenario: `tp cert --help` should print help contents
+
+  When I run `tp cert --help`
+  Then the command should succeed
+  And a sub-command should print "Summary:   TLS Playground Certificate Utilities"
+  And a sub-command should print "Available Commands:"
+  And a sub-command should print "Arguments:"
+  And a sub-command should print "Global Options:"
+  And a sub-command should print "Environment:"
+
+
+
 Scenario Outline: Generate self-signed certificate `<path>/<name>.cert.pem` and clean up afterwards
 
   Then template file `<path>/<name>.cert.conf.tmpl` should exist
