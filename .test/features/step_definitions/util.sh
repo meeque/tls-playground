@@ -1,6 +1,6 @@
-@When I run `{command} {arg}`
+@When I run `{command}`
 
-  run "${command} \"${arg}\""
+  run "${command}"
 
 
 
