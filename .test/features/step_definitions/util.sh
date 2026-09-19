@@ -47,7 +47,13 @@
 
 
 
-@Then a command run by TP should print error "{error}"
+@Then a sub-command should print "{output}"
+
+  tpt_extract_command_outputs "${LAST_STDOUT}" | grep -F "${output}" > /dev/null || fail "Could not find the expected text"
+
+
+
+@Then a sub-command should print error "{error}"
 
   tpt_extract_command_outputs "${LAST_STDERR}" | grep -F "${error}" > /dev/null || fail "Could not find the expected text"
 

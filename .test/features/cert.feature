@@ -9,6 +9,20 @@ Background:
 
 
 
+Scenario: When called without arguments, `tp cert` should print basic usage info
+
+  When I run `tp cert`
+  Then the command should fail
+  And TP should print "No TP Certificate Utilities command given."
+  And TP should print "Try one of the following:"
+  And a sub-command should print "init"
+  And a sub-command should print "request"
+  And a sub-command should print "selfsign"
+  And a sub-command should print "clean"
+  And TP should print "Or, run 'tp cert --help' to learn more about these commands."
+
+
+
 Scenario Outline: Generate self-signed certificate `<path>/<name>.cert.pem` and clean up afterwards
 
   Then template file `<path>/<name>.cert.conf.tmpl` should exist
@@ -107,7 +121,7 @@ Scenario Outline: Fail generating self-signed certificate from broken config `<p
   When I run `tp cert request <path>/<name>.cert.conf`
   Then the command should fail
   And TP should print "Generating key-pair and CSR..."
-  And a command run by TP should print error "<error>"
+  And a sub-command should print error "<error>"
   And config file `<path>/<name>.cert.conf` should exist
   And key passphrase file `<path>/private/<name>.key.pass.txt` should exist
   But private key file `<path>/private/<name>.key.pem` should NOT exist
@@ -117,7 +131,7 @@ Scenario Outline: Fail generating self-signed certificate from broken config `<p
   When I run `tp cert selfsign "<path>/<name>.cert.conf"`
   Then the command should fail
   And TP should print "Generating key-pair and CSR..."
-  And a command run by TP should print error "<error>"
+  And a sub-command should print error "<error>"
   And config file `<path>/<name>.cert.conf` should exist
   And key passphrase file `<path>/private/<name>.key.pass.txt` should exist
   But private key file `<path>/private/<name>.key.pem` should NOT exist
