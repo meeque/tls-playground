@@ -194,6 +194,8 @@ Available Commands:
 
   fingerprint  Calculate a cryptographic checksum (a.k.a. fingerprint) of a cert, CSR, or key <file>.
 
+  verify       Verify that the private key matches cert or CSR <file>, based on TP file naming conventions.
+
   params       Create key parameters based on config <file>.
 
   key          Create key parameters and private key based on config <file>.
@@ -213,7 +215,7 @@ Arguments:
   <file>  Path to a cert, CSR, key, 'openssl req' config file, or directory. May be absolute or relative.
           When a directory path is given, tp will search for all suitable files in that directory.
           When multiple files and directories are given, the command will run on all of them consecutively.
-          Commands that support multiple file types ('show', 'fingerpint') will deduce file type from naming conventions.
+          Commands that support multiple file types ('show', 'fingerpint', 'verify') will deduce file type from naming conventions.
           Run 'tp --help files' to learn more about naming conventions for certificate files.
 
 Options:

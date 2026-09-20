@@ -61,6 +61,14 @@ Scenario Outline: Generate self-signed certificate `<path>/<name>.cert.pem` and 
   And CNs in CSR `<path>/<name>.csr.pem` and config `<path>/<name>.cert.conf` should match
   And CNs in certificate `<path>/<name>.cert.pem` and CSR `<path>/<name>.csr.pem` should match
 
+  When I run `tp cert verify <path>/<name>.cert.pem`
+  Then the command should succeed
+  And TP should print "Verified"
+
+  When I run `tp cert verify <path>/<name>.csr.pem`
+  Then the command should succeed
+  And TP should print "Verified"
+
   When I run `tp cert clean <path>/<name>.cert.pem`
   Then the command should succeed
   And config file `<path>/<name>.cert.conf` should NOT exist
@@ -101,12 +109,20 @@ Scenario Outline: Generate self-signed certificate `<path>/<name>.cert.pem` step
   And CNs in CSR `<path>/<name>.csr.pem` and config `<path>/<name>.cert.conf` should match
   But self-signed X.509 certificate file `<path>/<name>.cert.pem` should NOT exist
 
+  When I run `tp cert verify <path>/<name>.csr.pem`
+  Then the command should succeed
+  And TP should print "Verified"
+
   When I run `tp cert selfsign <path>/<name>.csr.pem`
   Then the command should succeed
   And TP should print "Signing CSR with it's own private key..."
   And TP should run command `<selfsign_command>`
   And self-signed X.509 certificate file `<path>/<name>.cert.pem` should exist
   And CNs in certificate `<path>/<name>.cert.pem` and CSR `<path>/<name>.csr.pem` should match
+
+  When I run `tp cert verify <path>/<name>.cert.pem`
+  Then the command should succeed
+  And TP should print "Verified"
 
   Examples:
     | path         | name                      | csr_command                                                                                                                                                                                                                                                                    | selfsign_command                                                                                                                                                                                                                                                                                                     |
@@ -153,6 +169,43 @@ Scenario Outline: Fail generating self-signed certificate from broken config `<p
   Examples:
     | path        | name               | error                      |
     | ../cert/bad | rsa-short-key-404  | Error setting keysize      |
+
+
+
+Scenario Outline: Fail verifying `<path>/<name>` after regenerating its private key
+
+  When I run `tp cert init "<path>/<name>.cert.conf.tmpl"`
+  Then the command should succeed
+
+  When I run `tp cert selfsign <path>/<name>.cert.conf`
+  Then the command should succeed
+  And private key file `<path>/private/<name>.key.pem` should exist
+  And CSR file `<path>/<name>.csr.pem` should exist
+  And self-signed X.509 certificate file `<path>/<name>.cert.pem` should exist
+
+  When I run `tp cert verify <path>/<name>.cert.pem`
+  Then the command should succeed
+  And TP should print "Verified"
+
+  When I run `tp cert verify <path>/<name>.csr.pem`
+  Then the command should succeed
+  And TP should print "Verified"
+
+  When I run `tp cert key <path>/<name>.cert.conf`
+  Then the command should succeed
+  And TP should print "New private key"
+
+  When I run `tp cert verify <path>/<name>.cert.pem`
+  Then the command should fail
+  And TP should print "does NOT match"
+
+  When I run `tp cert verify <path>/<name>.csr.pem`
+  Then the command should fail
+  And TP should print "does NOT match"
+
+  Examples:
+    | path         | name     |
+    | ../cert/good | rsa-4096 |
 
 
 
