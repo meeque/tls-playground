@@ -5,24 +5,24 @@
 
 function tpt_extract_tp_outputs {
   echo "$1" \
-    | grep -E '^\S+\[TP\]\S+\s+' \
-    | sed -E -e 's/^\S+\[TP\]\S+\s+//'
+    | grep -E '^\S*\[TP\]\S*\s+' \
+    | sed -E -e 's/^\S*\[TP\]\S*\s+//'
 }
 
 
 
 function tpt_extract_command_outputs {
   echo "$1" \
-    | grep -E --invert-match '^\S+\[TP\]\S+\s+' \
-    | grep -E --invert-match '^\S+\$\S+\s+'
+    | grep -E --invert-match '^\S*\[TP\]\S*\s+' \
+    | grep -E --invert-match '^\S*\$\S*\s+'
 }
 
 
 
 function tpt_extract_commands {
   echo "$1" \
-    | grep -E '^\S+\$\S+\s+' \
-    | sed -E -e 's/^\S+\$\S+\s+//' \
+    | grep -E '^\S*\$\S*\s+' \
+    | sed -E -e 's/^\S*\$\S*\s+//' \
       || true
 }
 
