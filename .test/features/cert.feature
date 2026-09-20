@@ -61,11 +61,11 @@ Scenario Outline: Generate self-signed certificate `<path>/<name>.cert.pem` and 
   And CNs in CSR `<path>/<name>.csr.pem` and config `<path>/<name>.cert.conf` should match
   And CNs in certificate `<path>/<name>.cert.pem` and CSR `<path>/<name>.csr.pem` should match
 
-  When I run `tp cert verify <path>/<name>.cert.pem`
+  When I run `tp cert verify key <path>/<name>.cert.pem`
   Then the command should succeed
   And TP should print "Verified"
 
-  When I run `tp cert verify <path>/<name>.csr.pem`
+  When I run `tp cert verify key <path>/<name>.csr.pem`
   Then the command should succeed
   And TP should print "Verified"
 
@@ -109,7 +109,7 @@ Scenario Outline: Generate self-signed certificate `<path>/<name>.cert.pem` step
   And CNs in CSR `<path>/<name>.csr.pem` and config `<path>/<name>.cert.conf` should match
   But self-signed X.509 certificate file `<path>/<name>.cert.pem` should NOT exist
 
-  When I run `tp cert verify <path>/<name>.csr.pem`
+  When I run `tp cert verify key <path>/<name>.csr.pem`
   Then the command should succeed
   And TP should print "Verified"
 
@@ -120,7 +120,7 @@ Scenario Outline: Generate self-signed certificate `<path>/<name>.cert.pem` step
   And self-signed X.509 certificate file `<path>/<name>.cert.pem` should exist
   And CNs in certificate `<path>/<name>.cert.pem` and CSR `<path>/<name>.csr.pem` should match
 
-  When I run `tp cert verify <path>/<name>.cert.pem`
+  When I run `tp cert verify key <path>/<name>.cert.pem`
   Then the command should succeed
   And TP should print "Verified"
 
@@ -183,11 +183,11 @@ Scenario Outline: Fail verifying `<path>/<name>` after regenerating its private 
   And CSR file `<path>/<name>.csr.pem` should exist
   And self-signed X.509 certificate file `<path>/<name>.cert.pem` should exist
 
-  When I run `tp cert verify <path>/<name>.cert.pem`
+  When I run `tp cert verify key <path>/<name>.cert.pem`
   Then the command should succeed
   And TP should print "Verified"
 
-  When I run `tp cert verify <path>/<name>.csr.pem`
+  When I run `tp cert verify key <path>/<name>.csr.pem`
   Then the command should succeed
   And TP should print "Verified"
 
@@ -195,11 +195,11 @@ Scenario Outline: Fail verifying `<path>/<name>` after regenerating its private 
   Then the command should succeed
   And TP should print "New private key"
 
-  When I run `tp cert verify <path>/<name>.cert.pem`
+  When I run `tp cert verify key <path>/<name>.cert.pem`
   Then the command should fail
   And TP should print "does NOT match"
 
-  When I run `tp cert verify <path>/<name>.csr.pem`
+  When I run `tp cert verify key <path>/<name>.csr.pem`
   Then the command should fail
   And TP should print "does NOT match"
 
