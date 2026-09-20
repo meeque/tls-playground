@@ -1515,35 +1515,13 @@ function tp_clean {
 # general TP utility functions
 
 function tp_util_run {
-    tp_util_log_command "$@"
-
-    local status=0
-    echo
-    "$@" || status=$?
-    echo
-
-    tp_util_step_ack "${status}"
-
-    return "${status}"
+    tp_util_run_capture '' "$@"
 }
 
 function tp_util_run_capture {
-    local -n _output_var="$1"
+    local varname="$1"
     shift
 
-    tp_util_log_command "$@"
-
-    local status=0
-    echo
-    { _output_var="$( "$@" | tee /dev/fd/3 )" || status=$?; } 3>&1
-    echo
-
-    tp_util_step_ack "${status}"
-
-    return "${status}"
-}
-
-function tp_util_log_command {
     local dir_rel="$( realpath --relative-to="${tp_pwd}" "$PWD" )"
     if [[ ${dir_rel} == '.' ]]
     then
@@ -1573,10 +1551,23 @@ function tp_util_log_command {
     then
         read -s -n 1
     fi
-}
 
-function tp_util_step_ack {
-    local status="$1"
+    local status=0
+    echo
+    if [[ -z "${varname}" ]]
+    then
+        # run the actual command
+        "$@" || status=$?
+    else
+        # run the actual command, and capture stdout
+        local -n varref="${varname}"
+        {
+            varref="$( "$@" | tee /dev/fd/3 )" \
+            || status=$?;
+        } \
+        3>&1
+    fi
+    echo
 
     if [[ -n "${tp_step}" ]]
     then
@@ -1589,6 +1580,8 @@ function tp_util_step_ack {
             read -s -n 1
         fi
     fi
+
+    return "${status}"
 }
 
 function tp_util_quote {
