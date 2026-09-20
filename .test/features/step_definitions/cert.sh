@@ -8,19 +8,12 @@
 
 @Then CNs in CSR `{csr_file}` and config `{config_file}` should match
 
-  local config_cn="$(
-    tp_util_get_config_values "${config_file}" 'CN' '.*'
-  )"
+  local config_cn="$( tp_util_get_config_values "${config_file}" 'CN' '.*' )"
   [[ -n ${config_cn} ]] \
     || fail "could not find a CN field in config file \`${config_file}\`" \
     || return 1
 
-  local csr_cn="$(
-    tp cert show "${csr_file}" \
-      | grep -E '^(\s)+Subject:' \
-      | grep -o -E 'CN=(\S)+' \
-      | sed -e 's/^CN=//'
-  )"
+  local csr_cn="$( tpt_extract_cn "${csr_file}" )"
   [[ -n "${csr_cn}" ]] \
     || fail "could not find a CN field in CSR file \`${csr_file}\`" \
     || return 1
@@ -32,22 +25,12 @@
 
 @Then CNs in certificate `{cert_file}` and CSR `{csr_file}` should match
 
-  local csr_cn="$(
-    tp cert show "${csr_file}" \
-      | grep -E '^(\s)+Subject:' \
-      | grep -o -E 'CN=(\S)+' \
-      | sed -e 's/^CN=//'
-  )"
+  local csr_cn="$( tpt_extract_cn "${csr_file}" )"
   [[ -n "${csr_cn}" ]] \
     || fail "could not find a CN field in CSR file \`${csr_file}\`" \
     || return 1
 
-  local cert_cn="$(
-    tp cert show "${cert_file}" \
-      | grep -E '^(\s)+Subject:' \
-      | grep -o -E 'CN=(\S)+' \
-      | sed -e 's/^CN=//'
-  )"
+  local cert_cn="$( tpt_extract_cn "${cert_file}" )"
   [[ -n ${cert_cn} ]] \
     || fail "could not find a CN field in certificate file \`${cert_file}\`" \
     || return 1

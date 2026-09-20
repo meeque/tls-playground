@@ -25,3 +25,12 @@ function tpt_extract_commands {
     | sed -E -e 's/^\S+\$\S+\s+//' \
       || true
 }
+
+
+
+function tpt_extract_cn {
+  tp cert show "$1" \
+    | grep -E '^\s+Subject:' \
+    | grep -o -E 'CN=\S+' \
+    | sed -e 's/^CN=//'
+}
