@@ -226,13 +226,15 @@ Scenario Outline: Generate self-signed certificates all configs in `<dir>` and c
   When I run `tp cert selfsign "<dir>"`
   Then the command should succeed
   And TP should print "Proceeding to selfsign all certificates in '<dir>'..."
-
-
   And <count> files in `<dir>` should match wildcard pattern `*.cert.conf`
   And <count> files in `<dir>` should match wildcard pattern `*.key.pass.txt`
   And <count> files in `<dir>` should match wildcard pattern `*.key.pem`
   And <count> files in `<dir>` should match wildcard pattern `*.csr.pem`
   And <count> files in `<dir>` should match wildcard pattern `*.cert.pem`
+
+  When I run `tp cert verify key "<dir>"`
+  Then the command should succeed
+  And TP should print "Verified: private key"
 
   When I run `tp cert clean "<dir>"`
   Then the command should succeed
