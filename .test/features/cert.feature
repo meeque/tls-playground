@@ -204,8 +204,9 @@ Scenario Outline: Fail verifying `<path>/<name>` after regenerating its private 
   And TP should print "does NOT match"
 
   Examples:
-    | path         | name     |
-    | ../cert/good | rsa-4096 |
+    | path         | name      |
+    | ../cert/good | rsa-4096  |
+    | ../cert/good | ecdsa-256 |
 
 
 
