@@ -74,17 +74,15 @@
 
 @Then {file_role} file `{file_path}` should exist
 
-  run "ls \"${file_path}\""
-  [[ "${LAST_EXIT_CODE}" == '0' ]] \
-    || fail "Expected file does not exit."
+  [[ -e "${file_path}" ]] \
+    || fail "Expected file does not exist."
 
 
 
 @Then {file_role} file `{file_path}` should NOT exist
 
-  run "ls \"${file_path}\""
-  [[ "${LAST_EXIT_CODE}" != '0' ]] \
-    || fail "Unexpected file exits."
+  [[ ! -e "${file_path}" ]] \
+    || fail "Unexpected file exists."
 
 
 

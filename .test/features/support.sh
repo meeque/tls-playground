@@ -21,6 +21,7 @@ function tpt_extract_command_outputs {
 
 function tpt_extract_commands {
   echo "$1" \
-    | grep -E '^\S+\$\S+\s+' || true \
-    | sed -E -e 's/^\S+\$\S+\s+//'
+    | grep -E '^\S+\$\S+\s+' \
+    | sed -E -e 's/^\S+\$\S+\s+//' \
+      || true
 }
