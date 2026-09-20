@@ -1,7 +1,7 @@
 @Given all sample certificates have been cleaned
 
   run "tp cert clean"
-  [[ "${LAST_EXIT_CODE}" == '0' ]] \
+  (( LAST_EXIT_CODE == 0 )) \
     || fail "Precondition commmand \`tp cert clean\` has failed."
 
 
