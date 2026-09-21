@@ -1,4 +1,10 @@
-# import library functions from the tp script
+# add `tp` script to path
+if [[ ":$PATH:" != *":$PWD/bin:"* ]]
+then
+    PATH="$PWD/bin:$PATH"
+fi
+
+# also import library functions from the `tp` script
 . bin/tp
 
 
