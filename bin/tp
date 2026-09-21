@@ -245,7 +245,7 @@ function tp_cert_handle_multiple {
 
     for file in "${files_to_handle[@]}"
     do
-        echo
+        tp_print
         "tp_cert_${command// /_}" "${file}"
     done
 }
@@ -311,9 +311,9 @@ function tp_cert_show {
         'conf' | *'.conf' | 'ini' | *'.ini' )
             tp_cert_shown[conf]="${file}"
             tp_msg "Showing configuration file '${file}':"
-            echo
+            tp_print
             cat "${file}"
-            echo
+            tp_print
             ;;
         * )
             tp_err "Sorry, don't know how to show contents of files with suffix '.${files[suffix]}'!"
@@ -535,7 +535,7 @@ function tp_cert_key {
 
     tp_succ "New private key in '${files[key_pem_path]}'."
     tp_succ "Pass-phrase for new private key in '${files[key_pass_path]}'."
-    echo
+    tp_print
     tp_cert_show_if_not_shown_yet "${files[key_pem_path]}"
 }
 
@@ -611,7 +611,7 @@ function tp_cert_request {
     fi
 
     tp_succ "New CSR in '${files[csr_pem_path]}'."
-    echo
+    tp_print
     tp_cert_show_if_not_shown_yet "${files[csr_pem_path]}"
 }
 
@@ -669,9 +669,9 @@ function tp_cert_selfsign {
     cp "${files[cert_pem_path]}" "${files[fullchain_pem_path]}"
     tp_succ "New (single-entry) certificate full-chain in '${files[fullchain_pem_path]}'."
 
-    echo
+    tp_print
     tp_cert_show "${files[cert_pem_path]}"
-    echo
+    tp_print
     tp_cert_fingerprint "${files[cert_pem_path]}"
 }
 
@@ -794,7 +794,7 @@ function tp_ca_init {
         tp_msg "No CA name specified. Proceeding to initialize all CAs..."
         for ca_name in $( tp_ca_list )
         do
-            echo
+            tp_print
             tp_ca_init "${ca_name}" "$@"
         done
         return $?
@@ -881,12 +881,12 @@ function tp_ca_sign {
     cat "${archive_files[cert_pem_path]}" "${ca_files[fullchain_pem_path]}" > "${archive_files[fullchain_pem_path]}"
     tp_succ "New certificate full-chain in '${archive_files[fullchain_pem_path]}'."
 
-    echo
+    tp_print
     tp_cert_link "${archive_files[file_path]}" "${target_files[file_path]}"
 
-    echo
+    tp_print
     tp_cert_show "${target_files[cert_pem_path]}"
-    echo
+    tp_print
     tp_cert_fingerprint "${target_files[cert_pem_path]}"
 }
 
@@ -1065,12 +1065,12 @@ function tp_acme_sign_domains {
     tp_succ "New certificate chain in '${certbot_live_dir}/chain.pem'."
     tp_succ "New certificate full-chain in '${certbot_live_dir}/fullchain.pem'."
 
-    echo
+    tp_print
     tp_acme_certbot_cert_link "${certbot_live_dir}" "${target_files[cert_conf_path]}"
 
-    echo
+    tp_print
     tp_cert_show "${target_files[cert_pem_path]}"
-    echo
+    tp_print
     tp_cert_fingerprint "${target_files[cert_pem_path]}"
 }
 
@@ -1086,7 +1086,7 @@ function tp_acme_sign_csr {
     if [[ "${#cert_numbers[@]}" != 0 ]]
     then
         # pick highest number and strip leading zeros, so bash doesn't assume it's octal
-        new_cert_number="$( echo "${cert_numbers[-1]}" | sed -E -e 's/^0+//' )"
+        new_cert_number="$( tp_print "${cert_numbers[-1]}" | sed -E -e 's/^0+//' )"
     fi
     (( ++new_cert_number ))
     new_cert_number="$( printf '%08d' "${new_cert_number}" )"
@@ -1122,12 +1122,12 @@ function tp_acme_sign_csr {
     tp_succ "New certificate chain in '${archive_files[chain_pem_path]}'."
     tp_succ "New certificate full-chain in '${archive_files[fullchain_pem_path]}'."
 
-    echo
+    tp_print
     tp_cert_link "${archive_files[file_path]}" "${target_files[file_path]}"
 
-    echo
+    tp_print
     tp_cert_show "${target_files[cert_pem_path]}"
-    echo
+    tp_print
     tp_cert_fingerprint "${target_files[cert_pem_path]}"
 }
 
@@ -1153,7 +1153,7 @@ function tp_acme_revoke {
     then
         local status=0
         "tp_acme_revoke_${cert_file}" || status=$?
-        echo
+        tp_print
 
         if [[ "${status}" == '0' ]]
         then
@@ -1188,7 +1188,7 @@ function tp_acme_revoke {
         private_key_file="private/${source_files[key_pem_file]}"
     elif [[ "${source_files[file]}" == cert*.pem ]]
     then
-        local candidate_file="$( echo "${source_files[file]}" | sed -e 's/^cert/privkey/' )"
+        local candidate_file="$( tp_print "${source_files[file]}" | sed -e 's/^cert/privkey/' )"
         if [[ -f "${source_files[dir]}/${candidate_file}" ]]
         then
             private_key_file="${candidate_file}"
@@ -1219,16 +1219,16 @@ function tp_acme_revoke {
 function tp_acme_revoke_all {
     local status=0
     tp_msg "Revoking all archived certificates that have been signed with ACME..."
-    echo
+    tp_print
     tp_acme_revoke_certbot || status=$?
-    echo
+    tp_print
     tp_acme_revoke_csr || status=$?
     return "${status}"
 }
 
 function tp_acme_revoke_certbot {
     tp_msg "Revoking Certbot's archived certificates that have been signed with ACME..."
-    echo
+    tp_print
 
     local status=0
     local archive_dir="${tp_base_dir}/acme/certbot/conf/archive"
@@ -1239,7 +1239,7 @@ function tp_acme_revoke_certbot {
             for archived_cert_file in $( find "${lineage_dir}" -type f -name 'cert*.pem' | sort )
             do
                 tp_acme_revoke "${archived_cert_file}" || status=$?
-                echo
+                tp_print
             done
         done
     fi
@@ -1248,7 +1248,7 @@ function tp_acme_revoke_certbot {
 
 function tp_acme_revoke_csr {
     tp_msg "Revoking TP archived certificates that have been signed with ACME using a custom CSR..."
-    echo
+    tp_print
 
     local status=0
     local archive_dir="${tp_base_dir}/acme/certbot/custom/archive"
@@ -1257,7 +1257,7 @@ function tp_acme_revoke_csr {
         for archived_cert_file in $( find "${archive_dir}" -type f -name '*.cert.pem' | sort )
         do
             tp_acme_revoke "${archived_cert_file}" || status=$?
-            echo
+            tp_print
         done
     fi
     return "${status}"
@@ -1383,7 +1383,7 @@ function tp_server_init {
         tp_msg "No demo server name specified. Proceeding to initialize all demo servers..."
         for server_name in $( tp_server_list )
         do
-            echo
+            tp_print
             tp_server_init "${server_name}" "$@"
         done
         return $?
@@ -1401,7 +1401,7 @@ function tp_server_init {
     tp_msg "Initializing demo server '${server_name}'..."
     tp_server_nginx_init "${server_dir}" "$@"
 
-    echo
+    tp_print
     tp_msg "Creating server certificates for demo server '${server_name}' using certificate provider '${tp_cert_provider}'..."
     for config_file in $( find "${server_dir}" -path '*/tls/*' '(' -name 'server*.cert.conf' -or -name 'host*.cert.conf' ')' | sort )
     do
@@ -1575,12 +1575,12 @@ function tp_util_run_capture {
         tp_prompt "Preparing to run below command, hit any key to continue!"
     fi
 
-    echo
+    tp_print
     if [[ -n "${TP_COLOR}" ]]
     then
-        echo $'\e[1;34m'"${dir_rel}"$'\e[0m'"${prompt}"$'\e[1m'"$( tp_util_quote "$@" )"$'\e[0m'
+        tp_print $'\e[1;34m'"${dir_rel}"$'\e[0m'"${prompt}"$'\e[1m'"$( tp_util_quote "$@" )"$'\e[0m'
     else
-        echo "${dir_rel}${prompt}$( tp_util_quote "$@" )"
+        tp_print "${dir_rel}${prompt}$( tp_util_quote "$@" )"
     fi
 
     if [[ -n "${tp_step}" ]]
@@ -1589,18 +1589,18 @@ function tp_util_run_capture {
     fi
 
     local status=0
-    echo
+    tp_print
     if [[ -z "${varname}" ]]
     then
         # run the actual command
         "$@" || status=$?
     else
-        # run the actual command, capture stdout, then echo it so the user sees it
+        # run the actual command, capture its stdout, then print it to own stdout
         local -n varref="${varname}"
         varref="$( "$@" )" || status=$?
-        echo "${varref}"
+        tp_print "${varref}"
     fi
-    echo
+    tp_print
 
     if [[ -n "${tp_step}" ]]
     then
@@ -1645,8 +1645,8 @@ function tp_util_files {
     # if given file-path is in a 'private' direcotry, use the parent directory instead
     local dir="$( dirname "${file_path}" | sed -E -e 's/(^|[/])private$//' )"
     local file="$( basename "${file_path}" )"
-    local name="$( echo "${file}" | sed -e 's/[.].*$//' )"
-    local suffix="$( echo "${file}" | sed -E -e 's/^[^.]*[.]?//' )"
+    local name="$( tp_print "${file}" | sed -e 's/[.].*$//' )"
+    local suffix="$( tp_print "${file}" | sed -E -e 's/^[^.]*[.]?//' )"
     local path="${dir}/${name}"
 
     varref=(
@@ -1695,13 +1695,13 @@ function tp_util_files_stat {
     local file_path="$1"
     if [[ -f "${file_path}" ]]
     then
-        echo 'f'
+        tp_print 'f'
     elif [[ -d "${file_path}" ]]
     then
-        echo 'd'
+        tp_print 'd'
     elif [[ -e "${file_path}" ]]
     then
-        echo 'e'
+        tp_print 'e'
     fi
 }
 
@@ -1710,8 +1710,8 @@ function tp_util_files_check {
     local check="$2"
     local message="$3"
 
-    local check_name="$( echo "${check}" | sed -E -e 's/=.*$//' )"
-    local check_value="$( echo "${check}" | sed -E -e 's/^[^=]+(=|$)//' )"
+    local check_name="$( tp_print "${check}" | sed -E -e 's/=.*$//' )"
+    local check_value="$( tp_print "${check}" | sed -E -e 's/^[^=]+(=|$)//' )"
 
     local -n varref="${varname}"
     local actual_value="${varref["${check_name}"]}"
@@ -1769,7 +1769,7 @@ function tp_util_template {
     fi
 
     local template_file="$1"
-    local target_file="$( echo "${template_file}" | sed -e 's/[.]tmpl$//' )"
+    local target_file="$( tp_print "${template_file}" | sed -e 's/[.]tmpl$//' )"
 
     shift
     local var_names_array=( "$@" )
@@ -1792,7 +1792,7 @@ function tp_util_template_clean {
 
     if [[ -f "${template_file}" ]]
     then
-        local target_file="$( echo "${template_file}" | sed -e 's/[.]tmpl$//' )"
+        local target_file="$( tp_print "${template_file}" | sed -e 's/[.]tmpl$//' )"
         if [[ -f "${target_file}" ]]
         then
             rm -f "${target_file}"
@@ -1803,7 +1803,7 @@ function tp_util_template_clean {
 function tp_util_generate_hex_token {
     local input="$1"
     local size="${2:-16}"
-    echo "${input}" | openssl dgst -sha256 -r | { dd bs="${size}" count=1 2> /dev/null; } |  tr a-z A-Z
+    tp_print "${input}" | openssl dgst -sha256 -r | { dd bs="${size}" count=1 2> /dev/null; } |  tr a-z A-Z
 }
 
 function tp_util_run_hook {
@@ -1818,11 +1818,11 @@ function tp_util_run_hook {
 
      # run the hook script in a sub-shell
     tp_msg "Running ${hook_name}..."
-    echo
+    tp_print
     (
         . ${hook_script}
     )
-    echo
+    tp_print
     tp_succ "Done running ${hook_name}."
 }
 
@@ -1833,9 +1833,9 @@ function tp_util_run_hook {
 function tp_help_if_needed {
     if [[ -n "${tp_help}" ]]
     then
-        echo
+        tp_print
         tp_help_extract_markdown_code_block "$@"
-        echo
+        tp_print
         return 1
     fi
 }
@@ -1857,7 +1857,7 @@ function tp_help_with_commands {
 
     for supported_command in ${supported_commands}
     do
-        echo "${supported_command}"
+        tp_print "${supported_command}"
     done
 
     tp_msg "Or, run '${parent_command} --help' to learn more about these commands."
@@ -1902,48 +1902,52 @@ function tp_help_extract_markdown_code_block {
 
 # TP message functions
 
+function tp_print {
+    printf '%s\n' "$*"
+}
+
 function tp_msg {
     if [[ -n "${TP_COLOR}" ]]
     then
-        echo $'\e[1;34m[TP]\e[1;36m'" $@"$'\e[0m'
+        tp_print $'\e[1;34m[TP]\e[1;36m'" $@"$'\e[0m'
     else
-        echo "[TP] $@"
+        tp_print "[TP] $@"
     fi
 }
 
 function tp_prompt {
     if [[ -n "${TP_COLOR}" ]]
     then
-        echo $'\e[1;34m[TP]\e[1;35m'" $@"$'\e[0m'
+        tp_print $'\e[1;34m[TP]\e[1;35m'" $@"$'\e[0m'
     else
-        echo "[TP][?] $@"
+        tp_print "[TP][?] $@"
     fi
 }
 
 function tp_succ {
     if [[ -n "${TP_COLOR}" ]]
     then
-        echo $'\e[1;34m[TP]\e[1;32m'" $@"$'\e[0m'
+        tp_print $'\e[1;34m[TP]\e[1;32m'" $@"$'\e[0m'
     else
-        echo "[TP] $@"
+        tp_print "[TP] $@"
     fi
 }
 
 function tp_warn {
     if [[ -n "${TP_COLOR}" ]]
     then
-        echo $'\e[1;34m[TP]\e[1;33m'" $@"$'\e[0m'
+        tp_print $'\e[1;34m[TP]\e[1;33m'" $@"$'\e[0m'
     else
-        echo "[TP][WARN]" "$@"
+        tp_print "[TP][WARN]" "$@"
     fi
 }
 
 function tp_err {
     if [[ -n "${TP_COLOR}" ]]
     then
-        echo $'\e[1;34m[TP]\e[1;31m'" $@"$'\e[0m'
+        tp_print $'\e[1;34m[TP]\e[1;31m'" $@"$'\e[0m'
     else
-        echo "[TP][ERR]" "$@"
+        tp_print "[TP][ERR]" "$@"
     fi
 }
 
