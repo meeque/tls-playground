@@ -1595,13 +1595,10 @@ function tp_util_run_capture {
         # run the actual command
         "$@" || status=$?
     else
-        # run the actual command, and capture stdout
+        # run the actual command, capture stdout, then echo it so the user sees it
         local -n varref="${varname}"
-        {
-            varref="$( "$@" | tee /dev/fd/3 )" \
-            || status=$?;
-        } \
-        3>&1
+        varref="$( "$@" )" || status=$?
+        echo "${varref}"
     fi
     echo
 
