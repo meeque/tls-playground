@@ -738,7 +738,8 @@ function tp_cert_clean {
             rm "${file}"
         elif [[ -f "${file}" ]]
         then
-            shred --remove "${file}"
+            shred "${file}"
+            rm "${file}"
         fi
     done
     find "${files[dir]}" -mindepth 1 -maxdepth 1 -type d -name 'private' -empty | xargs --no-run-if-empty rmdir
