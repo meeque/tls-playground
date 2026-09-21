@@ -169,3 +169,19 @@ See the previous section for information on the other container creation options
 Note that code running inside this TP Docker container will have full access to bind-mounted portion of your local file-system.
 If you do not trust the TP Docker image at all, you should consider using a [Docker volume](https://docs.docker.com/storage/volumes/) rather than a bind-mount.
 You can then attach the Docker volume to different container that can perform the necessary Git operations.
+
+
+
+## Testing TP
+
+If you just want to explore TP, you probably won't need automated testing.
+However, if you want to tinker with the underlying shell code, TP has test suites to back you up.
+
+TP follows a [Behavior-Driven Development](https://cucumber.io/docs/bdd/) approach.
+You can find its feature specs and test steps in the [.test/features](.test/features) directory.
+
+These can be run with **[Shellkin](https://github.com/DannyBen/shellkin)**.
+TP does not bundle **Shellkin**, so you'll have to [download and install](https://github.com/DannyBen/shellkin#install) it manually, including its prerequisites.
+
+Once you're set up, simply run the `shellkin` command from the root directory of this project.
+See `shellkin --help` docs for running individual feature specs and scenarios.
