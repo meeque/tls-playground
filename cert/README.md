@@ -194,7 +194,7 @@ Available Commands:
 
   fingerprint  Calculate a cryptographic checksum (a.k.a. fingerprint) of a cert, CSR, or key <file>.
 
-  verify key   Verify that the private key matches cert or CSR <file>, based on TP file naming conventions.
+  verify key   Verify that private key matches cert and/or CSR, with <file> being either of these.
 
   params       Create key parameters based on config <file>.
 

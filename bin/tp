@@ -220,13 +220,13 @@ function tp_cert_handle_multiple {
                 'init' )
                     files_to_handle+=( $( find "${arg}" -type f -and -name '*.cert.conf.tmpl' | sort ) )
                     ;;
-                'show' | 'fingerprint' | 'verify key' )
+                'show' | 'fingerprint' )
                     files_to_handle+=( $( find "${arg}" -type f -and '(' -name '*.cert.pem' -or -name '*.csr.pem' ')' | sort ) )
                     ;;
                 'params' | 'key' | 'request' | 'selfsign' )
                     files_to_handle+=( $( find "${arg}" -type f -and -name '*.cert.conf' | sort ) )
                     ;;
-                'pkcs8' )
+                'pkcs8' | 'verify key' )
                     files_to_handle+=( $( find "${arg}" -type f -and -name '*.key.pem' | sort ) )
                     ;;
                 'pkcs12' )
@@ -389,7 +389,7 @@ function tp_cert_verify_key {
 
     tp_util_files 'files' "${file}"
     tp_util_files_check 'files' 'file_path' \
-        "No file given. Specify a certificate or CSR file to verify!" || return $?
+        "No file given. Specify a private key, certificate, or CSR file to verify!" || return $?
     tp_util_files_check 'files' 'file_stat' \
         "Given file '${file}' does not exist!" || return $?
 
@@ -403,6 +403,25 @@ function tp_cert_verify_key {
         'csr.pem' )
             cert_or_csr='CSR'
             cert_or_csr_pubkey_cmd=( openssl req -in "${file}" -pubkey -noout )
+            ;;
+        'key.pem' )
+            # when given a private key, verify against each existing counterpart
+            if [[ "${files[cert_pem_stat]}" != 'f' && "${files[csr_pem_stat]}" != 'f' ]]
+            then
+                tp_err "Looked for matching certificate '${files[cert_pem_path]}' or CSR '${files[csr_pem_path]}' for the given private key. But neither exists!"
+                return 1
+            fi
+
+            local status=0
+            if [[ "${files[cert_pem_stat]}" == 'f' ]]
+            then
+                tp_cert_verify_key "${files[cert_pem_path]}" || status=$?
+            fi
+            if [[ "${files[csr_pem_stat]}" == 'f' ]]
+            then
+                tp_cert_verify_key "${files[csr_pem_path]}" || status=$?
+            fi
+            return "${status}"
             ;;
         * )
             tp_err "Sorry, don't know how to verify files with suffix '.${files[suffix]}'!"

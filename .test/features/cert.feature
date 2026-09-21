@@ -191,6 +191,10 @@ Scenario Outline: Fail verifying `<path>/<name>` after regenerating its private 
   Then the command should succeed
   And TP should print "Verified"
 
+  When I run `tp cert verify key <path>/private/<name>.key.pem`
+  Then the command should succeed
+  And TP should print "Verified"
+
   When I run `tp cert key <path>/<name>.cert.conf`
   Then the command should succeed
   And TP should print "New private key"
@@ -200,6 +204,10 @@ Scenario Outline: Fail verifying `<path>/<name>` after regenerating its private 
   And TP should print "does NOT match"
 
   When I run `tp cert verify key <path>/<name>.csr.pem`
+  Then the command should fail
+  And TP should print "does NOT match"
+
+  When I run `tp cert verify key <path>/private/<name>.key.pem`
   Then the command should fail
   And TP should print "does NOT match"
 
