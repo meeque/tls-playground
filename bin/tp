@@ -393,16 +393,16 @@ function tp_cert_verify_key {
     tp_util_files_check 'files' 'file_stat' \
         "Given file '${file}' does not exist!" || return $?
 
-    local file_desc
-    local -a file_pubkey_cmd
+    local cert_or_csr
+    local -a cert_or_csr_pubkey_cmd
     case "${files[suffix]}" in
         'cert.pem' | 'pem' )
-            file_desc='certificate'
-            file_pubkey_cmd=( openssl x509 -in "${file}" -pubkey -noout )
+            cert_or_csr='certificate'
+            cert_or_csr_pubkey_cmd=( openssl x509 -in "${file}" -pubkey -noout )
             ;;
         'csr.pem' )
-            file_desc='CSR'
-            file_pubkey_cmd=( openssl req -in "${file}" -pubkey -noout )
+            cert_or_csr='CSR'
+            cert_or_csr_pubkey_cmd=( openssl req -in "${file}" -pubkey -noout )
             ;;
         * )
             tp_err "Sorry, don't know how to verify files with suffix '.${files[suffix]}'!"
@@ -411,27 +411,27 @@ function tp_cert_verify_key {
     esac
 
     tp_util_files_check 'files' 'key_pem_stat' \
-        "Looked for matching private key file '${files[key_pem_path]}' for the given ${file_desc}. But it does not exist!" || return $?
+        "Looked for matching private key file '${files[key_pem_path]}' for the given ${cert_or_csr}. But it does not exist!" || return $?
     tp_util_files_check 'files' 'key_pass_stat' \
-        "Looked for matching passphrase file '${files[key_pass_path]}' for the given ${file_desc}. But it does not exist!" || return $?
+        "Looked for matching passphrase file '${files[key_pass_path]}' for the given ${cert_or_csr}. But it does not exist!" || return $?
 
-    tp_msg "Verifying that private key '${files[key_pem_path]}' matches ${file_desc} '${file}'..."
+    tp_msg "Verifying that private key '${files[key_pem_path]}' matches ${cert_or_csr} '${file}'..."
 
-    local key_pubkey file_pubkey
+    local key_pubkey cert_or_csr_pubkey
     tp_util_run_capture key_pubkey \
         openssl pkey \
             -in "${files[key_pem_path]}" \
             -passin "file:${files[key_pass_path]}" \
             -pubout
 
-    tp_util_run_capture file_pubkey \
-        "${file_pubkey_cmd[@]}"
+    tp_util_run_capture cert_or_csr_pubkey \
+        "${cert_or_csr_pubkey_cmd[@]}"
 
-    if [[ "${key_pubkey}" == "${file_pubkey}" ]]
+    if [[ "${key_pubkey}" == "${cert_or_csr_pubkey}" ]]
     then
-        tp_succ "Verified: private key '${files[key_pem_path]}' matches ${file_desc} '${file}'."
+        tp_succ "Verified: private key '${files[key_pem_path]}' matches ${cert_or_csr} '${file}'."
     else
-        tp_err "Verification failed: private key '${files[key_pem_path]}' does NOT match ${file_desc} '${file}'."
+        tp_err "Verification failed: private key '${files[key_pem_path]}' does NOT match ${cert_or_csr} '${file}'."
         return 1
     fi
 }
