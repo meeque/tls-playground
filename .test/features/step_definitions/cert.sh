@@ -1,4 +1,4 @@
-@Given all sample certificates have been cleaned
+@Given all TP sample certificates have been cleaned
 
   run "tp cert clean"
   (( LAST_EXIT_CODE == 0 )) \

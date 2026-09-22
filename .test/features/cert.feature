@@ -1,11 +1,11 @@
 Feature: cert
-  Manage X.509 certificates
+  Manage X.509 certificates, certificate signing requests (CSRs), private keys, and and related files
 
 
 
 Background:
 
-  Given all sample certificates have been cleaned
+  Given all TP sample certificates have been cleaned
 
 
 
