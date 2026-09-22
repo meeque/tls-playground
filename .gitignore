@@ -1,5 +1,9 @@
-# hidden, temp, backup, log, archive files
+# hidden files
 .*
+!/.test/
+
+# temp, backup, log, archive files
+
 *~
 *.tmp
 *.bak
