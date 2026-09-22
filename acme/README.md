@@ -285,7 +285,7 @@ Summary:    TLS Playground ACME Utilities
 Usage:      tp [<global options>] acme <command> [<sub-command>]
   [<request>|<cert>] [<options>]
 
-Available commands:
+Available Commands:
 
   init      Initialize TP ACME functionality.
             Create directory structures and generate config files for 'certbot'
@@ -372,6 +372,10 @@ Options:
             web-server to complete challenges. You will need to start the
             challenges web-server beforehand though, see 'challenges' commands
             above.
+
+Global Options:
+
+  Run 'tp --help' to learn more about global options, in particular the '--step' option.
 
 Environment:
 

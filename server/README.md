@@ -151,7 +151,7 @@ Summary:    Control TLS Playground Demo Servers
 
 Usage:      tp [<global options>] server <command> [<server>] [<options>]
 
-Available commands:
+Available Commands:
 
   init      Initialize the given TP demo <server>:
             Generate config files from templates, request and install necessary
@@ -208,6 +208,10 @@ Options:
             This is equivalent to running 'tp acme sign' for all cert
             configurations of the demo server. See the sign command for details
             and additional options.
+
+Global Options:
+
+  Run 'tp --help' to learn more about global options, in particular the '--step' option.
 
 Environment:
 

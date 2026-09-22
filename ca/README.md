@@ -106,7 +106,7 @@ Summary:      Control TLS Playground Demo CAs
 
 Usage:        tp [<global options>] ca <command> [<ca>] [<request>]
 
-Available commands:
+Available Commands:
 
   init        Initialize given <ca>, or all TP CAs, if <ca> is omitted.
               Initialization includes creating the necessary directory structures,
@@ -131,4 +131,8 @@ Arguments:
               This can be either a Certificate Signing Request (CSR) file or
               an 'openssl req' configuration file. If it's the latter,
               the CSR will be generated on the fly before signing.
+
+Global Options:
+
+  Run 'tp --help' to learn more about global options, in particular the '--step' option.
 ```

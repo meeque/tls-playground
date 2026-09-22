@@ -160,7 +160,7 @@ Summary:   TLS Playground CLI
 
 Usage:     tp [<global options>] <command> [...]
 
-Available commands:
+Available Commands:
 
   cert      Manage keys, CSRs, certificates, etc.
 
@@ -172,7 +172,7 @@ Available commands:
 
   clean     Delete transient data.
 
-Global options:
+Global Options:
 
   -s, --step
            Step through invocation of external commands (e.g. openssl, certbot) one-by-one.
