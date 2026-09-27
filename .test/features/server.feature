@@ -100,7 +100,7 @@ Scenario: Run init hook when initializing nginx-complex
 
   When I run `tp server init nginx-complex`
   Then the command should succeed
-  And TP should print "Running init hook for server 'nginx-complex'"
+  And TP should print "Running init hook for server 'nginx-complex'..."
   And trusted client CAs file `server/nginx-complex/virtual/host2/tls/trusted-clients-cas.certs.pem` should exist
 
 
@@ -113,7 +113,7 @@ Scenario: Run clean hook when cleaning nginx-complex
 
   When I run `tp server clean nginx-complex`
   Then the command should succeed
-  And TP should print "Running clean hook for server 'nginx-complex'"
+  And TP should print "Running clean hook for server 'nginx-complex'..."
   And trusted client CAs file `server/nginx-complex/virtual/host2/tls/trusted-clients-cas.certs.pem` should NOT exist
 
 
