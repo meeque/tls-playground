@@ -74,15 +74,29 @@
 
 @Then {file_role} file `{file_path}` should exist
 
-  [[ -e "${file_path}" ]] \
-    || fail "Expected file does not exist."
+  [[ -f "${file_path}" ]] \
+    || fail "Expected regular file does not exist."
 
 
 
 @Then {file_role} file `{file_path}` should NOT exist
 
   [[ ! -e "${file_path}" ]] \
-    || fail "Unexpected file exists."
+    || fail "Unexpected $( stat -c '%F' "${file_path}" ) exists at given path."
+
+
+
+@Then {file_role} directory `{file_path}` should exist
+
+  [[ -d "${file_path}" ]] \
+    || fail "Expected directory does not exist."
+
+
+
+@Then {file_role} directory `{file_path}` should NOT exist
+
+  [[ ! -e "${file_path}" ]] \
+    || fail "Unexpected $( stat -c '%F' "${file_path}" ) exists at given path."
 
 
 
