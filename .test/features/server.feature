@@ -50,7 +50,6 @@ Scenario Outline: Initialize demo server `<server>` with self-signed certificate
   And TP should print "Creating server certificates for demo server '<server>' using certificate provider 'selfsign'"
   And nginx config file `server/<server>/nginx.conf` should exist
   And nginx logs directory `server/<server>/var/logs` should exist
-  # TODO also verify server cert and key
 
   When I run `tp server clean <server>`
   Then the command should succeed
@@ -68,7 +67,6 @@ Scenario Outline: Initialize demo server `<server>` with self-signed certificate
 
 Scenario Outline: Initialize demo server `<server>` with certificates from CA `<ca>` via `<ca_option>`
 
-  # TODO move CA init/teardown to @BeforeAll/@AfterAll and reuse them throughout server tests
   When I run `tp ca init <ca>`
   Then the command should succeed
   And CA root certificate file `ca/<ca>/ca-root.cert.pem` should exist
@@ -95,20 +93,11 @@ Scenario: Initialize all TP demo servers at once
 
 
 
-# TODO merge next two tests?
-Scenario: Run init hook when initializing nginx-complex
+Scenario: Run init and clean hooks of nginx-complex
 
   When I run `tp server init nginx-complex`
   Then the command should succeed
   And TP should print "Running init hook for server 'nginx-complex'..."
-  And trusted client CAs file `server/nginx-complex/virtual/host2/tls/trusted-clients-cas.certs.pem` should exist
-
-
-
-Scenario: Run clean hook when cleaning nginx-complex
-
-  When I run `tp server init nginx-complex`
-  Then the command should succeed
   And trusted client CAs file `server/nginx-complex/virtual/host2/tls/trusted-clients-cas.certs.pem` should exist
 
   When I run `tp server clean nginx-complex`
