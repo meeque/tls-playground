@@ -4,5 +4,5 @@ local trusted_clients_cas_file="${tp_base_dir}/server/nginx-complex/virtual/host
 
 if [[ -f "${trusted_clients_cas_file}" ]]
 then
-    rm "${trusted_clients_cas_file}"
+  rm "${trusted_clients_cas_file}"
 fi

@@ -8,158 +8,158 @@ shopt -s extglob
 
 function tp_main {
 
-    # setup base directory relative to the location of this script
-    tp_base_dir="$( realpath --relative-to '.' "$(dirname "$0")/.." )"
-    # remember current working directory
-    tp_pwd="${PWD}"
+  # setup base directory relative to the location of this script
+  tp_base_dir="$( realpath --relative-to '.' "$(dirname "$0")/.." )"
+  # remember current working directory
+  tp_pwd="${PWD}"
 
-    # setup environment
-    tp_main_env_global
-    tp_main_env_defaults
-    tp_main_env_check
+  # setup environment
+  tp_main_env_global
+  tp_main_env_defaults
+  tp_main_env_check
 
-    tp_main_arg_defaults
+  tp_main_arg_defaults
 
-    # parse arguments
-    local tp_arguments="$( getopt --options 'hsed:c::amr' --longoptions 'help,step,disclose,explicit,digests:,ca::,acme,manual,request,csr' --name '[TP]' -- "$@" )"
-    eval set -- ${tp_arguments}
+  # parse arguments
+  local tp_arguments="$( getopt --options 'hsed:c::amr' --longoptions 'help,step,disclose,explicit,digests:,ca::,acme,manual,request,csr' --name '[TP]' -- "$@" )"
+  eval set -- ${tp_arguments}
 
-    # process arguments
-    while true
-    do
-        case "$1" in
-            -h | --help )
-                tp_help='true'
-                ;;
-            -s | --step )
-                tp_step='true'
-                ;;
-            --disclose )
-                tp_disclose='true'
-                ;;
-            -e | --explicit )
-                tp_explicit='true'
-                ;;
-            -d | --digests )
-                shift
-                tp_cert_digests="${1}"
-                ;;
-            -c | --ca )
-                tp_cert_provider='ca'
-                shift
-                tp_cert_provider_opt="${1}"
-                ;;
-            -a | --acme )
-                tp_cert_provider='acme'
-                ;;
-            -m | --manual )
-                tp_acme_certbot_opts=( '--manual' )
-                ;;
-            -r | --request | --csr )
-                tp_acme_certbot_custom_csr='true'
-                ;;
-            --)
-                shift
-                break
-                ;;
-            *)
-                tp_warn "Unknown option argument $1. Ignoring."
-                ;;
-        esac
+  # process arguments
+  while true
+  do
+    case "$1" in
+      -h | --help )
+        tp_help='true'
+        ;;
+      -s | --step )
+        tp_step='true'
+        ;;
+      --disclose )
+        tp_disclose='true'
+        ;;
+      -e | --explicit )
+        tp_explicit='true'
+        ;;
+      -d | --digests )
         shift
-    done
-
-    # dispatch command
-    local command="$1"
-    shift || true
-    case "${command}" in
-        'cert' | 'ca' | 'acme' | 'server' | 'clean' )
-            "tp_${command}" "$@"
-            return $?
-            ;;
-        * )
-            case "${command}" in
-                'files' )
-                    local help_block=3
-                    ;;
-                'env' )
-                    local help_block=2
-                    ;;
-                * )
-                    local help_block=1
-                    ;;
-            esac
-            tp_help_if_needed "${tp_base_dir}/bin/README.md" "${help_block}" || return 0
-            tp_help_with_commands 'tp' 'TLS Playground' "${command}" 'cert ca acme server clean'
-            ;;
+        tp_cert_digests="${1}"
+        ;;
+      -c | --ca )
+        tp_cert_provider='ca'
+        shift
+        tp_cert_provider_opt="${1}"
+        ;;
+      -a | --acme )
+        tp_cert_provider='acme'
+        ;;
+      -m | --manual )
+        tp_acme_certbot_opts=( '--manual' )
+        ;;
+      -r | --request | --csr )
+        tp_acme_certbot_custom_csr='true'
+        ;;
+      --)
+        shift
+        break
+        ;;
+      *)
+        tp_warn "Unknown option argument $1. Ignoring."
+        ;;
     esac
+    shift
+  done
+
+  # dispatch command
+  local command="$1"
+  shift || true
+  case "${command}" in
+    'cert' | 'ca' | 'acme' | 'server' | 'clean' )
+      "tp_${command}" "$@"
+      return $?
+      ;;
+    * )
+      case "${command}" in
+        'files' )
+          local help_block=3
+          ;;
+        'env' )
+          local help_block=2
+          ;;
+        * )
+          local help_block=1
+          ;;
+      esac
+      tp_help_if_needed "${tp_base_dir}/bin/README.md" "${help_block}" || return 0
+      tp_help_with_commands 'tp' 'TLS Playground' "${command}" 'cert ca acme server clean'
+      ;;
+  esac
 }
 
 function tp_main_env_global {
 
-    # passphrase handling, for private key files
-    if [[ -z "${TP_PASS}" ]]
+  # passphrase handling, for private key files
+  if [[ -z "${TP_PASS}" ]]
+  then
+    local pass_file="${tp_base_dir}/.tp.pass.txt"
+    if [[ ! -f "${pass_file}" ]]
     then
-        local pass_file="${tp_base_dir}/.tp.pass.txt"
-        if [[ ! -f "${pass_file}" ]]
-        then
-            tp_msg "No passphrase specified in either variable TP_PASS or file '${pass_file}'!"
-            tp_msg "Generating a new passphrase, since it may needed for protecting key-files later..."
+      tp_msg "No passphrase specified in either variable TP_PASS or file '${pass_file}'!"
+      tp_msg "Generating a new passphrase, since it may needed for protecting key-files later..."
 
-            touch "${pass_file}"
-            chmod 'og-rwx' "${pass_file}"
+      touch "${pass_file}"
+      chmod 'og-rwx' "${pass_file}"
 
-            tp_util_run \
-                openssl rand -base64 -out "${pass_file}" 32
+      tp_util_run \
+        openssl rand -base64 -out "${pass_file}" 32
 
-            tp_msg "Stored new passphrase in file '${pass_file}'."
-        fi
-        TP_PASS="$(< "${pass_file}" )"
+      tp_msg "Stored new passphrase in file '${pass_file}'."
     fi
+    TP_PASS="$(< "${pass_file}" )"
+  fi
 
-    # colored outputs
-    # if $TP_COLOR is not set, try to guess by $TERM value
-    # if clause is same as [[ ! -v TP_COLOR ]], but -v is not available in older bash versions and other shells
-    if [[ -z "${TP_COLOR+varIsSet}" ]]
-    then
-        case "$TERM" in
-             xterm-color | *-256color )
-                 TP_COLOR='yes'
-                 ;;
-             * )
-                 TP_COLOR=''
-                 ;;
-        esac
-    fi
+  # colored outputs
+  # if $TP_COLOR is not set, try to guess by $TERM value
+  # if clause is same as [[ ! -v TP_COLOR ]], but -v is not available in older bash versions and other shells
+  if [[ -z "${TP_COLOR+varIsSet}" ]]
+  then
+    case "$TERM" in
+       xterm-color | *-256color )
+         TP_COLOR='yes'
+         ;;
+       * )
+         TP_COLOR=''
+         ;;
+    esac
+  fi
 }
 
 function tp_main_env_defaults {
-    TP_SERVER_DOMAIN="${TP_SERVER_DOMAIN:=localhost}"
-    TP_SERVER_LISTEN_ADDRESS="${TP_SERVER_LISTEN_ADDRESS:=127.0.0.1}"
-    TP_SERVER_HTTP_PORT="${TP_SERVER_HTTP_PORT:=8080}"
-    TP_SERVER_HTTPS_PORT="${TP_SERVER_HTTPS_PORT:=8443}"
-    TP_ACME_SERVER_URL="${TP_ACME_SERVER_URL:=lets-encrypt-staging}"
-    TP_ACME_ACCOUNT_EMAIL="${TP_ACME_ACCOUNT_EMAIL:=webmaster@tls-playground.example}"
+  TP_SERVER_DOMAIN="${TP_SERVER_DOMAIN:=localhost}"
+  TP_SERVER_LISTEN_ADDRESS="${TP_SERVER_LISTEN_ADDRESS:=127.0.0.1}"
+  TP_SERVER_HTTP_PORT="${TP_SERVER_HTTP_PORT:=8080}"
+  TP_SERVER_HTTPS_PORT="${TP_SERVER_HTTPS_PORT:=8443}"
+  TP_ACME_SERVER_URL="${TP_ACME_SERVER_URL:=lets-encrypt-staging}"
+  TP_ACME_ACCOUNT_EMAIL="${TP_ACME_ACCOUNT_EMAIL:=webmaster@tls-playground.example}"
 }
 
 function tp_main_env_check {
-    local status=0
-    tp_cert_check_env || status=1
-    tp_server_check_env || status=1
-    tp_acme_check_env || status=1
-    return "${status}"
+  local status=0
+  tp_cert_check_env || status=1
+  tp_server_check_env || status=1
+  tp_acme_check_env || status=1
+  return "${status}"
 }
 
 function tp_main_arg_defaults {
-    tp_help=''
-    tp_step=''
-    tp_disclose=''
-    tp_cert_digests='sha1,sha256'
-    tp_cert_shown=( conf='' params='' key='' csr='' cert='' chain='' fullchain='' )
-    tp_cert_provider='selfsign'
-    tp_cert_provider_opt=''
-    tp_acme_certbot_opts=( '--webroot' '--non-interactive' )
-    tp_acme_certbot_custom_csr=''
+  tp_help=''
+  tp_step=''
+  tp_disclose=''
+  tp_cert_digests='sha1,sha256'
+  tp_cert_shown=( conf='' params='' key='' csr='' cert='' chain='' fullchain='' )
+  tp_cert_provider='selfsign'
+  tp_cert_provider_opt=''
+  tp_acme_certbot_opts=( '--webroot' '--non-interactive' )
+  tp_acme_certbot_custom_csr=''
 }
 
 
@@ -167,292 +167,292 @@ function tp_main_arg_defaults {
 # TP cert sub-commands
 
 function tp_cert {
-    local command="$1"
-    shift || true
+  local command="$1"
+  shift || true
 
-    tp_help_if_needed "${tp_base_dir}/cert/README.md" '-1' || return 0
+  tp_help_if_needed "${tp_base_dir}/cert/README.md" '-1' || return 0
 
-    case "${command}" in
-        'init' | 'show' | 'fingerprint' | 'params' | 'key' | 'request' | 'selfsign' | 'pkcs8' | 'pkcs12' | 'clean' )
-            tp_cert_handle_multiple "${command}" "$@"
-            ;;
-        'verify' )
-            tp_cert_verify "$@"
-            ;;
-        * )
-            tp_help_with_commands 'tp cert' 'TP Certificate Utilities' "${command}" 'init show fingerprint verify params key request selfsign pkcs8 pkcs12 clean'
-            ;;
-    esac
+  case "${command}" in
+    'init' | 'show' | 'fingerprint' | 'params' | 'key' | 'request' | 'selfsign' | 'pkcs8' | 'pkcs12' | 'clean' )
+      tp_cert_handle_multiple "${command}" "$@"
+      ;;
+    'verify' )
+      tp_cert_verify "$@"
+      ;;
+    * )
+      tp_help_with_commands 'tp cert' 'TP Certificate Utilities' "${command}" 'init show fingerprint verify params key request selfsign pkcs8 pkcs12 clean'
+      ;;
+  esac
 }
 
 function tp_cert_handle_multiple {
-    local command="$1"
+  local command="$1"
 
-    if (( $# <= 1 ))
+  if (( $# <= 1 ))
+  then
+    local default_arg="${tp_base_dir}/cert"
+    tp_msg "No certificate specified. Proceeding to ${command} all TP sample certificates in '${default_arg}'..."
+    tp_cert_handle_multiple "${command}" "${default_arg}"
+    return
+  fi
+
+  local files_to_handle=()
+  while shift
+  do
+    local arg="$1"
+    if [[ "${arg}" =~ ^(good|bad|ugly)(/[^/]*)?$ ]]
     then
-        local default_arg="${tp_base_dir}/cert"
-        tp_msg "No certificate specified. Proceeding to ${command} all TP sample certificates in '${default_arg}'..."
-        tp_cert_handle_multiple "${command}" "${default_arg}"
-        return
+      local arg="${tp_base_dir}/cert/${arg}"
+      if [[ -d "${arg}" ]]
+      then
+        tp_msg "Proceeding to ${command} TP sample certificates in '${arg}'..."
+      else
+        tp_msg "Proceeding to ${command} TP sample certificate at '${arg}'..."
+      fi
+    elif [[ -d "${arg}" ]]
+    then
+      tp_msg "Proceeding to ${command} all certificates in '${arg}'..."
     fi
 
-    local files_to_handle=()
-    while shift
-    do
-        local arg="$1"
-        if [[ "${arg}" =~ ^(good|bad|ugly)(/[^/]*)?$ ]]
-        then
-            local arg="${tp_base_dir}/cert/${arg}"
-            if [[ -d "${arg}" ]]
-            then
-                tp_msg "Proceeding to ${command} TP sample certificates in '${arg}'..."
-            else
-                tp_msg "Proceeding to ${command} TP sample certificate at '${arg}'..."
-            fi
-        elif [[ -d "${arg}" ]]
-        then
-            tp_msg "Proceeding to ${command} all certificates in '${arg}'..."
-        fi
+    if [[ -d "${arg}" ]]
+    then
+      case "${command}" in
+        'init' )
+          files_to_handle+=( $( find "${arg}" -type f -and -name '*.cert.conf.tmpl' | sort ) )
+          ;;
+        'show' | 'fingerprint' )
+          files_to_handle+=( $( find "${arg}" -type f -and '(' -name '*.cert.pem' -or -name '*.csr.pem' ')' | sort ) )
+          ;;
+        'params' | 'key' | 'request' | 'selfsign' )
+          files_to_handle+=( $( find "${arg}" -type f -and -name '*.cert.conf' | sort ) )
+          ;;
+        'pkcs8' | 'verify key' )
+          files_to_handle+=( $( find "${arg}" -type f -and -name '*.key.pem' | sort ) )
+          ;;
+        'pkcs12' )
+          files_to_handle+=( $( find "${arg}" -type f -and -name '*.cert.pem' | sort ) )
+          ;;
+        'clean' )
+          files_to_handle+=( $( find "${arg}" -type f -and -name '*.cert.conf' | sort ) )
+          # TODO also cert clean files when there's only a *.cert.conf.tmpl file? or any file related to a cert according to tp naming conventions?
+          ;;
+      esac
+    elif [[ -n "${arg}" ]]
+    then
+      files_to_handle+=( "${arg}" )
+    fi
+  done
 
-        if [[ -d "${arg}" ]]
-        then
-            case "${command}" in
-                'init' )
-                    files_to_handle+=( $( find "${arg}" -type f -and -name '*.cert.conf.tmpl' | sort ) )
-                    ;;
-                'show' | 'fingerprint' )
-                    files_to_handle+=( $( find "${arg}" -type f -and '(' -name '*.cert.pem' -or -name '*.csr.pem' ')' | sort ) )
-                    ;;
-                'params' | 'key' | 'request' | 'selfsign' )
-                    files_to_handle+=( $( find "${arg}" -type f -and -name '*.cert.conf' | sort ) )
-                    ;;
-                'pkcs8' | 'verify key' )
-                    files_to_handle+=( $( find "${arg}" -type f -and -name '*.key.pem' | sort ) )
-                    ;;
-                'pkcs12' )
-                    files_to_handle+=( $( find "${arg}" -type f -and -name '*.cert.pem' | sort ) )
-                    ;;
-                'clean' )
-                    files_to_handle+=( $( find "${arg}" -type f -and -name '*.cert.conf' | sort ) )
-                    # TODO also cert clean files when there's only a *.cert.conf.tmpl file? or any file related to a cert according to tp naming conventions?
-                    ;;
-            esac
-        elif [[ -n "${arg}" ]]
-        then
-            files_to_handle+=( "${arg}" )
-        fi
-    done
-
-    for file in "${files_to_handle[@]}"
-    do
-        tp_print
-        "tp_cert_${command// /_}" "${file}"
-    done
+  for file in "${files_to_handle[@]}"
+  do
+    tp_print
+    "tp_cert_${command// /_}" "${file}"
+  done
 }
 
 function tp_cert_init {
-    local cert_config="$1"
+  local cert_config="$1"
 
-    tp_util_files 'files' "${cert_config}"
-    tp_msg "Initializing certificate configuration '${files[cert_conf_path]}'..."
+  tp_util_files 'files' "${cert_config}"
+  tp_msg "Initializing certificate configuration '${files[cert_conf_path]}'..."
 
-    local cert_config_template="${files[cert_conf_path]}.tmpl"
-    if [[ -f "${cert_config_template}" ]]
-    then
-        tp_cert_check_env
-        tp_util_template "${cert_config_template}" TP_SERVER_DOMAIN
-    fi
+  local cert_config_template="${files[cert_conf_path]}.tmpl"
+  if [[ -f "${cert_config_template}" ]]
+  then
+    tp_cert_check_env
+    tp_util_template "${cert_config_template}" TP_SERVER_DOMAIN
+  fi
 }
 
 function tp_cert_show {
-    local file="$1"
+  local file="$1"
 
-    tp_util_files 'files' "${file}"
-    tp_util_files_check 'files' 'file_path' "No file given. Specify a key, csr, or certificate file to show!" || return $?
-    tp_util_files_check 'files' 'file_stat' "Given file '${file}' does not exist!" || return $?
+  tp_util_files 'files' "${file}"
+  tp_util_files_check 'files' 'file_path' "No file given. Specify a key, csr, or certificate file to show!" || return $?
+  tp_util_files_check 'files' 'file_stat' "Given file '${file}' does not exist!" || return $?
 
-    case "${files[suffix]}" in
-        'cert.pem' | 'pem' )
-            tp_cert_shown[cert]="${file}"
-            tp_msg "Showing contents of certificate in '${file}':"
-            tp_util_run \
-                openssl x509 -in "${file}" -noout -text
-            ;;
-        'csr.pem' )
-            tp_cert_shown[csr]="${file}"
-            tp_msg "Showing contents of CSR in '${file}':"
-            tp_util_run \
-                openssl req -in "${file}" -noout -text
-            ;;
-        'key.pem' )
-            tp_cert_shown[key]="${file}"
-            if [[ -n "${tp_disclose}" ]]
-            then
-                tp_msg "Showing ALL contents of private key in '${file}':"
-                tp_util_run \
-                    openssl pkey -in "${file}" -passin "file:${files[key_pass_path]}" -noout -text
+  case "${files[suffix]}" in
+    'cert.pem' | 'pem' )
+      tp_cert_shown[cert]="${file}"
+      tp_msg "Showing contents of certificate in '${file}':"
+      tp_util_run \
+        openssl x509 -in "${file}" -noout -text
+      ;;
+    'csr.pem' )
+      tp_cert_shown[csr]="${file}"
+      tp_msg "Showing contents of CSR in '${file}':"
+      tp_util_run \
+        openssl req -in "${file}" -noout -text
+      ;;
+    'key.pem' )
+      tp_cert_shown[key]="${file}"
+      if [[ -n "${tp_disclose}" ]]
+      then
+        tp_msg "Showing ALL contents of private key in '${file}':"
+        tp_util_run \
+          openssl pkey -in "${file}" -passin "file:${files[key_pass_path]}" -noout -text
 
-                tp_warn "***************************************************************************************"
-                tp_warn "Attention:"
-                tp_warn "If anyone has seen this, you should stop using this key and corresponding certificates!"
-                tp_warn "***************************************************************************************"
-            else
-                tp_msg "Showing PUBLIC contents of private key in '${file}':"
-                tp_util_run \
-                    openssl pkey -in "${file}" -passin "file:${files[key_pass_path]}" -noout -text_pub
-            fi
-            ;;
-        'key.params.pem' )
-            tp_cert_shown[params]="${file}"
-            tp_msg "Showing public key algorithm parameters in '${file}':"
-            tp_util_run \
-                openssl pkeyparam -in "${file}" -noout -text
-            ;;
-        'conf' | *'.conf' | 'ini' | *'.ini' )
-            tp_cert_shown[conf]="${file}"
-            tp_msg "Showing configuration file '${file}':"
-            tp_print
-            cat "${file}"
-            tp_print
-            ;;
-        * )
-            tp_err "Sorry, don't know how to show contents of files with suffix '.${files[suffix]}'!"
-            return 1
-            ;;
-    esac
+        tp_warn "***************************************************************************************"
+        tp_warn "Attention:"
+        tp_warn "If anyone has seen this, you should stop using this key and corresponding certificates!"
+        tp_warn "***************************************************************************************"
+      else
+        tp_msg "Showing PUBLIC contents of private key in '${file}':"
+        tp_util_run \
+          openssl pkey -in "${file}" -passin "file:${files[key_pass_path]}" -noout -text_pub
+      fi
+      ;;
+    'key.params.pem' )
+      tp_cert_shown[params]="${file}"
+      tp_msg "Showing public key algorithm parameters in '${file}':"
+      tp_util_run \
+        openssl pkeyparam -in "${file}" -noout -text
+      ;;
+    'conf' | *'.conf' | 'ini' | *'.ini' )
+      tp_cert_shown[conf]="${file}"
+      tp_msg "Showing configuration file '${file}':"
+      tp_print
+      cat "${file}"
+      tp_print
+      ;;
+    * )
+      tp_err "Sorry, don't know how to show contents of files with suffix '.${files[suffix]}'!"
+      return 1
+      ;;
+  esac
 }
 
 function tp_cert_show_if_not_shown_yet {
-    local file="$1"
+  local file="$1"
 
-    for i in "${!tp_cert_shown[@]}"
-    do
-        [[ "${tp_cert_shown[${i}]}" == "${file}" ]] && return 0 || true
-    done
+  for i in "${!tp_cert_shown[@]}"
+  do
+    [[ "${tp_cert_shown[${i}]}" == "${file}" ]] && return 0 || true
+  done
 
-    tp_cert_show "${file}"
+  tp_cert_show "${file}"
 }
 
 function tp_cert_fingerprint {
-    local file="$1"
+  local file="$1"
 
-    tp_util_files 'files' "${file}"
-    tp_util_files_check 'files' 'file_path' "No file given. Specify a key, csr, or certificate whose fingerprint to calculate!" || return $?
-    tp_util_files_check 'files' 'file_stat' "Given file '${file}' does not exist!" || return $?
+  tp_util_files 'files' "${file}"
+  tp_util_files_check 'files' 'file_path' "No file given. Specify a key, csr, or certificate whose fingerprint to calculate!" || return $?
+  tp_util_files_check 'files' 'file_stat' "Given file '${file}' does not exist!" || return $?
 
-    (
-        IFS="${IFS},"
-        for digest in ${tp_cert_digests}
-        do
-            case "${files[suffix]}" in
-                'cert.pem' | 'pem' )
-                    tp_msg "Calculating fingerprint of certificate in '${file}'..."
-                    tp_util_run \
-                        openssl x509 -in "${file}" -noout -fingerprint "-${digest}"
-                    ;;
-                'csr.pem' )
-                    tp_msg "Calculating fingerprint of CSR in '${file}'..."
-                    tp_util_run \
-                        openssl req -in "${file}" -outform DER | openssl dgst "-${digest}" | tr 'a-z' 'A-Z'
-                    ;;
-                'key.pem' )
-                    tp_msg "Calculating fingerprint of private key in '${file}'..."
-                    tp_util_run \
-                        openssl pkey -in "${file}" -passin "file:${files[key_pass_path]}" -outform DER | openssl dgst "-${digest}" | tr 'a-z' 'A-Z'
-                    ;;
-                * )
-                    tp_warn "Not sure how to caculate fingerprints of files with suffix '.${files[suffix]}'!"
-                    tp_warn "Will just calculate checksum of the file as-is..."
-                    cat "${file}" | tp_util_run openssl dgst "-${digest}"
-                    ;;
-            esac
-        done
-    )
+  (
+    IFS="${IFS},"
+    for digest in ${tp_cert_digests}
+    do
+      case "${files[suffix]}" in
+        'cert.pem' | 'pem' )
+          tp_msg "Calculating fingerprint of certificate in '${file}'..."
+          tp_util_run \
+            openssl x509 -in "${file}" -noout -fingerprint "-${digest}"
+          ;;
+        'csr.pem' )
+          tp_msg "Calculating fingerprint of CSR in '${file}'..."
+          tp_util_run \
+            openssl req -in "${file}" -outform DER | openssl dgst "-${digest}" | tr 'a-z' 'A-Z'
+          ;;
+        'key.pem' )
+          tp_msg "Calculating fingerprint of private key in '${file}'..."
+          tp_util_run \
+            openssl pkey -in "${file}" -passin "file:${files[key_pass_path]}" -outform DER | openssl dgst "-${digest}" | tr 'a-z' 'A-Z'
+          ;;
+        * )
+          tp_warn "Not sure how to caculate fingerprints of files with suffix '.${files[suffix]}'!"
+          tp_warn "Will just calculate checksum of the file as-is..."
+          cat "${file}" | tp_util_run openssl dgst "-${digest}"
+          ;;
+      esac
+    done
+  )
 }
 
 function tp_cert_verify {
-    local sub_command="$1"
-    shift || true
+  local sub_command="$1"
+  shift || true
 
-    case "${sub_command}" in
-        'key' )
-            tp_cert_handle_multiple 'verify key' "$@"
-            ;;
-        * )
-            tp_help_with_commands 'tp cert verify' 'TP Certificate Verification Utilities' "${sub_command}" 'key'
-            ;;
-    esac
+  case "${sub_command}" in
+    'key' )
+      tp_cert_handle_multiple 'verify key' "$@"
+      ;;
+    * )
+      tp_help_with_commands 'tp cert verify' 'TP Certificate Verification Utilities' "${sub_command}" 'key'
+      ;;
+  esac
 }
 
 function tp_cert_verify_key {
-    local file="$1"
+  local file="$1"
 
-    tp_util_files 'files' "${file}"
-    tp_util_files_check 'files' 'file_path' \
-        "No file given. Specify a private key, certificate, or CSR file to verify!" || return $?
-    tp_util_files_check 'files' 'file_stat' \
-        "Given file '${file}' does not exist!" || return $?
+  tp_util_files 'files' "${file}"
+  tp_util_files_check 'files' 'file_path' \
+    "No file given. Specify a private key, certificate, or CSR file to verify!" || return $?
+  tp_util_files_check 'files' 'file_stat' \
+    "Given file '${file}' does not exist!" || return $?
 
-    local cert_or_csr
-    local -a cert_or_csr_pubkey_cmd
-    case "${files[suffix]}" in
-        'cert.pem' | 'pem' )
-            cert_or_csr='certificate'
-            cert_or_csr_pubkey_cmd=( openssl x509 -in "${file}" -pubkey -noout )
-            ;;
-        'csr.pem' )
-            cert_or_csr='CSR'
-            cert_or_csr_pubkey_cmd=( openssl req -in "${file}" -pubkey -noout )
-            ;;
-        'key.pem' )
-            # when given a private key, verify against each existing counterpart
-            if [[ "${files[cert_pem_stat]}" != 'f' && "${files[csr_pem_stat]}" != 'f' ]]
-            then
-                tp_err "Looked for matching certificate '${files[cert_pem_path]}' or CSR '${files[csr_pem_path]}' for the given private key. But neither exists!"
-                return 1
-            fi
-
-            local status=0
-            if [[ "${files[cert_pem_stat]}" == 'f' ]]
-            then
-                tp_cert_verify_key "${files[cert_pem_path]}" || status=$?
-            fi
-            if [[ "${files[csr_pem_stat]}" == 'f' ]]
-            then
-                tp_cert_verify_key "${files[csr_pem_path]}" || status=$?
-            fi
-            return "${status}"
-            ;;
-        * )
-            tp_err "Sorry, don't know how to verify files with suffix '.${files[suffix]}'!"
-            return 1
-            ;;
-    esac
-
-    tp_util_files_check 'files' 'key_pem_stat' \
-        "Looked for matching private key file '${files[key_pem_path]}' for the given ${cert_or_csr}. But it does not exist!" || return $?
-    tp_util_files_check 'files' 'key_pass_stat' \
-        "Looked for matching passphrase file '${files[key_pass_path]}' for the given ${cert_or_csr}. But it does not exist!" || return $?
-
-    tp_msg "Verifying that private key '${files[key_pem_path]}' matches ${cert_or_csr} '${file}'..."
-
-    local key_pubkey cert_or_csr_pubkey
-    tp_util_run_capture key_pubkey \
-        openssl pkey \
-            -in "${files[key_pem_path]}" \
-            -passin "file:${files[key_pass_path]}" \
-            -pubout
-
-    tp_util_run_capture cert_or_csr_pubkey \
-        "${cert_or_csr_pubkey_cmd[@]}"
-
-    if [[ "${key_pubkey}" == "${cert_or_csr_pubkey}" ]]
-    then
-        tp_succ "Verified: private key '${files[key_pem_path]}' matches ${cert_or_csr} '${file}'."
-    else
-        tp_err "Verification failed: private key '${files[key_pem_path]}' does NOT match ${cert_or_csr} '${file}'."
+  local cert_or_csr
+  local -a cert_or_csr_pubkey_cmd
+  case "${files[suffix]}" in
+    'cert.pem' | 'pem' )
+      cert_or_csr='certificate'
+      cert_or_csr_pubkey_cmd=( openssl x509 -in "${file}" -pubkey -noout )
+      ;;
+    'csr.pem' )
+      cert_or_csr='CSR'
+      cert_or_csr_pubkey_cmd=( openssl req -in "${file}" -pubkey -noout )
+      ;;
+    'key.pem' )
+      # when given a private key, verify against each existing counterpart
+      if [[ "${files[cert_pem_stat]}" != 'f' && "${files[csr_pem_stat]}" != 'f' ]]
+      then
+        tp_err "Looked for matching certificate '${files[cert_pem_path]}' or CSR '${files[csr_pem_path]}' for the given private key. But neither exists!"
         return 1
-    fi
+      fi
+
+      local status=0
+      if [[ "${files[cert_pem_stat]}" == 'f' ]]
+      then
+        tp_cert_verify_key "${files[cert_pem_path]}" || status=$?
+      fi
+      if [[ "${files[csr_pem_stat]}" == 'f' ]]
+      then
+        tp_cert_verify_key "${files[csr_pem_path]}" || status=$?
+      fi
+      return "${status}"
+      ;;
+    * )
+      tp_err "Sorry, don't know how to verify files with suffix '.${files[suffix]}'!"
+      return 1
+      ;;
+  esac
+
+  tp_util_files_check 'files' 'key_pem_stat' \
+    "Looked for matching private key file '${files[key_pem_path]}' for the given ${cert_or_csr}. But it does not exist!" || return $?
+  tp_util_files_check 'files' 'key_pass_stat' \
+    "Looked for matching passphrase file '${files[key_pass_path]}' for the given ${cert_or_csr}. But it does not exist!" || return $?
+
+  tp_msg "Verifying that private key '${files[key_pem_path]}' matches ${cert_or_csr} '${file}'..."
+
+  local key_pubkey cert_or_csr_pubkey
+  tp_util_run_capture key_pubkey \
+    openssl pkey \
+      -in "${files[key_pem_path]}" \
+      -passin "file:${files[key_pass_path]}" \
+      -pubout
+
+  tp_util_run_capture cert_or_csr_pubkey \
+    "${cert_or_csr_pubkey_cmd[@]}"
+
+  if [[ "${key_pubkey}" == "${cert_or_csr_pubkey}" ]]
+  then
+    tp_succ "Verified: private key '${files[key_pem_path]}' matches ${cert_or_csr} '${file}'."
+  else
+    tp_err "Verification failed: private key '${files[key_pem_path]}' does NOT match ${cert_or_csr} '${file}'."
+    return 1
+  fi
 }
 
 # TODO Add signature verification for CSRs and certs
@@ -460,311 +460,311 @@ function tp_cert_verify_key {
 #openssl verify -CAfile ca-root.cert.pem example.cert.pem
 
 function tp_cert_params {
-    local cert_config="$1"
+  local cert_config="$1"
 
-    tp_util_files 'files' "${cert_config}"
-    tp_util_files_check 'files' 'file_path' "No certificate config file name specified. Specify the OpenSSL config file for the key parameters!" || return $?
-    tp_util_files_check 'files' 'suffix=cert.conf' "Creating key parameters from given file '${cert_config}' is not supported! Specify a certificate config (.cert.conf) file!" || return $?
-    tp_util_files_check 'files' 'cert_conf_stat' "Given certificate config file '${cert_config}' does not exist!" || return $?
+  tp_util_files 'files' "${cert_config}"
+  tp_util_files_check 'files' 'file_path' "No certificate config file name specified. Specify the OpenSSL config file for the key parameters!" || return $?
+  tp_util_files_check 'files' 'suffix=cert.conf' "Creating key parameters from given file '${cert_config}' is not supported! Specify a certificate config (.cert.conf) file!" || return $?
+  tp_util_files_check 'files' 'cert_conf_stat' "Given certificate config file '${cert_config}' does not exist!" || return $?
 
-    tp_cert_show_if_not_shown_yet "${files[cert_conf_path]}"
+  tp_cert_show_if_not_shown_yet "${files[cert_conf_path]}"
 
-    local ec_curve=( $( tp_util_get_config_values "${files[cert_conf_path]}" 'tp_ec_curve' ) )
-    if [[ -n "${ec_curve}" ]]
-    then
-        tp_msg "Found configuration 'tp_ec_curve = ${ec_curve}' in certificate config file '${files[cert_conf_path]}'."
-        tp_msg "Generating elastic curve key parameters file for named curve '${ec_curve}'..."
+  local ec_curve=( $( tp_util_get_config_values "${files[cert_conf_path]}" 'tp_ec_curve' ) )
+  if [[ -n "${ec_curve}" ]]
+  then
+    tp_msg "Found configuration 'tp_ec_curve = ${ec_curve}' in certificate config file '${files[cert_conf_path]}'."
+    tp_msg "Generating elastic curve key parameters file for named curve '${ec_curve}'..."
 
-        tp_util_run \
-            openssl genpkey -genparam \
-                -algorithm ec \
-                -pkeyopt "ec_paramgen_curve:${ec_curve}" \
-                -out "${files[key_params_pem_path]}"
+    tp_util_run \
+      openssl genpkey -genparam \
+        -algorithm ec \
+        -pkeyopt "ec_paramgen_curve:${ec_curve}" \
+        -out "${files[key_params_pem_path]}"
 
-        tp_succ "New key parameters in '${files[key_params_pem_path]}'."
-        tp_cert_show_if_not_shown_yet "${files[key_params_pem_path]}"
-    else
-        tp_msg "This certificate config file does not require a key parameters file."
-    fi
+    tp_succ "New key parameters in '${files[key_params_pem_path]}'."
+    tp_cert_show_if_not_shown_yet "${files[key_params_pem_path]}"
+  else
+    tp_msg "This certificate config file does not require a key parameters file."
+  fi
 }
 
 function tp_cert_params_if_missing {
-    local cert_config="$1"
+  local cert_config="$1"
 
-    tp_util_files 'files' "${cert_config}"
+  tp_util_files 'files' "${cert_config}"
 
-    if [[ -f "${files[key_params_pem_path]}" ]]
-    then
-        tp_msg "Key parameters file '${files[key_params_pem_path]}' already exists. Skipping generation of a new one."
-        tp_cert_show_if_not_shown_yet "${files[key_params_pem_path]}"
-    else
-        tp_cert_params "${cert_config}"
-    fi
+  if [[ -f "${files[key_params_pem_path]}" ]]
+  then
+    tp_msg "Key parameters file '${files[key_params_pem_path]}' already exists. Skipping generation of a new one."
+    tp_cert_show_if_not_shown_yet "${files[key_params_pem_path]}"
+  else
+    tp_cert_params "${cert_config}"
+  fi
 }
 
 function tp_cert_key {
-    local cert_config="$1"
+  local cert_config="$1"
 
-    tp_util_files 'files' "${cert_config}"
-    tp_util_files_check 'files' 'file_path' "No certificate config file name specified. Specify the OpenSSL config file for the private key!" || return $?
-    tp_util_files_check 'files' 'suffix=cert.conf' "Creating a private key from given file '${cert_config}' is not supported! Specify a certificate config (.cert.conf) file!" || return $?
-    tp_util_files_check 'files' 'cert_conf_stat' "Given certificate config file '${cert_config}' does not exist!" || return $?
+  tp_util_files 'files' "${cert_config}"
+  tp_util_files_check 'files' 'file_path' "No certificate config file name specified. Specify the OpenSSL config file for the private key!" || return $?
+  tp_util_files_check 'files' 'suffix=cert.conf' "Creating a private key from given file '${cert_config}' is not supported! Specify a certificate config (.cert.conf) file!" || return $?
+  tp_util_files_check 'files' 'cert_conf_stat' "Given certificate config file '${cert_config}' does not exist!" || return $?
 
-    tp_cert_show_if_not_shown_yet "${cert_config}"
+  tp_cert_show_if_not_shown_yet "${cert_config}"
+  tp_cert_params_if_missing "${cert_config}"
+  tp_cert_key_prepare "${cert_config}"
+
+  tp_msg "Generating key-pair..."
+  if [[ -f "${files[key_params_pem_path]}" ]]
+  then
+    tp_util_run \
+      openssl genpkey \
+        -config "${cert_config}" \
+        -paramfile "${files[key_params_pem_path]}" \
+        -pass "file:${files[key_pass_path]}" \
+        -out "${files[key_pem_path]}"
+
+  else
+    tp_util_run \
+      openssl genpkey \
+        -config "${cert_config}" \
+        -algorithm rsa \
+        -pass "file:${files[key_pass_path]}" \
+        -out "${files[key_pem_path]}"
+  fi
+
+  tp_succ "New private key in '${files[key_pem_path]}'."
+  tp_succ "Pass-phrase for new private key in '${files[key_pass_path]}'."
+  tp_print
+  tp_cert_show_if_not_shown_yet "${files[key_pem_path]}"
+}
+
+function tp_cert_key_if_missing {
+  local cert_config="$1"
+
+  tp_util_files 'files' "${cert_config}"
+
+  if [[ -f "${files[key_pem_path]}" ]]
+  then
+    tp_msg "Private key file '${files[key_pem_path]}' already exists. Skipping generation of a new one."
+    tp_cert_show_if_not_shown_yet "${files[key_pem_path]}"
+  else
+    tp_cert_key "${cert_config}"
+  fi
+}
+
+function tp_cert_key_prepare {
+  local cert_config="$1"
+
+  tp_util_files 'files' "${cert_config}"
+
+  mkdir -p "${files[dir]}/private"
+  tp_util_remove_symlinks "${files[key_pass_path]}" "${files[key_pem_path]}" "${files[csr_pem_path]}"
+  touch "${files[key_pass_path]}"
+  chmod 'og-rwx' "${files[dir]}/private" "${files[key_pass_path]}"
+  echo -n "${TP_PASS}" > "${files[key_pass_path]}"
+}
+
+function tp_cert_request {
+  local cert_config="$1"
+
+  tp_util_files 'files' "${cert_config}"
+  tp_util_files_check 'files' 'file_path' "No certificate config file name specified. Specify the OpenSSL config file for the CSR!" || return $?
+  tp_util_files_check 'files' 'suffix=cert.conf' "Creating a CSR from given file '${cert_config}' is not supported! Specify a certificate config (.cert.conf) file!" || return $?
+  tp_util_files_check 'files' 'cert_conf_stat' "Given certificate config file '${cert_config}' does not exist!" || return $?
+
+  tp_cert_show_if_not_shown_yet "${cert_config}"
+
+  if [[ -n "${tp_explicit}" ]]
+  then
+    tp_cert_key_if_missing "${cert_config}"
+
+    tp_msg "Generating CSR..."
+    tp_util_run \
+      openssl req -new \
+        -config "${files[cert_conf_path]}" \
+        -key "${files[key_pem_path]}" -passin "file:${files[key_pass_path]}" \
+        -out "${files[csr_pem_path]}"
+  else
     tp_cert_params_if_missing "${cert_config}"
     tp_cert_key_prepare "${cert_config}"
 
-    tp_msg "Generating key-pair..."
+    tp_msg "Generating key-pair and CSR..."
     if [[ -f "${files[key_params_pem_path]}" ]]
     then
-        tp_util_run \
-            openssl genpkey \
-                -config "${cert_config}" \
-                -paramfile "${files[key_params_pem_path]}" \
-                -pass "file:${files[key_pass_path]}" \
-                -out "${files[key_pem_path]}"
-
+      tp_util_run \
+        openssl req -new \
+          -config "${files[cert_conf_path]}" \
+          -newkey "param:${files[key_params_pem_path]}" \
+          -passout "file:${files[key_pass_path]}" -keyout "${files[key_pem_path]}" \
+          -out "${files[csr_pem_path]}"
     else
-        tp_util_run \
-            openssl genpkey \
-                -config "${cert_config}" \
-                -algorithm rsa \
-                -pass "file:${files[key_pass_path]}" \
-                -out "${files[key_pem_path]}"
+      tp_util_run \
+        openssl req -new \
+          -config "${files[cert_conf_path]}" \
+          -passout "file:${files[key_pass_path]}" -keyout "${files[key_pem_path]}" \
+          -out "${files[csr_pem_path]}"
     fi
 
     tp_succ "New private key in '${files[key_pem_path]}'."
     tp_succ "Pass-phrase for new private key in '${files[key_pass_path]}'."
-    tp_print
-    tp_cert_show_if_not_shown_yet "${files[key_pem_path]}"
-}
+  fi
 
-function tp_cert_key_if_missing {
-    local cert_config="$1"
-
-    tp_util_files 'files' "${cert_config}"
-
-    if [[ -f "${files[key_pem_path]}" ]]
-    then
-        tp_msg "Private key file '${files[key_pem_path]}' already exists. Skipping generation of a new one."
-        tp_cert_show_if_not_shown_yet "${files[key_pem_path]}"
-    else
-        tp_cert_key "${cert_config}"
-    fi
-}
-
-function tp_cert_key_prepare {
-    local cert_config="$1"
-
-    tp_util_files 'files' "${cert_config}"
-
-    mkdir -p "${files[dir]}/private"
-    tp_util_remove_symlinks "${files[key_pass_path]}" "${files[key_pem_path]}" "${files[csr_pem_path]}"
-    touch "${files[key_pass_path]}"
-    chmod 'og-rwx' "${files[dir]}/private" "${files[key_pass_path]}"
-    echo -n "${TP_PASS}" > "${files[key_pass_path]}"
-}
-
-function tp_cert_request {
-    local cert_config="$1"
-
-    tp_util_files 'files' "${cert_config}"
-    tp_util_files_check 'files' 'file_path' "No certificate config file name specified. Specify the OpenSSL config file for the CSR!" || return $?
-    tp_util_files_check 'files' 'suffix=cert.conf' "Creating a CSR from given file '${cert_config}' is not supported! Specify a certificate config (.cert.conf) file!" || return $?
-    tp_util_files_check 'files' 'cert_conf_stat' "Given certificate config file '${cert_config}' does not exist!" || return $?
-
-    tp_cert_show_if_not_shown_yet "${cert_config}"
-
-    if [[ -n "${tp_explicit}" ]]
-    then
-        tp_cert_key_if_missing "${cert_config}"
-
-        tp_msg "Generating CSR..."
-        tp_util_run \
-            openssl req -new \
-                -config "${files[cert_conf_path]}" \
-                -key "${files[key_pem_path]}" -passin "file:${files[key_pass_path]}" \
-                -out "${files[csr_pem_path]}"
-    else
-        tp_cert_params_if_missing "${cert_config}"
-        tp_cert_key_prepare "${cert_config}"
-
-        tp_msg "Generating key-pair and CSR..."
-        if [[ -f "${files[key_params_pem_path]}" ]]
-        then
-            tp_util_run \
-                openssl req -new \
-                    -config "${files[cert_conf_path]}" \
-                    -newkey "param:${files[key_params_pem_path]}" \
-                    -passout "file:${files[key_pass_path]}" -keyout "${files[key_pem_path]}" \
-                    -out "${files[csr_pem_path]}"
-        else
-            tp_util_run \
-                openssl req -new \
-                    -config "${files[cert_conf_path]}" \
-                    -passout "file:${files[key_pass_path]}" -keyout "${files[key_pem_path]}" \
-                    -out "${files[csr_pem_path]}"
-        fi
-
-        tp_succ "New private key in '${files[key_pem_path]}'."
-        tp_succ "Pass-phrase for new private key in '${files[key_pass_path]}'."
-    fi
-
-    tp_succ "New CSR in '${files[csr_pem_path]}'."
-    tp_print
-    tp_cert_show_if_not_shown_yet "${files[csr_pem_path]}"
+  tp_succ "New CSR in '${files[csr_pem_path]}'."
+  tp_print
+  tp_cert_show_if_not_shown_yet "${files[csr_pem_path]}"
 }
 
 function tp_cert_request_if_missing {
-    local cert_config_or_csr="$1"
+  local cert_config_or_csr="$1"
 
-    tp_util_files 'files' "${cert_config_or_csr}"
+  tp_util_files 'files' "${cert_config_or_csr}"
 
-    if [[ "${files[csr_pem_stat]}" == 'f' && "${files[key_pem_stat]}" == 'f' && "${files[key_pass_stat]}" == 'f' ]]
-    then
-        tp_msg "CSR already exists in '${files[csr_pem_path]}' and its private key is also available. Skipping generation of a new CSR."
-        tp_cert_show_if_not_shown_yet "${files[key_pem_path]}"
-        tp_cert_show_if_not_shown_yet "${files[csr_pem_path]}"
-    else
-        tp_cert_request "${cert_config_or_csr}"
-    fi
+  if [[ "${files[csr_pem_stat]}" == 'f' && "${files[key_pem_stat]}" == 'f' && "${files[key_pass_stat]}" == 'f' ]]
+  then
+    tp_msg "CSR already exists in '${files[csr_pem_path]}' and its private key is also available. Skipping generation of a new CSR."
+    tp_cert_show_if_not_shown_yet "${files[key_pem_path]}"
+    tp_cert_show_if_not_shown_yet "${files[csr_pem_path]}"
+  else
+    tp_cert_request "${cert_config_or_csr}"
+  fi
 }
 
 function tp_cert_selfsign {
-    local cert_config_or_csr="$1"
+  local cert_config_or_csr="$1"
 
-    tp_util_files 'files' "${cert_config_or_csr}"
-    tp_util_files_check 'files' 'file_path' "Nothing to self-sign. Specify a certificate config file or a CSR file!" || return $?
+  tp_util_files 'files' "${cert_config_or_csr}"
+  tp_util_files_check 'files' 'file_path' "Nothing to self-sign. Specify a certificate config file or a CSR file!" || return $?
 
-    tp_cert_request_if_missing "${cert_config_or_csr}"
+  tp_cert_request_if_missing "${cert_config_or_csr}"
 
-    local openssl_x509_extra_args=()
-    if [[ "${files[cert_conf_stat]}" == 'f' ]]
+  local openssl_x509_extra_args=()
+  if [[ "${files[cert_conf_stat]}" == 'f' ]]
+  then
+    local default_md=( $( tp_util_get_config_values "${files[cert_conf_path]}" 'default_md' ) )
+    if [[ -n "${default_md}" ]]
     then
-        local default_md=( $( tp_util_get_config_values "${files[cert_conf_path]}" 'default_md' ) )
-        if [[ -n "${default_md}" ]]
-        then
-            tp_msg "Found configuration 'default_md = ${default_md}' in certificate config file '${files[cert_conf_path]}'."
-            tp_msg "Using ${default_md} as message digest (a.k.a. cryptographic hash function) in the certificate signature."
-            openssl_x509_extra_args+="-${default_md}"
-        fi
+      tp_msg "Found configuration 'default_md = ${default_md}' in certificate config file '${files[cert_conf_path]}'."
+      tp_msg "Using ${default_md} as message digest (a.k.a. cryptographic hash function) in the certificate signature."
+      openssl_x509_extra_args+="-${default_md}"
     fi
+  fi
 
-    tp_util_remove_symlinks "${files[cert_pem_path]}" "${files[chain_pem_path]}" "${files[fullchain_pem_path]}"
+  tp_util_remove_symlinks "${files[cert_pem_path]}" "${files[chain_pem_path]}" "${files[fullchain_pem_path]}"
 
-    tp_msg "Signing CSR with it's own private key..."
+  tp_msg "Signing CSR with it's own private key..."
 
-    tp_util_run \
-        openssl x509 -req \
-            -days '90' \
-            -copy_extensions 'copyall' \
-            "${openssl_x509_extra_args[@]}" \
-            -in "${files[csr_pem_path]}" \
-            -signkey "${files[key_pem_path]}" -passin "file:${files[key_pass_path]}" \
-            -out "${files[cert_pem_path]}"
+  tp_util_run \
+    openssl x509 -req \
+      -days '90' \
+      -copy_extensions 'copyall' \
+      "${openssl_x509_extra_args[@]}" \
+      -in "${files[csr_pem_path]}" \
+      -signkey "${files[key_pem_path]}" -passin "file:${files[key_pass_path]}" \
+      -out "${files[cert_pem_path]}"
 
-    tp_succ "New certificate in '${files[cert_pem_path]}'."
-    :> "${files[chain_pem_path]}"
-    tp_succ "New (empty) certificate chain in '${files[chain_pem_path]}'."
-    cp "${files[cert_pem_path]}" "${files[fullchain_pem_path]}"
-    tp_succ "New (single-entry) certificate full-chain in '${files[fullchain_pem_path]}'."
+  tp_succ "New certificate in '${files[cert_pem_path]}'."
+  :> "${files[chain_pem_path]}"
+  tp_succ "New (empty) certificate chain in '${files[chain_pem_path]}'."
+  cp "${files[cert_pem_path]}" "${files[fullchain_pem_path]}"
+  tp_succ "New (single-entry) certificate full-chain in '${files[fullchain_pem_path]}'."
 
-    tp_print
-    tp_cert_show "${files[cert_pem_path]}"
-    tp_print
-    tp_cert_fingerprint "${files[cert_pem_path]}"
+  tp_print
+  tp_cert_show "${files[cert_pem_path]}"
+  tp_print
+  tp_cert_fingerprint "${files[cert_pem_path]}"
 }
 
 function tp_cert_pkcs8 {
-    local key_file="$1"
+  local key_file="$1"
 
-    tp_util_files 'files' "${key_file}"
-    tp_util_files_check 'files' 'file_path' "No key file name specified. Specify the key file to convert to PKCS8!" || return $?
-    tp_util_files_check 'files' 'suffix=key.pem' "Converting file '${key_file}' to PKCS8 format is not supported! Specify a private key (.key.pem) file!" || return $?
-    tp_util_files_check 'files' 'file_stat' "Given private key file '${key_file}' does not exist!" || return $?
-    tp_util_files_check 'files' 'key_pass_stat' "Looked for matching pass-phrase file '${files[key_pass_path]}' for the given private key! But it does not exist!" || return $?
+  tp_util_files 'files' "${key_file}"
+  tp_util_files_check 'files' 'file_path' "No key file name specified. Specify the key file to convert to PKCS8!" || return $?
+  tp_util_files_check 'files' 'suffix=key.pem' "Converting file '${key_file}' to PKCS8 format is not supported! Specify a private key (.key.pem) file!" || return $?
+  tp_util_files_check 'files' 'file_stat' "Given private key file '${key_file}' does not exist!" || return $?
+  tp_util_files_check 'files' 'key_pass_stat' "Looked for matching pass-phrase file '${files[key_pass_path]}' for the given private key! But it does not exist!" || return $?
 
-    local pkcs8_file="${files[dir]}/private/${files[name]}.key.pkcs8.der"
+  local pkcs8_file="${files[dir]}/private/${files[name]}.key.pkcs8.der"
 
-    tp_msg "Converting private key '${key_file}' to PKCS8 format..."
+  tp_msg "Converting private key '${key_file}' to PKCS8 format..."
 
-    tp_util_run \
-        openssl pkcs8 \
-            -topk8 -nocrypt \
-            -in "${key_file}" -passin "file:${files[key_pass_path]}" \
-            -outform 'DER' -out "${pkcs8_file}"
+  tp_util_run \
+    openssl pkcs8 \
+      -topk8 -nocrypt \
+      -in "${key_file}" -passin "file:${files[key_pass_path]}" \
+      -outform 'DER' -out "${pkcs8_file}"
 
-    tp_succ "PKCS8 private key in '${pkcs8_file}'."
+  tp_succ "PKCS8 private key in '${pkcs8_file}'."
 }
 
 function tp_cert_pkcs12 {
-    local cert_file="$1"
+  local cert_file="$1"
 
-    tp_util_files 'files' "${cert_file}"
-    tp_util_files_check 'files' 'file_path' "No certificate specified. Specify the certificate file to bundle in PKCS12!" || return $?
-    tp_util_files_check 'files' 'suffix=cert.pem' "Bundling file '${cert_file}' in PKCS12 format is not supported! Specify a certificate (.cert.pem) file!" || return $?
-    tp_util_files_check 'files' 'file_stat' "Given certificate file '${cert_file}' does not exist!" || return $?
-    tp_util_files_check 'files' 'key_pem_stat' "Looked for matching private key file '${files[key_pem_path]}' for the given certificate. But it does not exist!" || return $?
-    tp_util_files_check 'files' 'key_pass_stat' "Looked for matching private key paass-phrase file '${files[key_pass_path]}' for the given certificate. But it does not exist!" || return $?
+  tp_util_files 'files' "${cert_file}"
+  tp_util_files_check 'files' 'file_path' "No certificate specified. Specify the certificate file to bundle in PKCS12!" || return $?
+  tp_util_files_check 'files' 'suffix=cert.pem' "Bundling file '${cert_file}' in PKCS12 format is not supported! Specify a certificate (.cert.pem) file!" || return $?
+  tp_util_files_check 'files' 'file_stat' "Given certificate file '${cert_file}' does not exist!" || return $?
+  tp_util_files_check 'files' 'key_pem_stat' "Looked for matching private key file '${files[key_pem_path]}' for the given certificate. But it does not exist!" || return $?
+  tp_util_files_check 'files' 'key_pass_stat' "Looked for matching private key paass-phrase file '${files[key_pass_path]}' for the given certificate. But it does not exist!" || return $?
 
-    local pkcs12_file="${files[dir]}/private/${files[name]}.pfx"
+  local pkcs12_file="${files[dir]}/private/${files[name]}.pfx"
 
-    # cannot use pssphrase file directly
-    # when the same file is used for both -passin and -passout, OpenSSL will expect 2 pass-phrase in it
-    # with an env-var we can specify the same pass-phrase twice without this gimick
-    local -x TP_PASS="$(< "${files[key_pass_path]}" )"
+  # cannot use pssphrase file directly
+  # when the same file is used for both -passin and -passout, OpenSSL will expect 2 pass-phrase in it
+  # with an env-var we can specify the same pass-phrase twice without this gimick
+  local -x TP_PASS="$(< "${files[key_pass_path]}" )"
 
-    tp_msg "Bundling certificate '${cert_file}' and private key '${files[key_pem_path]}' in PKCS12..."
+  tp_msg "Bundling certificate '${cert_file}' and private key '${files[key_pem_path]}' in PKCS12..."
 
-    tp_util_run \
-        openssl pkcs12 \
-            -export \
-            -in "${cert_file}" -inkey "${files[key_pem_path]}" -passin "env:TP_PASS" \
-            -out "${pkcs12_file}" -passout "env:TP_PASS"
+  tp_util_run \
+    openssl pkcs12 \
+      -export \
+      -in "${cert_file}" -inkey "${files[key_pem_path]}" -passin "env:TP_PASS" \
+      -out "${pkcs12_file}" -passout "env:TP_PASS"
 
-    tp_succ "PKCS12 bundle in '${pkcs12_file}'."
+  tp_succ "PKCS12 bundle in '${pkcs12_file}'."
 }
 
 function tp_cert_clean {
-    local cert_config="$1"
+  local cert_config="$1"
 
-    tp_util_files 'files' "${cert_config}"
-    tp_msg "Cleaning up certificates and other files related to '${files[cert_conf_path]}'..."
+  tp_util_files 'files' "${cert_config}"
+  tp_msg "Cleaning up certificates and other files related to '${files[cert_conf_path]}'..."
 
-    for file in "${files[key_pem_path]}" "${files[key_pass_path]}" "${files[key_params_pem_path]}" "${files[csr_pem_path]}" "${files[cert_pem_path]}" "${files[chain_pem_path]}" "${files[fullchain_pem_path]}" "${files[dir]}/private/${files[name]}.key.pkcs8.der" "${files[dir]}/private/${files[name]}.pfx"
-    do
-        if [[ -L "${file}" ]]
-        then
-            rm "${file}"
-        elif [[ -f "${file}" ]]
-        then
-            shred "${file}"
-            rm "${file}"
-        fi
-    done
-    find "${files[dir]}" -mindepth 1 -maxdepth 1 -type d -name 'private' -empty | xargs --no-run-if-empty rmdir
-    tp_util_template_clean "${files[cert_conf_path]}.tmpl"
+  for file in "${files[key_pem_path]}" "${files[key_pass_path]}" "${files[key_params_pem_path]}" "${files[csr_pem_path]}" "${files[cert_pem_path]}" "${files[chain_pem_path]}" "${files[fullchain_pem_path]}" "${files[dir]}/private/${files[name]}.key.pkcs8.der" "${files[dir]}/private/${files[name]}.pfx"
+  do
+    if [[ -L "${file}" ]]
+    then
+      rm "${file}"
+    elif [[ -f "${file}" ]]
+    then
+      shred "${file}"
+      rm "${file}"
+    fi
+  done
+  find "${files[dir]}" -mindepth 1 -maxdepth 1 -type d -name 'private' -empty | xargs --no-run-if-empty rmdir
+  tp_util_template_clean "${files[cert_conf_path]}.tmpl"
 }
 
 function tp_cert_check_env {
 
-    [[ "${TP_SERVER_DOMAIN}" =~ ^([-a-zA-Z0-9]+[.])*[-a-zA-Z0-9]+$ ]] \
-        || { tp_err "Variable TP_SERVER_DOMAIN with value '${TP_SERVER_DOMAIN}' does not look like a DNS domain name!"; return 1; }
+  [[ "${TP_SERVER_DOMAIN}" =~ ^([-a-zA-Z0-9]+[.])*[-a-zA-Z0-9]+$ ]] \
+    || { tp_err "Variable TP_SERVER_DOMAIN with value '${TP_SERVER_DOMAIN}' does not look like a DNS domain name!"; return 1; }
 }
 
 function tp_cert_link {
-    local source="$1"
-    local target="$2"
+  local source="$1"
+  local target="$2"
 
-    tp_util_files "source_files" "${source}"
-    tp_util_files "target_files" "${target}"
+  tp_util_files "source_files" "${source}"
+  tp_util_files "target_files" "${target}"
 
-    ln -srf "${source_files[cert_pem_path]}" "${target_files[cert_pem_path]}"
-    tp_msg "Linked new certificate into '${target_files[cert_pem_path]}'."
-    ln -srf "${source_files[chain_pem_path]}" "${target_files[chain_pem_path]}"
-    tp_msg "Linked new certificate chain into '${target_files[chain_pem_path]}'."
-    ln -srf "${source_files[fullchain_pem_path]}" "${target_files[fullchain_pem_path]}"
-    tp_msg "Linked new certificate full-chain into '${target_files[fullchain_pem_path]}'."
+  ln -srf "${source_files[cert_pem_path]}" "${target_files[cert_pem_path]}"
+  tp_msg "Linked new certificate into '${target_files[cert_pem_path]}'."
+  ln -srf "${source_files[chain_pem_path]}" "${target_files[chain_pem_path]}"
+  tp_msg "Linked new certificate chain into '${target_files[chain_pem_path]}'."
+  ln -srf "${source_files[fullchain_pem_path]}" "${target_files[fullchain_pem_path]}"
+  tp_msg "Linked new certificate full-chain into '${target_files[fullchain_pem_path]}'."
 }
 
 
@@ -772,157 +772,157 @@ function tp_cert_link {
 # TP CA sub-commands
 
 function tp_ca {
-    local command="$1"
-    shift || true
+  local command="$1"
+  shift || true
 
-    tp_help_if_needed "${tp_base_dir}/ca/README.md" '-1' || return 0
+  tp_help_if_needed "${tp_base_dir}/ca/README.md" '-1' || return 0
 
-    case "${command}" in
-        'init' | 'sign' | 'clean' )
-            "tp_ca_${command}" "$@"
-            ;;
-        * )
-            tp_help_with_commands 'tp ca' 'TP Demo CA' "${command}" 'init sign clean'
-            ;;
-    esac
+  case "${command}" in
+    'init' | 'sign' | 'clean' )
+      "tp_ca_${command}" "$@"
+      ;;
+    * )
+      tp_help_with_commands 'tp ca' 'TP Demo CA' "${command}" 'init sign clean'
+      ;;
+  esac
 }
 
 function tp_ca_init {
-    local ca_name="$1"
+  local ca_name="$1"
 
-    if [[ -z "${ca_name}" ]]
-    then
-        tp_msg "No CA name specified. Proceeding to initialize all CAs..."
-        for ca_name in $( tp_ca_list )
-        do
-            tp_print
-            tp_ca_init "${ca_name}" "$@"
-        done
-        return $?
-    fi
+  if [[ -z "${ca_name}" ]]
+  then
+    tp_msg "No CA name specified. Proceeding to initialize all CAs..."
+    for ca_name in $( tp_ca_list )
+    do
+      tp_print
+      tp_ca_init "${ca_name}" "$@"
+    done
+    return $?
+  fi
 
-    local ca_dir="${tp_base_dir}/ca/${ca_name}"
-    if [[ ! -d "${ca_dir}" ]]
-    then
-        tp_err "Failed to initialize CA '${ca_name}'! Could not find expected CA directory '${ca_dir}'!"
-        tp_msg "Omit the CA name to initialize all of them. Or, try one of the following instead:"
-        tp_ca_list
-        return 1
-    fi
+  local ca_dir="${tp_base_dir}/ca/${ca_name}"
+  if [[ ! -d "${ca_dir}" ]]
+  then
+    tp_err "Failed to initialize CA '${ca_name}'! Could not find expected CA directory '${ca_dir}'!"
+    tp_msg "Omit the CA name to initialize all of them. Or, try one of the following instead:"
+    tp_ca_list
+    return 1
+  fi
 
-    tp_ca_clean "$@"
+  tp_ca_clean "$@"
 
-    tp_cert_show_if_not_shown_yet "${ca_dir}/ca.conf"
+  tp_cert_show_if_not_shown_yet "${ca_dir}/ca.conf"
 
-    local serial="$( tp_util_generate_hex_token "tls-playground-ca-${ca_name}-$( date '+%s' )" 8 )00000001"
-    tp_msg "Creating scaffolding for CA '${ca_name}' with initial certificate serial number '${serial}'..."
-    (
-        cd "${ca_dir}"
-        mkdir 'archive'
-        mkdir 'private'
-        chmod 'go-rwx' 'private'
-        touch db.txt
-        echo -n "${serial}" > serial
-    )
+  local serial="$( tp_util_generate_hex_token "tls-playground-ca-${ca_name}-$( date '+%s' )" 8 )00000001"
+  tp_msg "Creating scaffolding for CA '${ca_name}' with initial certificate serial number '${serial}'..."
+  (
+    cd "${ca_dir}"
+    mkdir 'archive'
+    mkdir 'private'
+    chmod 'go-rwx' 'private'
+    touch db.txt
+    echo -n "${serial}" > serial
+  )
 
-    tp_msg "Preparing root certificate for CA '${ca_name}'..."
-    tp_cert_selfsign "${ca_dir}/ca-root.cert.conf"
+  tp_msg "Preparing root certificate for CA '${ca_name}'..."
+  tp_cert_selfsign "${ca_dir}/ca-root.cert.conf"
 }
 
 function tp_ca_sign {
-    local ca_name="$1"
-    local cert_config_or_csr="$2"
+  local ca_name="$1"
+  local cert_config_or_csr="$2"
 
-    if [[ -z "${ca_name}" ]]
-    then
-        tp_err "No CA name specified. Specify the CA to sign with!"
-        tp_msg "Try one of the following:"
-        tp_ca_list
-        return 1
-    fi
-    if [[ ! -d "${tp_base_dir}/ca/${ca_name}" ]]
-    then
-        tp_err "CA with name '${ca_name}' does not exist!"
-        tp_msg "Try one of the following instead:"
-        tp_ca_list
-        return 1
-    fi
+  if [[ -z "${ca_name}" ]]
+  then
+    tp_err "No CA name specified. Specify the CA to sign with!"
+    tp_msg "Try one of the following:"
+    tp_ca_list
+    return 1
+  fi
+  if [[ ! -d "${tp_base_dir}/ca/${ca_name}" ]]
+  then
+    tp_err "CA with name '${ca_name}' does not exist!"
+    tp_msg "Try one of the following instead:"
+    tp_ca_list
+    return 1
+  fi
 
-    tp_util_files 'ca_files' "${tp_base_dir}/ca/${ca_name}/ca-root.cert.pem"
-    tp_util_files_check 'ca_files' 'file_stat' "Could not find root certificate of CA ${ca_name} in '${ca_files[file_path]}'! Initialize the CA first!" || return $?
-    tp_util_files_check 'ca_files' 'key_pem_stat' "Could not find private key of CA ${ca_name} in '${ca_files[key_pem_path]}'! Initialize the CA first!" || return $?
-    tp_util_files_check 'ca_files' 'key_pass_stat' "Could not find private key pass-phrase of CA ${ca_name} in '${ca_files[key_pass_path]}'! Initialize the CA first!" || return $?
+  tp_util_files 'ca_files' "${tp_base_dir}/ca/${ca_name}/ca-root.cert.pem"
+  tp_util_files_check 'ca_files' 'file_stat' "Could not find root certificate of CA ${ca_name} in '${ca_files[file_path]}'! Initialize the CA first!" || return $?
+  tp_util_files_check 'ca_files' 'key_pem_stat' "Could not find private key of CA ${ca_name} in '${ca_files[key_pem_path]}'! Initialize the CA first!" || return $?
+  tp_util_files_check 'ca_files' 'key_pass_stat' "Could not find private key pass-phrase of CA ${ca_name} in '${ca_files[key_pass_path]}'! Initialize the CA first!" || return $?
 
-    # TODO add support for signing multiple certs? similar to 'tp cert selfsign'?
-    tp_msg "Generating CSR for the new certificate..."
-    tp_cert_request_if_missing "${cert_config_or_csr}"
+  # TODO add support for signing multiple certs? similar to 'tp cert selfsign'?
+  tp_msg "Generating CSR for the new certificate..."
+  tp_cert_request_if_missing "${cert_config_or_csr}"
 
-    local new_serial="$(< "${ca_files[dir]}/serial" )"
-    tp_util_files 'archive_files' "${ca_files[dir]}/archive/${new_serial}.pem"
+  local new_serial="$(< "${ca_files[dir]}/serial" )"
+  tp_util_files 'archive_files' "${ca_files[dir]}/archive/${new_serial}.pem"
 
-    tp_util_files 'target_files' "${cert_config_or_csr}"
-    local csr_pem_rel_path="$( realpath --relative-to "${ca_files[dir]}" "${target_files[csr_pem_path]}" )"
+  tp_util_files 'target_files' "${cert_config_or_csr}"
+  local csr_pem_rel_path="$( realpath --relative-to "${ca_files[dir]}" "${target_files[csr_pem_path]}" )"
 
-    tp_msg "Signing CSR from '${target_files[csr_pem_path]}' with CA ${ca_name} at serial ${new_serial}..."
+  tp_msg "Signing CSR from '${target_files[csr_pem_path]}' with CA ${ca_name} at serial ${new_serial}..."
 
-    (
-        cd "${ca_files[dir]}"
-        tp_util_run \
-            openssl ca \
-                -batch -notext \
-                -config 'ca.conf' \
-                -passin "file:private/ca-root.key.pass.txt" \
-                -in "${csr_pem_rel_path}"
-    )
+  (
+    cd "${ca_files[dir]}"
+    tp_util_run \
+      openssl ca \
+        -batch -notext \
+        -config 'ca.conf' \
+        -passin "file:private/ca-root.key.pass.txt" \
+        -in "${csr_pem_rel_path}"
+  )
 
-    cat "${archive_files[file_path]}" > "${archive_files[cert_pem_path]}"
-    tp_succ "New certificate in '${archive_files[cert_pem_path]}'."
-    cat "${ca_files[fullchain_pem_path]}" > "${archive_files[chain_pem_path]}"
-    tp_succ "New certificate chain in '${archive_files[chain_pem_path]}'."
-    cat "${archive_files[cert_pem_path]}" "${ca_files[fullchain_pem_path]}" > "${archive_files[fullchain_pem_path]}"
-    tp_succ "New certificate full-chain in '${archive_files[fullchain_pem_path]}'."
+  cat "${archive_files[file_path]}" > "${archive_files[cert_pem_path]}"
+  tp_succ "New certificate in '${archive_files[cert_pem_path]}'."
+  cat "${ca_files[fullchain_pem_path]}" > "${archive_files[chain_pem_path]}"
+  tp_succ "New certificate chain in '${archive_files[chain_pem_path]}'."
+  cat "${archive_files[cert_pem_path]}" "${ca_files[fullchain_pem_path]}" > "${archive_files[fullchain_pem_path]}"
+  tp_succ "New certificate full-chain in '${archive_files[fullchain_pem_path]}'."
 
-    tp_print
-    tp_cert_link "${archive_files[file_path]}" "${target_files[file_path]}"
+  tp_print
+  tp_cert_link "${archive_files[file_path]}" "${target_files[file_path]}"
 
-    tp_print
-    tp_cert_show "${target_files[cert_pem_path]}"
-    tp_print
-    tp_cert_fingerprint "${target_files[cert_pem_path]}"
+  tp_print
+  tp_cert_show "${target_files[cert_pem_path]}"
+  tp_print
+  tp_cert_fingerprint "${target_files[cert_pem_path]}"
 }
 
 function tp_ca_clean {
-    local ca_name="$1"
+  local ca_name="$1"
 
-    if [[ -z "${ca_name}" ]]
-    then
-        tp_msg "No CA name specified. Proceeding to clean all CAs..."
-        for ca_name in $( find "${tp_base_dir}/ca" -mindepth 1 -maxdepth 1 -type d  -exec basename '{}' ';' | sort )
-        do
-            tp_ca_clean "${ca_name}"
-        done
-        return $?
-    fi
+  if [[ -z "${ca_name}" ]]
+  then
+    tp_msg "No CA name specified. Proceeding to clean all CAs..."
+    for ca_name in $( find "${tp_base_dir}/ca" -mindepth 1 -maxdepth 1 -type d  -exec basename '{}' ';' | sort )
+    do
+      tp_ca_clean "${ca_name}"
+    done
+    return $?
+  fi
 
-    local ca_dir="${tp_base_dir}/ca/${ca_name}"
-    if [[ ! -d "${ca_dir}" ]]
-    then
-        tp_err "Failed to clean up CA '${ca_name}'! Could not find expected CA directory '${ca_dir}'!"
-        tp_msg "Omit the CA name to clean up all of them. Or, try one of the following instead:"
-        tp_ca_list
-        return 1
-    fi
+  local ca_dir="${tp_base_dir}/ca/${ca_name}"
+  if [[ ! -d "${ca_dir}" ]]
+  then
+    tp_err "Failed to clean up CA '${ca_name}'! Could not find expected CA directory '${ca_dir}'!"
+    tp_msg "Omit the CA name to clean up all of them. Or, try one of the following instead:"
+    tp_ca_list
+    return 1
+  fi
 
-    tp_msg "Cleaning transient files of CA '${ca_name}'..."
-    (
-        cd "${ca_dir}"
-        find . -type d -and '(' -name 'archive' -or -name 'private' ')' | xargs rm -rf
-        find . -type f -and -not '(' -name '*.conf' -or -name '*.md' ')' | xargs rm -f
-    )
+  tp_msg "Cleaning transient files of CA '${ca_name}'..."
+  (
+    cd "${ca_dir}"
+    find . -type d -and '(' -name 'archive' -or -name 'private' ')' | xargs rm -rf
+    find . -type f -and -not '(' -name '*.conf' -or -name '*.md' ')' | xargs rm -f
+  )
 }
 
 function tp_ca_list {
-    find "${tp_base_dir}/ca" -mindepth 1 -maxdepth 1 -type d  -exec basename '{}' ';' | sort
+  find "${tp_base_dir}/ca" -mindepth 1 -maxdepth 1 -type d  -exec basename '{}' ';' | sort
 }
 
 
@@ -930,407 +930,407 @@ function tp_ca_list {
 # TP ACME sub-commands
 
 function tp_acme {
-    local command="$1"
-    shift || true
+  local command="$1"
+  shift || true
 
-    tp_help_if_needed "${tp_base_dir}/acme/README.md" '-1' || return 0
+  tp_help_if_needed "${tp_base_dir}/acme/README.md" '-1' || return 0
 
-    case "${command}" in
-        'init' | 'account' | 'challenges' | 'sign' | 'renew' | 'revoke' | 'clean' )
-            "tp_acme_${command}" "$@"
-            ;;
-        * )
-            tp_help_with_commands 'tp acme' 'TP ACME Utilities' "${command}" 'init account challenges sign renew revoke clean'
-            ;;
-    esac
+  case "${command}" in
+    'init' | 'account' | 'challenges' | 'sign' | 'renew' | 'revoke' | 'clean' )
+      "tp_acme_${command}" "$@"
+      ;;
+    * )
+      tp_help_with_commands 'tp acme' 'TP ACME Utilities' "${command}" 'init account challenges sign renew revoke clean'
+      ;;
+  esac
 }
 
 function tp_acme_init {
-    tp_msg "Initializing ACME and Certbot..."
-    mkdir -p "${tp_base_dir}/acme/challenges/http-01/public/.well-known/acme-challenge"
-    mkdir -p "${tp_base_dir}/acme/certbot/custom/archive/private"
-    chmod 'go-rwx' "${tp_base_dir}/acme/certbot/custom/archive/private"
+  tp_msg "Initializing ACME and Certbot..."
+  mkdir -p "${tp_base_dir}/acme/challenges/http-01/public/.well-known/acme-challenge"
+  mkdir -p "${tp_base_dir}/acme/certbot/custom/archive/private"
+  chmod 'go-rwx' "${tp_base_dir}/acme/certbot/custom/archive/private"
 
-    tp_acme_check_env
-    tp_util_template "${tp_base_dir}/acme/certbot/cli.ini.tmpl" TP_ACME_SERVER_URL TP_ACME_ACCOUNT_EMAIL
+  tp_acme_check_env
+  tp_util_template "${tp_base_dir}/acme/certbot/cli.ini.tmpl" TP_ACME_SERVER_URL TP_ACME_ACCOUNT_EMAIL
 
-    tp_cert_show_if_not_shown_yet "${tp_base_dir}/acme/certbot/cli.ini"
-    tp_server_nginx_init "${tp_base_dir}/acme/challenges/http-01"
+  tp_cert_show_if_not_shown_yet "${tp_base_dir}/acme/certbot/cli.ini"
+  tp_server_nginx_init "${tp_base_dir}/acme/challenges/http-01"
 }
 
 function tp_acme_account {
-    local command="$1"
-    shift || true
+  local command="$1"
+  shift || true
 
-    tp_help_if_needed "${tp_base_dir}/acme/README.md" '-1' || return 0
+  tp_help_if_needed "${tp_base_dir}/acme/README.md" '-1' || return 0
 
-    case "${command}" in
-        'register' | 'unregister' )
-            "tp_acme_account_${command}" "$@"
-            ;;
-        * )
-            tp_help_with_commands 'tp acme account' 'TP ACME Account' "${command}" 'register unregister'
-            ;;
-    esac
+  case "${command}" in
+    'register' | 'unregister' )
+      "tp_acme_account_${command}" "$@"
+      ;;
+    * )
+      tp_help_with_commands 'tp acme account' 'TP ACME Account' "${command}" 'register unregister'
+      ;;
+  esac
 }
 
 function tp_acme_account_register {
-    (
-        cd "${tp_base_dir}/acme/"
-        tp_util_run \
-            certbot --config 'certbot/cli.ini' register
-    )
+  (
+    cd "${tp_base_dir}/acme/"
+    tp_util_run \
+      certbot --config 'certbot/cli.ini' register
+  )
 }
 
 function tp_acme_account_unregister {
-    (
-        cd "${tp_base_dir}/acme/"
-        tp_util_run \
-            certbot --config 'certbot/cli.ini' unregister
-    )
+  (
+    cd "${tp_base_dir}/acme/"
+    tp_util_run \
+      certbot --config 'certbot/cli.ini' unregister
+  )
 }
 
 function tp_acme_challenges {
-    local command="$1"
-    shift || true
+  local command="$1"
+  shift || true
 
-    tp_help_if_needed "${tp_base_dir}/acme/README.md" '-1' || return 0
+  tp_help_if_needed "${tp_base_dir}/acme/README.md" '-1' || return 0
 
-    case "${command}" in
-        'run' | 'start' | 'reload' | 'stop' )
-            "tp_server_nginx_${command}" "${tp_base_dir}/acme/challenges/http-01" "$@"
-            ;;
-        * )
-            tp_help_with_commands 'tp acme challenes' 'TP ACME Challenges' "${command}" 'run start reload stop'
-            ;;
-    esac
+  case "${command}" in
+    'run' | 'start' | 'reload' | 'stop' )
+      "tp_server_nginx_${command}" "${tp_base_dir}/acme/challenges/http-01" "$@"
+      ;;
+    * )
+      tp_help_with_commands 'tp acme challenes' 'TP ACME Challenges' "${command}" 'run start reload stop'
+      ;;
+  esac
 }
 
 function tp_acme_sign {
-    local cert_config_or_csr="$1"
+  local cert_config_or_csr="$1"
 
-    if [[ -z "${cert_config_or_csr}" ]]
-    then
-        tp_err "Nothing to sign with ACME. Specify a certificate config file or a CSR!"
-        return 1
-    fi
+  if [[ -z "${cert_config_or_csr}" ]]
+  then
+    tp_err "Nothing to sign with ACME. Specify a certificate config file or a CSR!"
+    return 1
+  fi
 
-    # TODO add support for signing multiple certs? similar to 'tp cert selfsign'?
+  # TODO add support for signing multiple certs? similar to 'tp cert selfsign'?
 
-    # TODO allow dns-01 challenges when using --manual mode?
+  # TODO allow dns-01 challenges when using --manual mode?
 
-    if [[ -n "${tp_acme_certbot_custom_csr}" ]]
-    then
-        tp_acme_sign_csr "$@"
-    else
-        tp_acme_sign_domains "$@"
-    fi
+  if [[ -n "${tp_acme_certbot_custom_csr}" ]]
+  then
+    tp_acme_sign_csr "$@"
+  else
+    tp_acme_sign_domains "$@"
+  fi
 }
 
 function tp_acme_sign_domains {
-    local cert_config="$1"
+  local cert_config="$1"
 
-    tp_util_files 'target_files' "${cert_config}"
-    tp_util_files_check 'target_files' 'cert_conf_stat' "Given certificate config file '${cert_config}' does not exist!" || return $?
+  tp_util_files 'target_files' "${cert_config}"
+  tp_util_files_check 'target_files' 'cert_conf_stat' "Given certificate config file '${cert_config}' does not exist!" || return $?
 
-    local domains=( $( tp_util_get_config_values "$1" 'CN|DNS[.][0-9]+' '([-a-zA-Z0-9*]+[.])*[-a-zA-Z0-9*]+' ) )
-    local certbot_lineage="${domains[0]}"
-    local certbot_live_dir="${tp_base_dir}/acme/certbot/conf/live/${certbot_lineage}"
+  local domains=( $( tp_util_get_config_values "$1" 'CN|DNS[.][0-9]+' '([-a-zA-Z0-9*]+[.])*[-a-zA-Z0-9*]+' ) )
+  local certbot_lineage="${domains[0]}"
+  local certbot_live_dir="${tp_base_dir}/acme/certbot/conf/live/${certbot_lineage}"
 
-    local certbot_domain_args=()
-    for domain in "${domains[@]}"
-    do
-        certbot_domain_args+=( '--domain' "${domain}" )
-    done
+  local certbot_domain_args=()
+  for domain in "${domains[@]}"
+  do
+    certbot_domain_args+=( '--domain' "${domain}" )
+  done
 
-    mkdir -p "${target_files[dir]}/private"
-    chmod 'og-rwx' "${target_files[dir]}/private"
-    # servers may be configured to require the private key pass-phrase, but Certbot generates private keys without pass-phrase
-    # so create an empty pass-phrase file, which most servers tolerate
-    :> "${target_files[key_pass_path]}"
+  mkdir -p "${target_files[dir]}/private"
+  chmod 'og-rwx' "${target_files[dir]}/private"
+  # servers may be configured to require the private key pass-phrase, but Certbot generates private keys without pass-phrase
+  # so create an empty pass-phrase file, which most servers tolerate
+  :> "${target_files[key_pass_path]}"
 
-    tp_msg "Signing domains from OpenSSL certificate config file '${target_files[cert_conf_path]}' with ACME..."
+  tp_msg "Signing domains from OpenSSL certificate config file '${target_files[cert_conf_path]}' with ACME..."
 
-    (
-        cd "${tp_base_dir}/acme/"
-        tp_util_run \
-            certbot certonly \
-                --config "certbot/cli.ini" \
-                "${tp_acme_certbot_opts[@]}" \
-                --cert-name "${certbot_lineage}" \
-                "${certbot_domain_args[@]}"
-    )
+  (
+    cd "${tp_base_dir}/acme/"
+    tp_util_run \
+      certbot certonly \
+        --config "certbot/cli.ini" \
+        "${tp_acme_certbot_opts[@]}" \
+        --cert-name "${certbot_lineage}" \
+        "${certbot_domain_args[@]}"
+  )
 
-    tp_succ "New private key in '${certbot_live_dir}/privkey.pem'."
-    tp_succ "New certificate in '${certbot_live_dir}/cert.pem'."
-    tp_succ "New certificate chain in '${certbot_live_dir}/chain.pem'."
-    tp_succ "New certificate full-chain in '${certbot_live_dir}/fullchain.pem'."
+  tp_succ "New private key in '${certbot_live_dir}/privkey.pem'."
+  tp_succ "New certificate in '${certbot_live_dir}/cert.pem'."
+  tp_succ "New certificate chain in '${certbot_live_dir}/chain.pem'."
+  tp_succ "New certificate full-chain in '${certbot_live_dir}/fullchain.pem'."
 
-    tp_print
-    tp_acme_certbot_cert_link "${certbot_live_dir}" "${target_files[cert_conf_path]}"
+  tp_print
+  tp_acme_certbot_cert_link "${certbot_live_dir}" "${target_files[cert_conf_path]}"
 
-    tp_print
-    tp_cert_show "${target_files[cert_pem_path]}"
-    tp_print
-    tp_cert_fingerprint "${target_files[cert_pem_path]}"
+  tp_print
+  tp_cert_show "${target_files[cert_pem_path]}"
+  tp_print
+  tp_cert_fingerprint "${target_files[cert_pem_path]}"
 }
 
 function tp_acme_sign_csr {
-    local cert_config_or_csr="$1"
+  local cert_config_or_csr="$1"
 
-    tp_msg "Generating CSR for the new certificate..."
-    tp_cert_request_if_missing "${cert_config_or_csr}"
+  tp_msg "Generating CSR for the new certificate..."
+  tp_cert_request_if_missing "${cert_config_or_csr}"
 
-    # calculate next cert number in archive dir
-    local new_cert_number=0
-    local cert_numbers=( $( find "${tp_base_dir}/acme/certbot/custom/archive" -regex '.*/[0-9]+[.a-zA-Z0-9]+[.]pem' -exec basename '{}' ';' | sed -e 's/[.].*$//' | sort --unique ) )
-    if [[ "${#cert_numbers[@]}" != 0 ]]
-    then
-        # pick highest number and strip leading zeros, so bash doesn't assume it's octal
-        new_cert_number="$( tp_print "${cert_numbers[-1]}" | sed -E -e 's/^0+//' )"
-    fi
-    (( ++new_cert_number ))
-    new_cert_number="$( printf '%08d' "${new_cert_number}" )"
+  # calculate next cert number in archive dir
+  local new_cert_number=0
+  local cert_numbers=( $( find "${tp_base_dir}/acme/certbot/custom/archive" -regex '.*/[0-9]+[.a-zA-Z0-9]+[.]pem' -exec basename '{}' ';' | sed -e 's/[.].*$//' | sort --unique ) )
+  if [[ "${#cert_numbers[@]}" != 0 ]]
+  then
+    # pick highest number and strip leading zeros, so bash doesn't assume it's octal
+    new_cert_number="$( tp_print "${cert_numbers[-1]}" | sed -E -e 's/^0+//' )"
+  fi
+  (( ++new_cert_number ))
+  new_cert_number="$( printf '%08d' "${new_cert_number}" )"
 
-    tp_util_files 'target_files' "${cert_config_or_csr}"
-    tp_util_files 'target_files_rel' "$( realpath --relative-to "${tp_base_dir}/acme/" "${target_files[file_path]}" )"
-    tp_util_files 'archive_files_rel' "certbot/custom/archive/${new_cert_number}.cert.pem"
-    tp_util_files 'archive_files' "$( realpath --relative-to "." "${tp_base_dir}/acme/${archive_files_rel[file_path]}" )"
+  tp_util_files 'target_files' "${cert_config_or_csr}"
+  tp_util_files 'target_files_rel' "$( realpath --relative-to "${tp_base_dir}/acme/" "${target_files[file_path]}" )"
+  tp_util_files 'archive_files_rel' "certbot/custom/archive/${new_cert_number}.cert.pem"
+  tp_util_files 'archive_files' "$( realpath --relative-to "." "${tp_base_dir}/acme/${archive_files_rel[file_path]}" )"
 
-    tp_msg "Archiving CSR, private key, and key passphrase in order to facilitate later certificate revocation..."
-    cp "${target_files[csr_pem_path]}" "${archive_files[csr_pem_path]}"
-    tp_succ "Archived CSR in '${archive_files[csr_pem_path]}'."
-    cp "${target_files[key_pem_path]}" "${archive_files[key_pem_path]}"
-    tp_succ "Archived private key in '${archive_files[key_pem_path]}'."
-    cp "${target_files[key_pass_path]}" "${archive_files[key_pass_path]}"
-    tp_succ "Archived key passphrase in '${archive_files[key_pass_path]}'."
+  tp_msg "Archiving CSR, private key, and key passphrase in order to facilitate later certificate revocation..."
+  cp "${target_files[csr_pem_path]}" "${archive_files[csr_pem_path]}"
+  tp_succ "Archived CSR in '${archive_files[csr_pem_path]}'."
+  cp "${target_files[key_pem_path]}" "${archive_files[key_pem_path]}"
+  tp_succ "Archived private key in '${archive_files[key_pem_path]}'."
+  cp "${target_files[key_pass_path]}" "${archive_files[key_pass_path]}"
+  tp_succ "Archived key passphrase in '${archive_files[key_pass_path]}'."
 
-    tp_msg "Signing CSR from '${target_files[csr_pem_path]}' with ACME..."
+  tp_msg "Signing CSR from '${target_files[csr_pem_path]}' with ACME..."
 
-    (
-        cd "${tp_base_dir}/acme/"
-        tp_util_run \
-            certbot certonly \
-                --config "certbot/cli.ini" \
-                "${tp_acme_certbot_opts[@]}" \
-                --csr "${target_files_rel[csr_pem_path]}" \
-                --cert-path "${archive_files_rel[cert_pem_path]}" \
-                --chain-path "${archive_files_rel[chain_pem_path]}" \
-                --fullchain-path "${archive_files_rel[fullchain_pem_path]}"
-    )
+  (
+    cd "${tp_base_dir}/acme/"
+    tp_util_run \
+      certbot certonly \
+        --config "certbot/cli.ini" \
+        "${tp_acme_certbot_opts[@]}" \
+        --csr "${target_files_rel[csr_pem_path]}" \
+        --cert-path "${archive_files_rel[cert_pem_path]}" \
+        --chain-path "${archive_files_rel[chain_pem_path]}" \
+        --fullchain-path "${archive_files_rel[fullchain_pem_path]}"
+  )
 
-    tp_succ "New certificate in '${archive_files[cert_pem_path]}'."
-    tp_succ "New certificate chain in '${archive_files[chain_pem_path]}'."
-    tp_succ "New certificate full-chain in '${archive_files[fullchain_pem_path]}'."
+  tp_succ "New certificate in '${archive_files[cert_pem_path]}'."
+  tp_succ "New certificate chain in '${archive_files[chain_pem_path]}'."
+  tp_succ "New certificate full-chain in '${archive_files[fullchain_pem_path]}'."
 
-    tp_print
-    tp_cert_link "${archive_files[file_path]}" "${target_files[file_path]}"
+  tp_print
+  tp_cert_link "${archive_files[file_path]}" "${target_files[file_path]}"
 
-    tp_print
-    tp_cert_show "${target_files[cert_pem_path]}"
-    tp_print
-    tp_cert_fingerprint "${target_files[cert_pem_path]}"
+  tp_print
+  tp_cert_show "${target_files[cert_pem_path]}"
+  tp_print
+  tp_cert_fingerprint "${target_files[cert_pem_path]}"
 }
 
 function tp_acme_renew {
-    tp_msg "Renewing all certificates that Certbot manages in a lineage..."
+  tp_msg "Renewing all certificates that Certbot manages in a lineage..."
 
-    (
-        cd "${tp_base_dir}/acme/"
-        tp_util_run \
-            certbot renew \
-                --config "certbot/cli.ini"
-    )
+  (
+    cd "${tp_base_dir}/acme/"
+    tp_util_run \
+      certbot renew \
+        --config "certbot/cli.ini"
+  )
 
-    tp_succ "Certbot certificate renewal done."
-    tp_msg "No need to adjust any certificate links. The new certs are available at the same place in Certbot's live directory at '${tp_base_dir}/acme/certbot/conf/live/${certbot_lineage}'."
+  tp_succ "Certbot certificate renewal done."
+  tp_msg "No need to adjust any certificate links. The new certs are available at the same place in Certbot's live directory at '${tp_base_dir}/acme/certbot/conf/live/${certbot_lineage}'."
 }
 
 function tp_acme_revoke {
-    local cert_file="$1"
+  local cert_file="$1"
 
-    # handle special keywords for mass-revocation
-    if [[ "${cert_file}" == @(all|certbot|csr) ]]
+  # handle special keywords for mass-revocation
+  if [[ "${cert_file}" == @(all|certbot|csr) ]]
+  then
+    local status=0
+    "tp_acme_revoke_${cert_file}" || status=$?
+    tp_print
+
+    if [[ "${status}" == '0' ]]
     then
-        local status=0
-        "tp_acme_revoke_${cert_file}" || status=$?
-        tp_print
-
-        if [[ "${status}" == '0' ]]
-        then
-            tp_succ "Successfully revoked all given certificates."
-        else
-            tp_warn "Tried to revoke given certificates, but revocation has failed for some of them! Check above outputs!"
-        fi
-        return "${status}"
+      tp_succ "Successfully revoked all given certificates."
+    else
+      tp_warn "Tried to revoke given certificates, but revocation has failed for some of them! Check above outputs!"
     fi
+    return "${status}"
+  fi
 
-    tp_util_files 'source_files' "${cert_file}"
-    tp_util_files_check 'source_files' 'file_path' "No certificate given to revoke! Specify the certificate (.pem) file!" || return $?
-    [[ "${cert_file}" =~ [.]pem$ ]] || { tp_err "Revoking given file '${cert_file}' is not supported! Specify a certificate (.pem) file instead!"; return 1; }
-    tp_util_files_check 'source_files' 'file_stat=f' "Given certificate file '${cert_file}' does not exist!" || return $?
+  tp_util_files 'source_files' "${cert_file}"
+  tp_util_files_check 'source_files' 'file_path' "No certificate given to revoke! Specify the certificate (.pem) file!" || return $?
+  [[ "${cert_file}" =~ [.]pem$ ]] || { tp_err "Revoking given file '${cert_file}' is not supported! Specify a certificate (.pem) file instead!"; return 1; }
+  tp_util_files_check 'source_files' 'file_stat=f' "Given certificate file '${cert_file}' does not exist!" || return $?
 
-    tp_util_files 'rel_files' "$( realpath --relative-to "${tp_base_dir}/acme/" "${source_files[file_path]}" )"
+  tp_util_files 'rel_files' "$( realpath --relative-to "${tp_base_dir}/acme/" "${source_files[file_path]}" )"
 
-    tp_msg "Trying to revoke certificate in '${cert_file}', using existing ACME account..."
-    (
-        cd "${tp_base_dir}/acme/"
-        tp_util_run \
-            certbot revoke\
-                --config "certbot/cli.ini" \
-                --cert-path "${rel_files[file_path]}"
-    ) \
-    && { tp_succ "Successfully used ACME account to revoke certificate in '${cert_file}'."; return 0; }
-    tp_warn "Revoking certificate has failed! See above Certbot outputs."
+  tp_msg "Trying to revoke certificate in '${cert_file}', using existing ACME account..."
+  (
+    cd "${tp_base_dir}/acme/"
+    tp_util_run \
+      certbot revoke\
+        --config "certbot/cli.ini" \
+        --cert-path "${rel_files[file_path]}"
+  ) \
+  && { tp_succ "Successfully used ACME account to revoke certificate in '${cert_file}'."; return 0; }
+  tp_warn "Revoking certificate has failed! See above Certbot outputs."
 
-    local private_key_file=''
-    if [[ -f "${source_files[key_pem_path]}" ]]
+  local private_key_file=''
+  if [[ -f "${source_files[key_pem_path]}" ]]
+  then
+    private_key_file="private/${source_files[key_pem_file]}"
+  elif [[ "${source_files[file]}" == cert*.pem ]]
+  then
+    local candidate_file="$( tp_print "${source_files[file]}" | sed -e 's/^cert/privkey/' )"
+    if [[ -f "${source_files[dir]}/${candidate_file}" ]]
     then
-        private_key_file="private/${source_files[key_pem_file]}"
-    elif [[ "${source_files[file]}" == cert*.pem ]]
-    then
-        local candidate_file="$( tp_print "${source_files[file]}" | sed -e 's/^cert/privkey/' )"
-        if [[ -f "${source_files[dir]}/${candidate_file}" ]]
-        then
-            private_key_file="${candidate_file}"
-        fi
+      private_key_file="${candidate_file}"
     fi
+  fi
 
-    if [[ -z ${private_key_file} ]]
-    then
-        tp_err "Could not retry revoking certificate based on its private key, because corresponding private key file could not be found by naming conventions!"
-        return 1
-    fi
-
-    tp_msg "Retrying to revoke certificate, using its private key found in '${source_files[dir]}/${private_key_file}'..."
-    (
-        cd "${tp_base_dir}/acme/"
-        tp_util_run \
-            certbot revoke \
-                --config "certbot/cli.ini" \
-                --cert-path "${rel_files[file_path]}" \
-                --key-path "${rel_files[dir]}/${private_key_file}"
-    ) \
-    && { tp_succ "Successfully used certificate's private key to revoke certificate in '${cert_file}'."; return 0; }
-
-    tp_err "Revoking certificate has failed again! See above Certbot outputs. Giving up."
+  if [[ -z ${private_key_file} ]]
+  then
+    tp_err "Could not retry revoking certificate based on its private key, because corresponding private key file could not be found by naming conventions!"
     return 1
+  fi
+
+  tp_msg "Retrying to revoke certificate, using its private key found in '${source_files[dir]}/${private_key_file}'..."
+  (
+    cd "${tp_base_dir}/acme/"
+    tp_util_run \
+      certbot revoke \
+        --config "certbot/cli.ini" \
+        --cert-path "${rel_files[file_path]}" \
+        --key-path "${rel_files[dir]}/${private_key_file}"
+  ) \
+  && { tp_succ "Successfully used certificate's private key to revoke certificate in '${cert_file}'."; return 0; }
+
+  tp_err "Revoking certificate has failed again! See above Certbot outputs. Giving up."
+  return 1
 }
 
 function tp_acme_revoke_all {
-    local status=0
-    tp_msg "Revoking all archived certificates that have been signed with ACME..."
-    tp_print
-    tp_acme_revoke_certbot || status=$?
-    tp_print
-    tp_acme_revoke_csr || status=$?
-    return "${status}"
+  local status=0
+  tp_msg "Revoking all archived certificates that have been signed with ACME..."
+  tp_print
+  tp_acme_revoke_certbot || status=$?
+  tp_print
+  tp_acme_revoke_csr || status=$?
+  return "${status}"
 }
 
 function tp_acme_revoke_certbot {
-    tp_msg "Revoking Certbot's archived certificates that have been signed with ACME..."
-    tp_print
+  tp_msg "Revoking Certbot's archived certificates that have been signed with ACME..."
+  tp_print
 
-    local status=0
-    local archive_dir="${tp_base_dir}/acme/certbot/conf/archive"
-    if [[ -d "${archive_dir}" ]]
-    then
-        for lineage_dir in $( find "${archive_dir}" -mindepth 1 -maxdepth 1 -type d | sort )
-        do
-            for archived_cert_file in $( find "${lineage_dir}" -type f -name 'cert*.pem' | sort )
-            do
-                tp_acme_revoke "${archived_cert_file}" || status=$?
-                tp_print
-            done
-        done
-    fi
-    return "${status}"
+  local status=0
+  local archive_dir="${tp_base_dir}/acme/certbot/conf/archive"
+  if [[ -d "${archive_dir}" ]]
+  then
+    for lineage_dir in $( find "${archive_dir}" -mindepth 1 -maxdepth 1 -type d | sort )
+    do
+      for archived_cert_file in $( find "${lineage_dir}" -type f -name 'cert*.pem' | sort )
+      do
+        tp_acme_revoke "${archived_cert_file}" || status=$?
+        tp_print
+      done
+    done
+  fi
+  return "${status}"
 }
 
 function tp_acme_revoke_csr {
-    tp_msg "Revoking TP archived certificates that have been signed with ACME using a custom CSR..."
-    tp_print
+  tp_msg "Revoking TP archived certificates that have been signed with ACME using a custom CSR..."
+  tp_print
 
-    local status=0
-    local archive_dir="${tp_base_dir}/acme/certbot/custom/archive"
-    if [[ -d "${archive_dir}" ]]
-    then
-        for archived_cert_file in $( find "${archive_dir}" -type f -name '*.cert.pem' | sort )
-        do
-            tp_acme_revoke "${archived_cert_file}" || status=$?
-            tp_print
-        done
-    fi
-    return "${status}"
+  local status=0
+  local archive_dir="${tp_base_dir}/acme/certbot/custom/archive"
+  if [[ -d "${archive_dir}" ]]
+  then
+    for archived_cert_file in $( find "${archive_dir}" -type f -name '*.cert.pem' | sort )
+    do
+      tp_acme_revoke "${archived_cert_file}" || status=$?
+      tp_print
+    done
+  fi
+  return "${status}"
 }
 
 function tp_acme_clean {
-    tp_msg "Cleaning transient ACME and Certbot files..."
-    rm -f "${tp_base_dir}/acme/certbot/cli.ini"
-    find "${tp_base_dir}/acme/certbot" -mindepth 1 -type d -and \
-        -not '(' \
-            -path '*/conf' \
-            -or -path '*/conf/accounts' -or -path '*/conf/accounts/*' \
-            -or -path '*/conf/archive' -or -path '*/conf/archive/*' \
-            -or -path '*/custom' \
-            -or -path '*/custom/archive' -or -path '*/custom/archive/*' \
-        ')' \
-        | xargs rm -rf
+  tp_msg "Cleaning transient ACME and Certbot files..."
+  rm -f "${tp_base_dir}/acme/certbot/cli.ini"
+  find "${tp_base_dir}/acme/certbot" -mindepth 1 -type d -and \
+    -not '(' \
+      -path '*/conf' \
+      -or -path '*/conf/accounts' -or -path '*/conf/accounts/*' \
+      -or -path '*/conf/archive' -or -path '*/conf/archive/*' \
+      -or -path '*/custom' \
+      -or -path '*/custom/archive' -or -path '*/custom/archive/*' \
+    ')' \
+    | xargs rm -rf
 
-    tp_msg "Cleaning transient files of nginx-based 'http-01' challenges server..."
-    rm -rf "${tp_base_dir}/acme/challenges/http-01/public/.well-known"
-    tp_server_nginx_clean "${tp_base_dir}/acme/challenges/http-01"
+  tp_msg "Cleaning transient files of nginx-based 'http-01' challenges server..."
+  rm -rf "${tp_base_dir}/acme/challenges/http-01/public/.well-known"
+  tp_server_nginx_clean "${tp_base_dir}/acme/challenges/http-01"
 }
 
 function tp_acme_check_env {
-    local status=0
+  local status=0
 
-    # resolve presets
-    if [[ "${TP_ACME_SERVER_URL}" =~ ^[-a-zA-Z0-9]+$ ]]
-    then
-        case "${TP_ACME_SERVER_URL}" in
-            'le' | 'letsencrypt' | 'lets-encrypt' )
-                TP_ACME_SERVER_URL='https://acme-v02.api.letsencrypt.org/directory'
-                ;;
-            'les' | 'letsencryptstaging' | 'lets-encrypt-staging' )
-                TP_ACME_SERVER_URL='https://acme-staging-v02.api.letsencrypt.org/directory'
-                ;;
-            * )
-                status=1
-                tp_err "Variable TP_ACME_SERVER_URL with value '${TP_ACME_SERVER_URL}' is neither an https url nor a valid preset!"
-                tp_msg "Run 'tp --help env' to a learn more about TP_ACME_SERVER_URL and supported presets."
-                ;;
-        esac
-    elif [[ ! "${TP_ACME_SERVER_URL}" =~ ^https:[/][/]([-a-zA-Z0-9]+[.])*[-a-zA-Z0-9]+(:[0-9]{1,5})?([/][-a-zA-Z0-9.+*_~]*)*$ ]]
-    then
+  # resolve presets
+  if [[ "${TP_ACME_SERVER_URL}" =~ ^[-a-zA-Z0-9]+$ ]]
+  then
+    case "${TP_ACME_SERVER_URL}" in
+      'le' | 'letsencrypt' | 'lets-encrypt' )
+        TP_ACME_SERVER_URL='https://acme-v02.api.letsencrypt.org/directory'
+        ;;
+      'les' | 'letsencryptstaging' | 'lets-encrypt-staging' )
+        TP_ACME_SERVER_URL='https://acme-staging-v02.api.letsencrypt.org/directory'
+        ;;
+      * )
         status=1
-        tp_err "Variable TP_ACME_SERVER_URL with value '${TP_ACME_SERVER_URL}' does not look like an absolute https url! Please note that user-info, query string, fragment, or exotic path characters are not allowed here!"
-        tp_msg "Run 'tp --help env' to a learn more about TP_ACME_SERVER_URL."
-    fi
+        tp_err "Variable TP_ACME_SERVER_URL with value '${TP_ACME_SERVER_URL}' is neither an https url nor a valid preset!"
+        tp_msg "Run 'tp --help env' to a learn more about TP_ACME_SERVER_URL and supported presets."
+        ;;
+    esac
+  elif [[ ! "${TP_ACME_SERVER_URL}" =~ ^https:[/][/]([-a-zA-Z0-9]+[.])*[-a-zA-Z0-9]+(:[0-9]{1,5})?([/][-a-zA-Z0-9.+*_~]*)*$ ]]
+  then
+    status=1
+    tp_err "Variable TP_ACME_SERVER_URL with value '${TP_ACME_SERVER_URL}' does not look like an absolute https url! Please note that user-info, query string, fragment, or exotic path characters are not allowed here!"
+    tp_msg "Run 'tp --help env' to a learn more about TP_ACME_SERVER_URL."
+  fi
 
-    if [[ ! "${TP_ACME_ACCOUNT_EMAIL}" =~ ^[-a-zA-Z0-9._%+]+@([-a-zA-Z0-9]+[.])*[-a-zA-Z0-9]+$ ]]
-    then
-        status=1
-        tp_err "Variable TP_ACME_ACCOUNT_EMAIL with value '${TP_ACME_ACCOUNT_EMAIL}' does not look like an email address!"
-    fi
+  if [[ ! "${TP_ACME_ACCOUNT_EMAIL}" =~ ^[-a-zA-Z0-9._%+]+@([-a-zA-Z0-9]+[.])*[-a-zA-Z0-9]+$ ]]
+  then
+    status=1
+    tp_err "Variable TP_ACME_ACCOUNT_EMAIL with value '${TP_ACME_ACCOUNT_EMAIL}' does not look like an email address!"
+  fi
 
-    return "${status}"
+  return "${status}"
 }
 
 function tp_acme_certbot_cert_link {
-    local source="$1"
-    local target="$2"
+  local source="$1"
+  local target="$2"
 
-    tp_util_files 'target_files' "${target}"
+  tp_util_files 'target_files' "${target}"
 
-    ln -srf "${source}/privkey.pem" "${target_files[key_pem_path]}"
-    tp_msg "Linked new private key into '${target_files[key_pem_path]}'."
-    ln -srf "${source}/cert.pem" "${target_files[cert_pem_path]}"
-    tp_msg "Linked new certificate into '${target_files[cert_pem_path]}'."
-    ln -srf "${source}/chain.pem" "${target_files[chain_pem_path]}"
-    tp_msg "Linked new certificate chain into '${target_files[chain_pem_path]}'."
-    ln -srf "${source}/fullchain.pem" "${target_files[fullchain_pem_path]}"
-    tp_msg "Linked new certificate full-chain into '${target_files[fullchain_pem_path]}'."
+  ln -srf "${source}/privkey.pem" "${target_files[key_pem_path]}"
+  tp_msg "Linked new private key into '${target_files[key_pem_path]}'."
+  ln -srf "${source}/cert.pem" "${target_files[cert_pem_path]}"
+  tp_msg "Linked new certificate into '${target_files[cert_pem_path]}'."
+  ln -srf "${source}/chain.pem" "${target_files[chain_pem_path]}"
+  tp_msg "Linked new certificate chain into '${target_files[chain_pem_path]}'."
+  ln -srf "${source}/fullchain.pem" "${target_files[fullchain_pem_path]}"
+  tp_msg "Linked new certificate full-chain into '${target_files[fullchain_pem_path]}'."
 }
 
 
@@ -1338,198 +1338,198 @@ function tp_acme_certbot_cert_link {
 # TP server sub-commands
 
 function tp_server {
-    local command="$1"
-    shift || true
+  local command="$1"
+  shift || true
 
-    tp_help_if_needed "${tp_base_dir}/server/README.md" '-1' || return 0
+  tp_help_if_needed "${tp_base_dir}/server/README.md" '-1' || return 0
 
-    case "${command}" in
+  case "${command}" in
 
-        'init' | 'clean' )
-            "tp_server_${command}" "$@"
-            ;;
+    'init' | 'clean' )
+      "tp_server_${command}" "$@"
+      ;;
 
-        'run' | 'start' | 'reload' | 'stop' )
-            local server_name="$1"
-            shift || true
-            if [[ -z "${server_name}" ]]
-            then
-                tp_err "Failed to ${command} demo server! No demo server name specified!"
-                tp_msg "Try one of the following:"
-                tp_server_list
-                return 1
-            fi
-            local server_dir="${tp_base_dir}/server/${server_name}"
-            if [[ ! -d "${server_dir}" ]]
-            then
-                tp_err "Failed to ${command} demo server '${server_name}'! Could not find expected demo server directory '${server_dir}'!"
-                tp_msg "Try one of the following instead:"
-                tp_server_list
-                return 1
-            fi
-            "tp_server_nginx_${command}" "${server_dir}" "$@"
-            ;;
-        * )
-            tp_help_with_commands 'tp server' 'TP Demo Server' "${command}" 'init run start reload stop clean'
-            ;;
-    esac
-}
-
-function tp_server_init {
-    local server_name="$1"
-    shift || true
-
-    if [[ -z "${server_name}" ]]
-    then
-        tp_msg "No demo server name specified. Proceeding to initialize all demo servers..."
-        for server_name in $( tp_server_list )
-        do
-            tp_print
-            tp_server_init "${server_name}" "$@"
-        done
-        return $?
-    fi
-
-    local server_dir="${tp_base_dir}/server/${server_name}"
-    if [[ ! -d "${server_dir}" ]]
-    then
-        tp_err "Failed to initialize demo server '${server_name}'! Could not find expected demo server directory '${server_dir}'!"
+    'run' | 'start' | 'reload' | 'stop' )
+      local server_name="$1"
+      shift || true
+      if [[ -z "${server_name}" ]]
+      then
+        tp_err "Failed to ${command} demo server! No demo server name specified!"
+        tp_msg "Try one of the following:"
+        tp_server_list
+        return 1
+      fi
+      local server_dir="${tp_base_dir}/server/${server_name}"
+      if [[ ! -d "${server_dir}" ]]
+      then
+        tp_err "Failed to ${command} demo server '${server_name}'! Could not find expected demo server directory '${server_dir}'!"
         tp_msg "Try one of the following instead:"
         tp_server_list
         return 1
-    fi
+      fi
+      "tp_server_nginx_${command}" "${server_dir}" "$@"
+      ;;
+    * )
+      tp_help_with_commands 'tp server' 'TP Demo Server' "${command}" 'init run start reload stop clean'
+      ;;
+  esac
+}
 
-    tp_msg "Initializing demo server '${server_name}'..."
-    tp_server_nginx_init "${server_dir}" "$@"
+function tp_server_init {
+  local server_name="$1"
+  shift || true
 
-    tp_print
-    tp_msg "Creating server certificates for demo server '${server_name}' using certificate provider '${tp_cert_provider}'..."
-    for config_file in $( find "${server_dir}" -path '*/tls/*' '(' -name 'server*.cert.conf' -or -name 'host*.cert.conf' ')' | sort )
+  if [[ -z "${server_name}" ]]
+  then
+    tp_msg "No demo server name specified. Proceeding to initialize all demo servers..."
+    for server_name in $( tp_server_list )
     do
-        "tp_server_cert_${tp_cert_provider}" "${config_file}" "$@"
+      tp_print
+      tp_server_init "${server_name}" "$@"
     done
+    return $?
+  fi
 
-    tp_util_run_hook "${server_dir}/tp-init-hook.sh" "init hook for server '${server_name}'" "$@"
+  local server_dir="${tp_base_dir}/server/${server_name}"
+  if [[ ! -d "${server_dir}" ]]
+  then
+    tp_err "Failed to initialize demo server '${server_name}'! Could not find expected demo server directory '${server_dir}'!"
+    tp_msg "Try one of the following instead:"
+    tp_server_list
+    return 1
+  fi
+
+  tp_msg "Initializing demo server '${server_name}'..."
+  tp_server_nginx_init "${server_dir}" "$@"
+
+  tp_print
+  tp_msg "Creating server certificates for demo server '${server_name}' using certificate provider '${tp_cert_provider}'..."
+  for config_file in $( find "${server_dir}" -path '*/tls/*' '(' -name 'server*.cert.conf' -or -name 'host*.cert.conf' ')' | sort )
+  do
+    "tp_server_cert_${tp_cert_provider}" "${config_file}" "$@"
+  done
+
+  tp_util_run_hook "${server_dir}/tp-init-hook.sh" "init hook for server '${server_name}'" "$@"
 }
 
 function tp_server_clean {
-    local server_name="$1"
+  local server_name="$1"
 
-    if [[ -z "${server_name}" ]]
-    then
-        tp_msg "No demo server name specified. Proceeding to clean all demo servers..."
-        for server_name in $( tp_server_list )
-        do
-            tp_server_clean "${server_name}"
-        done
-        return $?
-    fi
+  if [[ -z "${server_name}" ]]
+  then
+    tp_msg "No demo server name specified. Proceeding to clean all demo servers..."
+    for server_name in $( tp_server_list )
+    do
+      tp_server_clean "${server_name}"
+    done
+    return $?
+  fi
 
-    local server_dir="${tp_base_dir}/server/${server_name}"
-    if [[ ! -d "${server_dir}" ]]
-    then
-        tp_err "Failed to clean up demo server '${server_name}'! Could not find expected demo server directory '${server_dir}'!"
-        tp_msg "Omit the the demo server name to clean up all ot them. Or, try one of the following instead:"
-        tp_server_list
-        return 1
-    fi
+  local server_dir="${tp_base_dir}/server/${server_name}"
+  if [[ ! -d "${server_dir}" ]]
+  then
+    tp_err "Failed to clean up demo server '${server_name}'! Could not find expected demo server directory '${server_dir}'!"
+    tp_msg "Omit the the demo server name to clean up all ot them. Or, try one of the following instead:"
+    tp_server_list
+    return 1
+  fi
 
-    tp_msg "Cleaning transient files of demo server '${server_name}'..."
-    tp_server_nginx_clean "${server_dir}"
-    tp_cert clean "${server_dir}"
-    tp_util_run_hook "${server_dir}/tp-clean-hook.sh" "clean hook for server '${server_name}'" "$@"
+  tp_msg "Cleaning transient files of demo server '${server_name}'..."
+  tp_server_nginx_clean "${server_dir}"
+  tp_cert clean "${server_dir}"
+  tp_util_run_hook "${server_dir}/tp-clean-hook.sh" "clean hook for server '${server_name}'" "$@"
 }
 
 function tp_server_check_env {
-    local status=0
+  local status=0
 
-    tp_cert_check_env || status=1
-    [[ "${TP_SERVER_LISTEN_ADDRESS}" =~ ^([*]|[0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3})$ ]] \
-        || { status=1; tp_err "Variable TP_SERVER_LISTEN_ADDRESS with value '${TP_SERVER_LISTEN_ADDRESS}' does not look like an IP address!"; }
-    [[ "${TP_SERVER_HTTP_PORT}" =~ ^[0-9]{1,5}$ ]] \
-        || { status=1; tp_err "Variable TP_SERVER_HTTP_PORT with value '${TP_SERVER_HTTP_PORT}' does not look like a network port number!"; }
-    [[ "${TP_SERVER_HTTPS_PORT}" =~ ^[0-9]{1,5}$ ]] \
-        || { status=1; tp_err "Variable TP_SERVER_HTTPS_PORT with value '${TP_SERVER_HTTPS_PORT}' does not look like a network port number!"; }
+  tp_cert_check_env || status=1
+  [[ "${TP_SERVER_LISTEN_ADDRESS}" =~ ^([*]|[0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3})$ ]] \
+    || { status=1; tp_err "Variable TP_SERVER_LISTEN_ADDRESS with value '${TP_SERVER_LISTEN_ADDRESS}' does not look like an IP address!"; }
+  [[ "${TP_SERVER_HTTP_PORT}" =~ ^[0-9]{1,5}$ ]] \
+    || { status=1; tp_err "Variable TP_SERVER_HTTP_PORT with value '${TP_SERVER_HTTP_PORT}' does not look like a network port number!"; }
+  [[ "${TP_SERVER_HTTPS_PORT}" =~ ^[0-9]{1,5}$ ]] \
+    || { status=1; tp_err "Variable TP_SERVER_HTTPS_PORT with value '${TP_SERVER_HTTPS_PORT}' does not look like a network port number!"; }
 
-    return "${status}"
+  return "${status}"
 }
 
 function tp_server_cert_selfsign {
-    tp_cert_selfsign "$@"
+  tp_cert_selfsign "$@"
 }
 
 function tp_server_cert_ca {
-    tp_ca_sign "${tp_cert_provider_opt:-ca4servers}" "$@"
+  tp_ca_sign "${tp_cert_provider_opt:-ca4servers}" "$@"
 }
 
 function tp_server_cert_acme {
-    tp_acme_sign "$@"
+  tp_acme_sign "$@"
 }
 
 function tp_server_nginx_init {
-    local server_dir="$1"
+  local server_dir="$1"
 
-    for config_file_template in $( find "${server_dir}" -type f -and -name '*.tmpl' )
-    do
-        tp_server_check_env
-        tp_util_template "${config_file_template}" TP_SERVER_DOMAIN TP_SERVER_LISTEN_ADDRESS TP_SERVER_HTTP_PORT TP_SERVER_HTTPS_PORT
-    done
+  for config_file_template in $( find "${server_dir}" -type f -and -name '*.tmpl' )
+  do
+    tp_server_check_env
+    tp_util_template "${config_file_template}" TP_SERVER_DOMAIN TP_SERVER_LISTEN_ADDRESS TP_SERVER_HTTP_PORT TP_SERVER_HTTPS_PORT
+  done
 
-    mkdir -p "${server_dir}/var/logs"
+  mkdir -p "${server_dir}/var/logs"
 }
 
 function tp_server_nginx_run {
-    local server_dir="$1"
-    tp_msg "Running nginx server at '${server_dir}' in the foreground..."
-    nginx -p "${server_dir}" -c 'nginx.conf' -g 'daemon off;'
+  local server_dir="$1"
+  tp_msg "Running nginx server at '${server_dir}' in the foreground..."
+  nginx -p "${server_dir}" -c 'nginx.conf' -g 'daemon off;'
 }
 
 function tp_server_nginx_start {
-    local server_dir="$1"
-    tp_msg "Starting nginx server at '${server_dir}' in the background..."
-    nginx -p "${server_dir}" -c 'nginx.conf' -g 'daemon on;'
+  local server_dir="$1"
+  tp_msg "Starting nginx server at '${server_dir}' in the background..."
+  nginx -p "${server_dir}" -c 'nginx.conf' -g 'daemon on;'
 }
 
 function tp_server_nginx_reload {
-    local server_dir="$1"
-    tp_msg "Reloading configuration of nginx server at '${server_dir}'..."
-    nginx -p "${server_dir}" -c 'nginx.conf' -s 'reload'
+  local server_dir="$1"
+  tp_msg "Reloading configuration of nginx server at '${server_dir}'..."
+  nginx -p "${server_dir}" -c 'nginx.conf' -s 'reload'
 }
 
 function tp_server_nginx_stop {
-    local server_dir="$1"
-    tp_msg "Stopping nginx server at '${server_dir}'..."
-    nginx -p "${server_dir}" -c 'nginx.conf' -s 'stop'
+  local server_dir="$1"
+  tp_msg "Stopping nginx server at '${server_dir}'..."
+  nginx -p "${server_dir}" -c 'nginx.conf' -s 'stop'
 }
 
 function tp_server_nginx_clean {
-    local server_dir="$1"
+  local server_dir="$1"
 
-    local pid_file="${server_dir}/var/nginx.pid"
-    if [[ -f "${pid_file}" ]]
+  local pid_file="${server_dir}/var/nginx.pid"
+  if [[ -f "${pid_file}" ]]
+  then
+    local pid="$(< "${pid_file}" )"
+    if comm=$( ps --format 'comm=' --pid "${pid}" ) && [[ "${comm}" == 'nginx' ]]
     then
-        local pid="$(< "${pid_file}" )"
-        if comm=$( ps --format 'comm=' --pid "${pid}" ) && [[ "${comm}" == 'nginx' ]]
-        then
-            tp_err "Looks like server in '${server_dir}' is still running with PID '${pid}'."
-            tp_err "Aborting clean-up! Stop the server or remove PID file '${pid_file}' before trying again!"
-            return 1
-        else
-            tp_warn "PID '${pid}' does not point to an nginx process anymore. Removing dangling PID file '${pid_file}'..."
-            rm -f "${pid_file}"
-        fi
+      tp_err "Looks like server in '${server_dir}' is still running with PID '${pid}'."
+      tp_err "Aborting clean-up! Stop the server or remove PID file '${pid_file}' before trying again!"
+      return 1
+    else
+      tp_warn "PID '${pid}' does not point to an nginx process anymore. Removing dangling PID file '${pid_file}'..."
+      rm -f "${pid_file}"
     fi
+  fi
 
-    for config_file_template in $( find "${server_dir}" -type f -and -name '*.tmpl' -and -not -name '*.cert.conf.tmpl' )
-    do
-        tp_util_template_clean "${config_file_template}"
-    done
+  for config_file_template in $( find "${server_dir}" -type f -and -name '*.tmpl' -and -not -name '*.cert.conf.tmpl' )
+  do
+    tp_util_template_clean "${config_file_template}"
+  done
 
-    rm -rf "${server_dir}/var"
+  rm -rf "${server_dir}/var"
 }
 
 function tp_server_list {
-    find "${tp_base_dir}/server" -mindepth 1 -maxdepth 1 -type d  -exec basename '{}' ';' | sort
+  find "${tp_base_dir}/server" -mindepth 1 -maxdepth 1 -type d  -exec basename '{}' ';' | sort
 }
 
 
@@ -1537,14 +1537,14 @@ function tp_server_list {
 # TP clean command
 
 function tp_clean {
-    tp_help_if_needed "${tp_base_dir}/bin/README.md" '1' || return 0
+  tp_help_if_needed "${tp_base_dir}/bin/README.md" '1' || return 0
 
-    tp_msg "Cleaning up everything..."
+  tp_msg "Cleaning up everything..."
 
-    tp_server clean
-    tp_acme clean
-    tp_ca clean
-    tp_cert clean
+  tp_server clean
+  tp_acme clean
+  tp_ca clean
+  tp_cert clean
 }
 
 
@@ -1552,279 +1552,279 @@ function tp_clean {
 # general TP utility functions
 
 function tp_util_run {
-    tp_util_run_capture '' "$@"
+  tp_util_run_capture '' "$@"
 }
 
 function tp_util_run_capture {
-    local varname="$1"
-    shift
+  local varname="$1"
+  shift
 
-    local dir_rel="$( realpath --relative-to="${tp_pwd}" "$PWD" )"
-    if [[ ${dir_rel} == '.' ]]
-    then
-        dir_rel=''
-    fi
+  local dir_rel="$( realpath --relative-to="${tp_pwd}" "$PWD" )"
+  if [[ ${dir_rel} == '.' ]]
+  then
+    dir_rel=''
+  fi
 
-    local prompt='$'
-    if [[ "$( id --user )" == '0' ]]
-    then
-        prompt='#'
-    fi
+  local prompt='$'
+  if [[ "$( id --user )" == '0' ]]
+  then
+    prompt='#'
+  fi
 
-    if [[ -n "${tp_step}" ]]
-    then
-        tp_prompt "Preparing to run below command, hit any key to continue!"
-    fi
+  if [[ -n "${tp_step}" ]]
+  then
+    tp_prompt "Preparing to run below command, hit any key to continue!"
+  fi
 
-    tp_print
-    if [[ -n "${TP_COLOR}" ]]
+  tp_print
+  if [[ -n "${TP_COLOR}" ]]
+  then
+    tp_print $'\e[1;34m'"${dir_rel}"$'\e[0m'"${prompt}"$'\e[1m'"$( tp_util_quote "$@" )"$'\e[0m'
+  else
+    tp_print "${dir_rel}${prompt}$( tp_util_quote "$@" )"
+  fi
+
+  if [[ -n "${tp_step}" ]]
+  then
+    read -s -n 1
+  fi
+
+  local status=0
+  tp_print
+  if [[ -z "${varname}" ]]
+  then
+    # run the actual command
+    "$@" || status=$?
+  else
+    # run the actual command, capture its stdout, then print it to own stdout
+    local -n varref="${varname}"
+    varref="$( "$@" )" || status=$?
+    tp_print "${varref}"
+  fi
+  tp_print
+
+  if [[ -n "${tp_step}" ]]
+  then
+    if [[ "${status}" == 0 ]]
     then
-        tp_print $'\e[1;34m'"${dir_rel}"$'\e[0m'"${prompt}"$'\e[1m'"$( tp_util_quote "$@" )"$'\e[0m'
+      tp_prompt "Successfully finished running the command, hit any key to continue!"
+      read -s -n 1
     else
-        tp_print "${dir_rel}${prompt}$( tp_util_quote "$@" )"
+      tp_prompt "Finished running the command with error status ${status}, hit any key to continue!"
+      read -s -n 1
     fi
+  fi
 
-    if [[ -n "${tp_step}" ]]
-    then
-        read -s -n 1
-    fi
-
-    local status=0
-    tp_print
-    if [[ -z "${varname}" ]]
-    then
-        # run the actual command
-        "$@" || status=$?
-    else
-        # run the actual command, capture its stdout, then print it to own stdout
-        local -n varref="${varname}"
-        varref="$( "$@" )" || status=$?
-        tp_print "${varref}"
-    fi
-    tp_print
-
-    if [[ -n "${tp_step}" ]]
-    then
-        if [[ "${status}" == 0 ]]
-        then
-            tp_prompt "Successfully finished running the command, hit any key to continue!"
-            read -s -n 1
-        else
-            tp_prompt "Finished running the command with error status ${status}, hit any key to continue!"
-            read -s -n 1
-        fi
-    fi
-
-    return "${status}"
+  return "${status}"
 }
 
 function tp_util_quote {
-    for array_member in "$@"
-    do
-        if [[ "${array_member}" =~ ^[-_=+a-zA-Z0-9]+$ ]]
-        then
-            echo -n " ${array_member}"
-        else
-            echo -n " ${array_member@Q}"
-        fi
-    done
+  for array_member in "$@"
+  do
+    if [[ "${array_member}" =~ ^[-_=+a-zA-Z0-9]+$ ]]
+    then
+      echo -n " ${array_member}"
+    else
+      echo -n " ${array_member@Q}"
+    fi
+  done
 }
 
 function tp_util_files {
-    local varname="$1"
-    local file_path="$2"
+  local varname="$1"
+  local file_path="$2"
 
-    # fail, if varname is missing
-    [[ -n "${varname}" ]]
+  # fail, if varname is missing
+  [[ -n "${varname}" ]]
 
-    declare -A -g "${varname}"
-    local -n varref="${varname}"
+  declare -A -g "${varname}"
+  local -n varref="${varname}"
 
-    # succeed, but leave variable empty, if file path is missing
-    [[ -n "${file_path}" ]] || return 0
+  # succeed, but leave variable empty, if file path is missing
+  [[ -n "${file_path}" ]] || return 0
 
-    # if given file-path is in a 'private' direcotry, use the parent directory instead
-    local dir="$( dirname "${file_path}" | sed -E -e 's/(^|[/])private$//' )"
-    local file="$( basename "${file_path}" )"
-    local name="$( tp_print "${file}" | sed -e 's/[.].*$//' )"
-    local suffix="$( tp_print "${file}" | sed -E -e 's/^[^.]*[.]?//' )"
-    local path="${dir}/${name}"
+  # if given file-path is in a 'private' direcotry, use the parent directory instead
+  local dir="$( dirname "${file_path}" | sed -E -e 's/(^|[/])private$//' )"
+  local file="$( basename "${file_path}" )"
+  local name="$( tp_print "${file}" | sed -e 's/[.].*$//' )"
+  local suffix="$( tp_print "${file}" | sed -E -e 's/^[^.]*[.]?//' )"
+  local path="${dir}/${name}"
 
-    varref=(
-        # name components
-        [name]="${name}"
-        [suffix]="${suffix}"
-        [dir]="${dir}"
-        [path]="${path}"
+  varref=(
+    # name components
+    [name]="${name}"
+    [suffix]="${suffix}"
+    [dir]="${dir}"
+    [path]="${path}"
 
-        # files (name + suffix)
-        [file]="${file}"
-        [cert_conf_file]="${name}.cert.conf"
-        [key_params_pem_file]="${name}.key.params.pem"
-        [key_pem_file]="${name}.key.pem"
-        [key_pass_file]="${name}.key.pass.txt"
-        [csr_pem_file]="${name}.csr.pem"
-        [cert_pem_file]="${name}.cert.pem"
-        [chain_pem_file]="${name}.chain.pem"
-        [fullchain_pem_file]="${name}.fullchain.pem"
+    # files (name + suffix)
+    [file]="${file}"
+    [cert_conf_file]="${name}.cert.conf"
+    [key_params_pem_file]="${name}.key.params.pem"
+    [key_pem_file]="${name}.key.pem"
+    [key_pass_file]="${name}.key.pass.txt"
+    [csr_pem_file]="${name}.csr.pem"
+    [cert_pem_file]="${name}.cert.pem"
+    [chain_pem_file]="${name}.chain.pem"
+    [fullchain_pem_file]="${name}.fullchain.pem"
 
-        # file paths (dir + name + suffix)
-        [file_path]="${file_path}"
-        [cert_conf_path]="${path}.cert.conf"
-        [key_params_pem_path]="${path}.key.params.pem"
-        [key_pem_path]="${dir}/private/${name}.key.pem"
-        [key_pass_path]="${dir}/private/${name}.key.pass.txt"
-        [csr_pem_path]="${path}.csr.pem"
-        [cert_pem_path]="${path}.cert.pem"
-        [chain_pem_path]="${path}.chain.pem"
-        [fullchain_pem_path]="${path}.fullchain.pem"
+    # file paths (dir + name + suffix)
+    [file_path]="${file_path}"
+    [cert_conf_path]="${path}.cert.conf"
+    [key_params_pem_path]="${path}.key.params.pem"
+    [key_pem_path]="${dir}/private/${name}.key.pem"
+    [key_pass_path]="${dir}/private/${name}.key.pass.txt"
+    [csr_pem_path]="${path}.csr.pem"
+    [cert_pem_path]="${path}.cert.pem"
+    [chain_pem_path]="${path}.chain.pem"
+    [fullchain_pem_path]="${path}.fullchain.pem"
 
-        # file statuses
-        [file_stat]="$( tp_util_files_stat "${file_path}" )"
-        [cert_conf_stat]="$( tp_util_files_stat "${path}.cert.conf" )"
-        [key_params_pem_stat]="$( tp_util_files_stat "${path}.key.params.pem" )"
-        [key_pem_stat]="$( tp_util_files_stat "${dir}/private/${name}.key.pem" )"
-        [key_pass_stat]="$( tp_util_files_stat "${dir}/private/${name}.key.pass.txt" )"
-        [csr_pem_stat]="$( tp_util_files_stat "${path}.csr.pem" )"
-        [cert_pem_stat]="$( tp_util_files_stat "${path}.cert.pem" )"
-        [chain_pem_stat]="$( tp_util_files_stat "${path}.chain.pem" )"
-        [fullchain_pem_stat]="$( tp_util_files_stat "${path}.fullchain.pem" )"
-    )
+    # file statuses
+    [file_stat]="$( tp_util_files_stat "${file_path}" )"
+    [cert_conf_stat]="$( tp_util_files_stat "${path}.cert.conf" )"
+    [key_params_pem_stat]="$( tp_util_files_stat "${path}.key.params.pem" )"
+    [key_pem_stat]="$( tp_util_files_stat "${dir}/private/${name}.key.pem" )"
+    [key_pass_stat]="$( tp_util_files_stat "${dir}/private/${name}.key.pass.txt" )"
+    [csr_pem_stat]="$( tp_util_files_stat "${path}.csr.pem" )"
+    [cert_pem_stat]="$( tp_util_files_stat "${path}.cert.pem" )"
+    [chain_pem_stat]="$( tp_util_files_stat "${path}.chain.pem" )"
+    [fullchain_pem_stat]="$( tp_util_files_stat "${path}.fullchain.pem" )"
+  )
 }
 
 function tp_util_files_stat {
-    local file_path="$1"
-    if [[ -f "${file_path}" ]]
-    then
-        tp_print 'f'
-    elif [[ -d "${file_path}" ]]
-    then
-        tp_print 'd'
-    elif [[ -e "${file_path}" ]]
-    then
-        tp_print 'e'
-    fi
+  local file_path="$1"
+  if [[ -f "${file_path}" ]]
+  then
+    tp_print 'f'
+  elif [[ -d "${file_path}" ]]
+  then
+    tp_print 'd'
+  elif [[ -e "${file_path}" ]]
+  then
+    tp_print 'e'
+  fi
 }
 
 function tp_util_files_check {
-    local varname="$1"
-    local check="$2"
-    local message="$3"
+  local varname="$1"
+  local check="$2"
+  local message="$3"
 
-    local check_name="$( tp_print "${check}" | sed -E -e 's/=.*$//' )"
-    local check_value="$( tp_print "${check}" | sed -E -e 's/^[^=]+(=|$)//' )"
+  local check_name="$( tp_print "${check}" | sed -E -e 's/=.*$//' )"
+  local check_value="$( tp_print "${check}" | sed -E -e 's/^[^=]+(=|$)//' )"
 
-    local -n varref="${varname}"
-    local actual_value="${varref["${check_name}"]}"
+  local -n varref="${varname}"
+  local actual_value="${varref["${check_name}"]}"
 
-    if [[ -n "${check_value}" ]]
-    then
-        # check for value match, if a check value was given
-        [[ "${actual_value}" == "${check_value}" ]] && return 0 || true
-    else
-        # check for non-empty, if no check value was given
-        [[ -n "${actual_value}" ]] && return 0 || true
+  if [[ -n "${check_value}" ]]
+  then
+    # check for value match, if a check value was given
+    [[ "${actual_value}" == "${check_value}" ]] && return 0 || true
+  else
+    # check for non-empty, if no check value was given
+    [[ -n "${actual_value}" ]] && return 0 || true
 
-    fi
+  fi
 
-    tp_err "${message}"
-    return 1
+  tp_err "${message}"
+  return 1
 }
 
 function tp_util_get_config_values {
-    local config_file="$1"
-    local key_regexp="$2"
-    local value_regexp="${3:-"[-a-zA-Z0-9]+"}"
+  local config_file="$1"
+  local key_regexp="$2"
+  local value_regexp="${3:-"[-a-zA-Z0-9]+"}"
 
-    local config_line_regex='^\s*('"${key_regexp}"')\s*=\s*('"${value_regexp}"')\s*$'
+  local config_line_regex='^\s*('"${key_regexp}"')\s*=\s*('"${value_regexp}"')\s*$'
 
-    # 1. pick lines starting with config key, followed by =, followed by config value
-    #    ignore surrounding whitespace and ignore which sections they are in
-    # 2. sort by config key
-    # 3. strip the config key and surrounding whitespace
-    # 4. remove duplicate config values
-    cat "${config_file}" \
-        | grep -E "${config_line_regex}" \
-        | sort \
-        | sed -E -e 's/'"${config_line_regex}"'/\2/' \
-        | awk '!uniq[$0]++' \
-        || true
+  # 1. pick lines starting with config key, followed by =, followed by config value
+  #  ignore surrounding whitespace and ignore which sections they are in
+  # 2. sort by config key
+  # 3. strip the config key and surrounding whitespace
+  # 4. remove duplicate config values
+  cat "${config_file}" \
+    | grep -E "${config_line_regex}" \
+    | sort \
+    | sed -E -e 's/'"${config_line_regex}"'/\2/' \
+    | awk '!uniq[$0]++' \
+    || true
 }
 
 function tp_util_remove_symlinks {
-    for file in "$@"
-    do
-        if [[ -L "${file}" ]]
-        then
-            tp_msg "Removing old symlink ${file} before creating a new file in its place..."
-            rm -rf "${file}"
-        fi
-    done
+  for file in "$@"
+  do
+    if [[ -L "${file}" ]]
+    then
+      tp_msg "Removing old symlink ${file} before creating a new file in its place..."
+      rm -rf "${file}"
+    fi
+  done
 }
 
 function tp_util_template {
-    if [[ $# -le 1 ]]
-    then
-        tp_err "Template util needs at least 2 arguments, one template file and multiple template variable names!"
-        return 1
-    fi
+  if [[ $# -le 1 ]]
+  then
+    tp_err "Template util needs at least 2 arguments, one template file and multiple template variable names!"
+    return 1
+  fi
 
-    local template_file="$1"
-    local target_file="$( tp_print "${template_file}" | sed -e 's/[.]tmpl$//' )"
+  local template_file="$1"
+  local target_file="$( tp_print "${template_file}" | sed -e 's/[.]tmpl$//' )"
 
-    shift
-    local var_names_array=( "$@" )
-    local var_names_string=''
-    for var_name in "${var_names_array[@]}"
-    do
-        var_names_string+='${'"${var_name}"'}'
-    done
+  shift
+  local var_names_array=( "$@" )
+  local var_names_string=''
+  for var_name in "${var_names_array[@]}"
+  do
+    var_names_string+='${'"${var_name}"'}'
+  done
 
-    tp_msg "Generating file ${target_file} from template... "
-    (
-        export "${var_names_array[@]}"
-        cat "${template_file}" | envsubst "${var_names_string}" > "${target_file}"
-    )
-    tp_succ "done."
+  tp_msg "Generating file ${target_file} from template... "
+  (
+    export "${var_names_array[@]}"
+    cat "${template_file}" | envsubst "${var_names_string}" > "${target_file}"
+  )
+  tp_succ "done."
 }
 
 function tp_util_template_clean {
-    local template_file="$1"
+  local template_file="$1"
 
-    if [[ -f "${template_file}" ]]
+  if [[ -f "${template_file}" ]]
+  then
+    local target_file="$( tp_print "${template_file}" | sed -e 's/[.]tmpl$//' )"
+    if [[ -f "${target_file}" ]]
     then
-        local target_file="$( tp_print "${template_file}" | sed -e 's/[.]tmpl$//' )"
-        if [[ -f "${target_file}" ]]
-        then
-            rm -f "${target_file}"
-        fi
+      rm -f "${target_file}"
     fi
+  fi
 }
 
 function tp_util_generate_hex_token {
-    local input="$1"
-    local size="${2:-16}"
-    tp_print "${input}" | openssl dgst -sha256 -r | { dd bs="${size}" count=1 2> /dev/null; } |  tr a-z A-Z
+  local input="$1"
+  local size="${2:-16}"
+  tp_print "${input}" | openssl dgst -sha256 -r | { dd bs="${size}" count=1 2> /dev/null; } |  tr a-z A-Z
 }
 
 function tp_util_run_hook {
-    local hook_script="$1"
-    local hook_name="${2:-"hook script '${hook_script}'"}"
+  local hook_script="$1"
+  local hook_name="${2:-"hook script '${hook_script}'"}"
 
-    # fail, if hook script name is missing
-    [[ -n "${hook_script}" ]]
+  # fail, if hook script name is missing
+  [[ -n "${hook_script}" ]]
 
-    # succeed, but do nothing, if hook script file does not exist
-    [[ -f "${hook_script}" ]] || return 0
+  # succeed, but do nothing, if hook script file does not exist
+  [[ -f "${hook_script}" ]] || return 0
 
-     # run the hook script in a sub-shell
-    tp_msg "Running ${hook_name}..."
-    tp_print
-    (
-        . ${hook_script}
-    )
-    tp_print
-    tp_succ "Done running ${hook_name}."
+   # run the hook script in a sub-shell
+  tp_msg "Running ${hook_name}..."
+  tp_print
+  (
+    . ${hook_script}
+  )
+  tp_print
+  tp_succ "Done running ${hook_name}."
 }
 
 
@@ -1832,71 +1832,71 @@ function tp_util_run_hook {
 # TP help system functions
 
 function tp_help_if_needed {
-    if [[ -n "${tp_help}" ]]
-    then
-        tp_print
-        tp_help_extract_markdown_code_block "$@"
-        tp_print
-        return 1
-    fi
+  if [[ -n "${tp_help}" ]]
+  then
+    tp_print
+    tp_help_extract_markdown_code_block "$@"
+    tp_print
+    return 1
+  fi
 }
 
 function tp_help_with_commands {
-    local parent_command="$1"
-    local parent_command_name="$2"
-    local given_command="$3"
-    local supported_commands="$4"
+  local parent_command="$1"
+  local parent_command_name="$2"
+  local given_command="$3"
+  local supported_commands="$4"
 
-    if [[ -n "${given_command}" ]]
-    then
-        tp_err "Unsupported ${parent_command_name} command '${given_command}'."
-        tp_msg "Try one of the following instead:"
-    else
-        tp_err "No ${parent_command_name} command given."
-        tp_msg "Try one of the following:"
-    fi
+  if [[ -n "${given_command}" ]]
+  then
+    tp_err "Unsupported ${parent_command_name} command '${given_command}'."
+    tp_msg "Try one of the following instead:"
+  else
+    tp_err "No ${parent_command_name} command given."
+    tp_msg "Try one of the following:"
+  fi
 
-    for supported_command in ${supported_commands}
-    do
-        tp_print "${supported_command}"
-    done
+  for supported_command in ${supported_commands}
+  do
+    tp_print "${supported_command}"
+  done
 
-    tp_msg "Or, run '${parent_command} --help' to learn more about these commands."
-    return 1
+  tp_msg "Or, run '${parent_command} --help' to learn more about these commands."
+  return 1
 }
 
 function tp_help_extract_markdown_code_block {
-    local markdown_file="$1"
-    local index="${2:-0}"
+  local markdown_file="$1"
+  local index="${2:-0}"
 
-    # fail, if no file given or file is missing
-    [[ -n "${markdown_file}" ]]
-    [[ -f "${markdown_file}" ]]
+  # fail, if no file given or file is missing
+  [[ -n "${markdown_file}" ]]
+  [[ -f "${markdown_file}" ]]
 
-    (
-        local blocks=()
-        unset current_block
+  (
+    local blocks=()
+    unset current_block
 
-        IFS=''
-        while read -r line
-        do
-            if [[ "${line}" =~ ^\`\`\`\s*$ ]]
-            then
-                if [[ -z "${current_block+x}" ]]
-                then
-                    local current_block=''
-                else
-                    blocks+=( "${current_block}" )
-                    unset current_block
-                fi
-            elif [[ -n "${current_block+x}" ]]
-            then
-                local current_block+="${line}"$'\n'
-            fi
-        done < "${markdown_file}"
+    IFS=''
+    while read -r line
+    do
+      if [[ "${line}" =~ ^\`\`\`\s*$ ]]
+      then
+        if [[ -z "${current_block+x}" ]]
+        then
+          local current_block=''
+        else
+          blocks+=( "${current_block}" )
+          unset current_block
+        fi
+      elif [[ -n "${current_block+x}" ]]
+      then
+        local current_block+="${line}"$'\n'
+      fi
+    done < "${markdown_file}"
 
-        echo -n "${blocks["${index}"]}"
-    )
+    echo -n "${blocks["${index}"]}"
+  )
 }
 
 
@@ -1904,52 +1904,52 @@ function tp_help_extract_markdown_code_block {
 # TP message functions
 
 function tp_print {
-    printf '%s\n' "$*"
+  printf '%s\n' "$*"
 }
 
 function tp_msg {
-    if [[ -n "${TP_COLOR}" ]]
-    then
-        tp_print $'\e[1;34m[TP]\e[1;36m'" $@"$'\e[0m'
-    else
-        tp_print "[TP] $@"
-    fi
+  if [[ -n "${TP_COLOR}" ]]
+  then
+    tp_print $'\e[1;34m[TP]\e[1;36m'" $@"$'\e[0m'
+  else
+    tp_print "[TP] $@"
+  fi
 }
 
 function tp_prompt {
-    if [[ -n "${TP_COLOR}" ]]
-    then
-        tp_print $'\e[1;34m[TP]\e[1;35m'" $@"$'\e[0m'
-    else
-        tp_print "[TP][?] $@"
-    fi
+  if [[ -n "${TP_COLOR}" ]]
+  then
+    tp_print $'\e[1;34m[TP]\e[1;35m'" $@"$'\e[0m'
+  else
+    tp_print "[TP][?] $@"
+  fi
 }
 
 function tp_succ {
-    if [[ -n "${TP_COLOR}" ]]
-    then
-        tp_print $'\e[1;34m[TP]\e[1;32m'" $@"$'\e[0m'
-    else
-        tp_print "[TP] $@"
-    fi
+  if [[ -n "${TP_COLOR}" ]]
+  then
+    tp_print $'\e[1;34m[TP]\e[1;32m'" $@"$'\e[0m'
+  else
+    tp_print "[TP] $@"
+  fi
 }
 
 function tp_warn {
-    if [[ -n "${TP_COLOR}" ]]
-    then
-        tp_print $'\e[1;34m[TP]\e[1;33m'" $@"$'\e[0m'
-    else
-        tp_print "[TP][WARN]" "$@"
-    fi
+  if [[ -n "${TP_COLOR}" ]]
+  then
+    tp_print $'\e[1;34m[TP]\e[1;33m'" $@"$'\e[0m'
+  else
+    tp_print "[TP][WARN]" "$@"
+  fi
 }
 
 function tp_err {
-    if [[ -n "${TP_COLOR}" ]]
-    then
-        tp_print $'\e[1;34m[TP]\e[1;31m'" $@"$'\e[0m'
-    else
-        tp_print "[TP][ERR]" "$@"
-    fi
+  if [[ -n "${TP_COLOR}" ]]
+  then
+    tp_print $'\e[1;34m[TP]\e[1;31m'" $@"$'\e[0m'
+  else
+    tp_print "[TP][ERR]" "$@"
+  fi
 }
 
 
@@ -1960,5 +1960,5 @@ function tp_err {
 # (in bash, return from outside a function only succeeds, when the script is being sourced)
 if ! ( return 0 2>/dev/null )
 then
-    tp_main "$@"
+  tp_main "$@"
 fi
