@@ -103,10 +103,10 @@ Scenario Outline: Sign certificate `cert/good/<name>.cert.pem` with CA `<ca>`
   And CA-signed certificate file `cert/good/<name>.cert.pem` should exist
   And files `cert/good/<name>.chain.pem` and `ca/<ca>/ca-root.cert.pem` should have identical contents
   And file `cert/good/<name>.fullchain.pem` should be the concatenation of files `cert/good/<name>.cert.pem` and `cert/good/<name>.chain.pem`
+  And CNs in certificate `cert/good/<name>.cert.pem` and CSR `cert/good/<name>.csr.pem` should match
   And 1 files in `ca/<ca>/archive` should match wildcard pattern `*.cert.pem`
   And 1 files in `ca/<ca>/archive` should match wildcard pattern `*.chain.pem`
   And 1 files in `ca/<ca>/archive` should match wildcard pattern `*.fullchain.pem`
-  And CNs in certificate `cert/good/<name>.cert.pem` and CSR `cert/good/<name>.csr.pem` should match
 
   Examples:
     | ca         | name      |
