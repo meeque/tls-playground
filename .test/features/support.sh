@@ -1,7 +1,7 @@
 # add `tp` script to path
 if [[ ":$PATH:" != *":$PWD/bin:"* ]]
 then
-    PATH="$PWD/bin:$PATH"
+  PATH="$PWD/bin:$PATH"
 fi
 
 # also import library functions from the `tp` script
@@ -28,8 +28,7 @@ function tpt_extract_command_outputs {
 function tpt_extract_commands {
   echo "$1" \
     | grep -E '^\S*\$\S*\s+' \
-    | sed -E -e 's/^\S*\$\S*\s+//' \
-      || true
+    | sed -E -e 's/^\S*\$\S*\s+//'
 }
 
 
