@@ -100,6 +100,39 @@
 
 
 
+@Then file `{file_path}` should be empty
+
+  [[ -f "${file_path}" ]] \
+    || fail "Expected file does not exist." || return
+  [[ ! -s "${file_path}" ]] \
+    || fail "File is not empty."
+
+
+
+@Then files `{file_path_1}` and `{file_path_2}` should have identical contents
+
+  [[ -f "${file_path_1}" ]] \
+    || fail "Expected file at '${file_path_1}' does not exist." || return
+  [[ -f "${file_path_2}" ]] \
+    || fail "Expected file at '${file_path_2}' does not exist." || return
+  cmp -s "${file_path_1}" "${file_path_2}" \
+    || fail "File contents do not match."
+
+
+
+@Then file `{file_path_1}` should be the concatenation of files `{file_path_2}` and `{file_path_3}`
+
+  [[ -f "${file_path_1}" ]] \
+    || fail "Expected file at '${file_path_1}' does not exist." || return
+  [[ -f "${file_path_2}" ]] \
+    || fail "Expected file at '${file_path_2}' does not exist." || return
+  [[ -f "${file_path_3}" ]] \
+    || fail "Expected file at '${file_path_3}' does not exist." || return
+  cmp -s "${file_path_1}" <( cat "${file_path_2}" "${file_path_3}" ) \
+    || fail "File contents are not a concatenation as expected."
+
+
+
 @Then {number} files in `{directory}` should match wildcard pattern `{pattern}`
 
   num="$(

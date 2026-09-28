@@ -43,6 +43,8 @@ Scenario Outline: Generate self-signed certificate `<path>/<name>.cert.pem` and 
   And key passphrase file `<path>/private/<name>.key.pass.txt` should NOT exist
   And CSR file `<path>/<name>.csr.pem` should NOT exist
   And self-signed X.509 certificate file `<path>/<name>.cert.pem` should NOT exist
+  And self-signed cert chain file `<path>/<name>.chain.pem` should NOT exist
+  And self-signed cert full-chain file `<path>/<name>.fullchain.pem` should NOT exist
 
   When I run `tp cert init "<path>/<name>.cert.conf.tmpl"`
   Then the command should succeed
@@ -58,6 +60,8 @@ Scenario Outline: Generate self-signed certificate `<path>/<name>.cert.pem` and 
   And key passphrase file `<path>/private/<name>.key.pass.txt` should exist
   And CSR file `<path>/<name>.csr.pem` should exist
   And self-signed X.509 certificate file `<path>/<name>.cert.pem` should exist
+  And file `<path>/<name>.chain.pem` should be empty
+  And files `<path>/<name>.fullchain.pem` and `<path>/<name>.cert.pem` should have identical contents
   And CNs in CSR `<path>/<name>.csr.pem` and config `<path>/<name>.cert.conf` should match
   And CNs in certificate `<path>/<name>.cert.pem` and CSR `<path>/<name>.csr.pem` should match
 
@@ -76,6 +80,8 @@ Scenario Outline: Generate self-signed certificate `<path>/<name>.cert.pem` and 
   And key passphrase file `<path>/private/<name>.key.pass.txt` should NOT exist
   And CSR file `<path>/<name>.csr.pem` should NOT exist
   And self-signed X.509 certificate file `<path>/<name>.cert.pem` should NOT exist
+  And self-signed cert chain file `<path>/<name>.chain.pem` should NOT exist
+  And self-signed cert full-chain file `<path>/<name>.fullchain.pem` should NOT exist
   But template file `<path>/<name>.cert.conf.tmpl` should exist
 
   Examples:
@@ -118,6 +124,8 @@ Scenario Outline: Generate self-signed certificate `<path>/<name>.cert.pem` step
   And TP should print "Signing CSR with it's own private key..."
   And TP should run command `<selfsign_command>`
   And self-signed X.509 certificate file `<path>/<name>.cert.pem` should exist
+  And file `<path>/<name>.chain.pem` should be empty
+  And files `<path>/<name>.fullchain.pem` and `<path>/<name>.cert.pem` should have identical contents
   And CNs in certificate `<path>/<name>.cert.pem` and CSR `<path>/<name>.csr.pem` should match
 
   When I run `tp cert verify key <path>/<name>.cert.pem`

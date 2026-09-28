@@ -101,8 +101,8 @@ Scenario Outline: Sign certificate `cert/good/<name>.cert.pem` with CA `<ca>`
   And private key file `cert/good/private/<name>.key.pem` should exist
   And CSR file `cert/good/<name>.csr.pem` should exist
   And CA-signed certificate file `cert/good/<name>.cert.pem` should exist
-  And CA-signed cert chain file `cert/good/<name>.chain.pem` should exist
-  And CA-signed cert full-chain file `cert/good/<name>.fullchain.pem` should exist
+  And files `cert/good/<name>.chain.pem` and `ca/<ca>/ca-root.cert.pem` should have identical contents
+  And file `cert/good/<name>.fullchain.pem` should be the concatenation of files `cert/good/<name>.cert.pem` and `cert/good/<name>.chain.pem`
   And 1 files in `ca/<ca>/archive` should match wildcard pattern `*.cert.pem`
   And 1 files in `ca/<ca>/archive` should match wildcard pattern `*.chain.pem`
   And 1 files in `ca/<ca>/archive` should match wildcard pattern `*.fullchain.pem`
