@@ -21,7 +21,7 @@ function tp_main {
   tp_main_arg_defaults
 
   # parse arguments
-  local tp_arguments="$( getopt --options 'hsed:c::amr' --longoptions 'help,step,disclose,explicit,digests:,ca::,acme,manual,request,csr,demo-server:,domain:,port:' --name '[TP]' -- "$@" )"
+  local tp_arguments="$( getopt --options 'hsed:c::amr' --longoptions 'help,step,disclose,explicit,digests:,ca::,acme,manual,request,csr' --name '[TP]' -- "$@" )"
   eval set -- ${tp_arguments}
 
   # process arguments
@@ -57,18 +57,6 @@ function tp_main {
         ;;
       -r | --request | --csr )
         tp_acme_certbot_custom_csr='true'
-        ;;
-      --demo-server )
-        shift
-        tp_client_demo_server="${1}"
-        ;;
-      --domain )
-        shift
-        tp_client_domain="${1}"
-        ;;
-      --port )
-        shift
-        tp_client_port="${1}"
         ;;
       --)
         shift
@@ -172,9 +160,6 @@ function tp_main_arg_defaults {
   tp_cert_provider_opt=''
   tp_acme_certbot_opts=( '--webroot' '--non-interactive' )
   tp_acme_certbot_custom_csr=''
-  tp_client_demo_server=''
-  tp_client_domain=''
-  tp_client_port=''
 }
 
 
@@ -1547,7 +1532,9 @@ function tp_server_list {
   find "${tp_base_dir}/server" -mindepth 1 -maxdepth 1 -type d  -exec basename '{}' ';' | sort
 }
 
-# TP client command
+
+
+# TP client sub-commands
 
 function tp_client {
   local command="$1"
@@ -1566,18 +1553,45 @@ function tp_client {
 }
 
 function tp_client_curl {
-  local path="$1"
+  local url="$1"
 
-  local cacert
-  if [[ "${tp_cert_provider}" == 'ca' ]]
+  # try to resolve the URL's authority to a TP demo server
+  local server_dir=''
+  local authority="${url#https://}"
+  authority="${authority%%/*}"
+  if [[ "${authority}" == "tls-playground.${TP_SERVER_DOMAIN}:${TP_SERVER_HTTPS_PORT}" ]]
   then
-    cacert="${tp_base_dir}/ca/${tp_cert_provider_opt:-ca4servers}/ca-root.cert.pem"
-  else
-    cacert="${tp_base_dir}/server/${tp_client_demo_server}/tls/server.cert.pem"
+    server_dir="${tp_base_dir}/server/nginx-simple"
   fi
 
-  tp_util_run \
-    curl --cacert "${cacert}" "https://${tp_client_domain}:${tp_client_port}/${path}"
+  # if we matched a demo server, pick the right trust root based on its current cert
+  local cacert=''
+  if [[ -n "${server_dir}" ]]
+  then
+    local chain_file="${server_dir}/tls/server.chain.pem"
+    if [[ -f "${chain_file}" && ! -s "${chain_file}" ]]
+    then
+      cacert="${server_dir}/tls/server.cert.pem"
+    elif [[ -f "${chain_file}" ]]
+    then
+      local ca_root
+      for ca_root in "${tp_base_dir}"/ca/*/ca-root.cert.pem
+      do
+        if [[ -f "${ca_root}" ]] && cmp -s "${chain_file}" "${ca_root}"
+        then
+          cacert="${ca_root}"
+          break
+        fi
+      done
+    fi
+  fi
+
+  if [[ -n "${cacert}" ]]
+  then
+    tp_util_run curl --cacert "${cacert}" "${url}"
+  else
+    tp_util_run curl "${url}"
+  fi
 }
 
 
