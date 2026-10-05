@@ -1567,7 +1567,14 @@ function tp_client {
 
 function tp_client_curl {
   local path="$1"
-  local cacert="${tp_base_dir}/server/${tp_client_demo_server}/tls/server.cert.pem"
+
+  local cacert
+  if [[ "${tp_cert_provider}" == 'ca' ]]
+  then
+    cacert="${tp_base_dir}/ca/${tp_cert_provider_opt:-ca4servers}/ca-root.cert.pem"
+  else
+    cacert="${tp_base_dir}/server/${tp_client_demo_server}/tls/server.cert.pem"
+  fi
 
   tp_util_run \
     curl --cacert "${cacert}" "https://${tp_client_domain}:${tp_client_port}/${path}"
