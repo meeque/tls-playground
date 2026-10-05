@@ -21,7 +21,7 @@ function tp_main {
   tp_main_arg_defaults
 
   # parse arguments
-  local tp_arguments="$( getopt --options 'hsed:c::amr' --longoptions 'help,step,disclose,explicit,digests:,ca::,acme,manual,request,csr' --name '[TP]' -- "$@" )"
+  local tp_arguments="$( getopt --options 'hsed:c::amr' --longoptions 'help,step,disclose,explicit,digests:,ca::,acme,manual,request,csr,demo-server:,domain:,port:' --name '[TP]' -- "$@" )"
   eval set -- ${tp_arguments}
 
   # process arguments
@@ -58,6 +58,18 @@ function tp_main {
       -r | --request | --csr )
         tp_acme_certbot_custom_csr='true'
         ;;
+      --demo-server )
+        shift
+        tp_client_demo_server="${1}"
+        ;;
+      --domain )
+        shift
+        tp_client_domain="${1}"
+        ;;
+      --port )
+        shift
+        tp_client_port="${1}"
+        ;;
       --)
         shift
         break
@@ -73,7 +85,7 @@ function tp_main {
   local command="$1"
   shift || true
   case "${command}" in
-    'cert' | 'ca' | 'acme' | 'server' | 'clean' )
+    'cert' | 'ca' | 'acme' | 'server' | 'client' | 'clean' )
       "tp_${command}" "$@"
       return $?
       ;;
@@ -90,7 +102,7 @@ function tp_main {
           ;;
       esac
       tp_help_if_needed "${tp_base_dir}/bin/README.md" "${help_block}" || return 0
-      tp_help_with_commands 'tp' 'TLS Playground' "${command}" 'cert ca acme server clean'
+      tp_help_with_commands 'tp' 'TLS Playground' "${command}" 'cert ca acme server client clean'
       ;;
   esac
 }
@@ -116,7 +128,7 @@ function tp_main_env_global {
     fi
     TP_PASS="$(< "${pass_file}" )"
   fi
-
+``
   # colored outputs
   # if $TP_COLOR is not set, try to guess by $TERM value
   # if clause is same as [[ ! -v TP_COLOR ]], but -v is not available in older bash versions and other shells
@@ -160,6 +172,9 @@ function tp_main_arg_defaults {
   tp_cert_provider_opt=''
   tp_acme_certbot_opts=( '--webroot' '--non-interactive' )
   tp_acme_certbot_custom_csr=''
+  tp_client_demo_server=''
+  tp_client_domain=''
+  tp_client_port=''
 }
 
 
@@ -1531,6 +1546,33 @@ function tp_server_nginx_clean {
 function tp_server_list {
   find "${tp_base_dir}/server" -mindepth 1 -maxdepth 1 -type d  -exec basename '{}' ';' | sort
 }
+
+# TP client command
+
+function tp_client {
+  local command="$1"
+  shift || true
+
+  tp_help_if_needed "${tp_base_dir}/client/README.md" '-1' || return 0
+
+  case "${command}" in
+    'curl' )
+      tp_client_curl "$@"
+      ;;
+    * )
+      tp_help_with_commands 'tp client' 'TP Demo Clients' "${command}" 'curl'
+      ;;
+  esac
+}
+
+function tp_client_curl {
+  local path="$1"
+  local cacert="${tp_base_dir}/server/${tp_client_demo_server}/tls/server.cert.pem"
+
+  tp_util_run \
+    curl --cacert "${cacert}" "https://${tp_client_domain}:${tp_client_port}/${path}"
+}
+
 
 
 
