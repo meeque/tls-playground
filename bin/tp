@@ -1555,16 +1555,23 @@ function tp_client {
 function tp_client_curl {
   local url="$1"
 
+  tp_msg "Using client 'curl' to request URL '${url}'..."
+
   # try to resolve the URL's authority to a TP demo server
   local server_dir=''
+  local server_name=''
   local authority="${url#https://}"
   authority="${authority%%/*}"
   if [[ "${authority}" == "tls-playground.${TP_SERVER_DOMAIN}:${TP_SERVER_HTTPS_PORT}" ]]
   then
-    server_dir="${tp_base_dir}/server/nginx-simple"
+    server_name='nginx-simple'
+    server_dir="${tp_base_dir}/server/${server_name}"
+    tp_msg "URL points to TP demo server '${server_name}', adjusting 'curl' args accordingly..."
+  else
+    tp_warn "URL does not seem to point to a TP demo server! NOT adjusting any 'curl' args."
   fi
 
-  # if we matched a demo server, pick the right trust root based on its current cert
+  # if we matched a demo server, pick a suitable certificate to trust
   local cacert=''
   if [[ -n "${server_dir}" ]]
   then
@@ -1572,6 +1579,7 @@ function tp_client_curl {
     if [[ -f "${chain_file}" && ! -s "${chain_file}" ]]
     then
       cacert="${server_dir}/tls/server.cert.pem"
+      tp_msg "Server uses a self-signed certificate. Using it as trust root through curl's '--cacert' option."
     elif [[ -f "${chain_file}" ]]
     then
       local ca_root
@@ -1580,17 +1588,22 @@ function tp_client_curl {
         if [[ -f "${ca_root}" ]] && cmp -s "${chain_file}" "${ca_root}"
         then
           cacert="${ca_root}"
+          local ca_name="$( basename "$( dirname "${ca_root}" )" )"
+          tp_msg "Server uses a certificate from TP demo CA '${ca_name}'. Using the CA's root certificate as trust root through curl's '--cacert' option."
           break
         fi
       done
+      tp_msg "Server does not seem to use a certificate managed by TP. NOT adjusting the trust root through curl's '--cacert' option."
+    else
+      tp_warn "Could not figure out what certificate the server uses. NOT adjusting the trust root through curl's '--cacert' option."
     fi
   fi
 
-  if [[ -n "${cacert}" ]]
+  if [[ -z "${cacert}" ]]
   then
-    tp_util_run curl --cacert "${cacert}" "${url}"
-  else
     tp_util_run curl "${url}"
+  else
+    tp_util_run curl --cacert "${cacert}" "${url}"
   fi
 }
 
