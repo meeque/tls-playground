@@ -1557,28 +1557,88 @@ function tp_client_curl {
 
   tp_msg "Using client 'curl' to request URL '${url}'..."
 
-  # try to resolve the URL's authority to a TP demo server
-  local server_dir=''
-  local server_name=''
+  # extract the URL host
   local authority="${url#https://}"
   authority="${authority%%/*}"
-  if [[ "${authority}" == "tls-playground.${TP_SERVER_DOMAIN}:${TP_SERVER_HTTPS_PORT}" ]]
+  local host="${authority%:*}"
+
+  # find the running TP demo server, if any
+  local server_dir=''
+  local server_name=''
+  local pid_file
+  for pid_file in "${tp_base_dir}"/server/*/var/nginx.pid
+  do
+    [[ -f "${pid_file}" ]] || continue
+    local pid
+    pid="$( < "${pid_file}" )"
+    local comm
+    if comm=$( ps --format 'comm=' --pid "${pid}" 2>/dev/null ) && [[ "${comm}" == 'nginx' ]]
+    then
+      server_dir="$( dirname "$( dirname "${pid_file}" )" )"
+      server_name="$( basename "${server_dir}" )"
+      break
+    fi
+  done
+
+  # match the URL host against a vhost by scanning server_name directives
+  local vhost_conf=''
+  if [[ -d "${server_dir}" ]]
   then
-    server_name='nginx-simple'
-    server_dir="${tp_base_dir}/server/${server_name}"
-    tp_msg "URL points to TP demo server '${server_name}', adjusting 'curl' args accordingly..."
-  else
-    tp_warn "URL does not seem to point to a TP demo server! NOT adjusting any 'curl' args."
+    local conf_file
+    while IFS= read -r conf_file
+    do
+      local line
+      while IFS= read -r line
+      do
+        if [[ "${line}" =~ ^[[:space:]]*server_name[[:space:]]+(.*) ]]
+        then
+          local tail="${BASH_REMATCH[1]}"
+          local token
+          for token in ${tail}
+          do
+            token="${token%;}"
+            if [[ "${token}" == "${host}" ]]
+            then
+              vhost_conf="${conf_file}"
+              break 3
+            fi
+          done
+        fi
+      done < "${conf_file}"
+    done < <( find "${server_dir}" -name 'nginx.conf' | sort )
   fi
 
-  # if we matched a demo server, pick a suitable certificate to trust
-  local cacert=''
-  if [[ -n "${server_dir}" ]]
+  # resolve the vhost's cert and chain files from its ssl_certificate directive
+  local cert_file=''
+  local chain_file=''
+  if [[ -n "${vhost_conf}" ]]
   then
-    local chain_file="${server_dir}/tls/server.chain.pem"
+    tp_msg "URL points to TP demo server '${server_name}' (vhost configured in '${vhost_conf}'), adjusting 'curl' args accordingly..."
+    local line
+    while IFS= read -r line
+    do
+      if [[ "${line}" =~ ^[[:space:]]*ssl_certificate[[:space:]]+([^[:space:];]+) ]]
+      then
+        local fullchain_rel="${BASH_REMATCH[1]}"
+        cert_file="${server_dir}/${fullchain_rel/fullchain/cert}"
+        chain_file="${server_dir}/${fullchain_rel/fullchain/chain}"
+        break
+      fi
+    done < "${vhost_conf}"
+  elif [[ -n "${server_dir}" ]]
+  then
+    tp_warn "URL does not match any vhost of running TP demo server '${server_name}'! NOT adjusting any 'curl' args."
+  else
+    tp_warn "No TP demo server appears to be running! NOT adjusting any 'curl' args."
+  fi
+
+  # identify a trust root for curl's --cacert
+  local cacert=''
+  if [[ -n "${chain_file}" ]]
+  then
     if [[ -f "${chain_file}" && ! -s "${chain_file}" ]]
     then
-      cacert="${server_dir}/tls/server.cert.pem"
+      cacert="${cert_file}"
       tp_msg "Server uses a self-signed certificate. Using it as trust root through curl's '--cacert' option."
     elif [[ -f "${chain_file}" ]]
     then
@@ -1588,12 +1648,16 @@ function tp_client_curl {
         if [[ -f "${ca_root}" ]] && cmp -s "${chain_file}" "${ca_root}"
         then
           cacert="${ca_root}"
-          local ca_name="$( basename "$( dirname "${ca_root}" )" )"
+          local ca_name
+          ca_name="$( basename "$( dirname "${ca_root}" )" )"
           tp_msg "Server uses a certificate from TP demo CA '${ca_name}'. Using the CA's root certificate as trust root through curl's '--cacert' option."
           break
         fi
       done
-      tp_msg "Server does not seem to use a certificate managed by TP. NOT adjusting the trust root through curl's '--cacert' option."
+      if [[ -z "${cacert}" ]]
+      then
+        tp_msg "Server does not seem to use a certificate managed by TP. NOT adjusting the trust root through curl's '--cacert' option."
+      fi
     else
       tp_warn "Could not figure out what certificate the server uses. NOT adjusting the trust root through curl's '--cacert' option."
     fi
