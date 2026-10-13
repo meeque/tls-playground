@@ -91,6 +91,11 @@ Scenario: Initialize all TP demo servers at once
   And nginx config file `server/nginx-simple/nginx.conf` should exist
   And nginx config file `server/nginx-complex/nginx.conf` should exist
 
+  When I run `tp server info`
+  Then the command should succeed
+  And TP should print "Demo server 'nginx-simple':"
+  And TP should print "Demo server 'nginx-complex':"
+
 
 
 Scenario: Run init and clean hooks of nginx-complex
@@ -109,13 +114,27 @@ Scenario: Run init and clean hooks of nginx-complex
 
 Scenario Outline: Start, reload, and stop demo server `<server>`
 
+  When I run `tp server info <server>`
+  Then the command should succeed
+  And TP should print "Demo server '<server>':"
+  And a sub-command should print "available"
+
   When I run `tp server init <server>`
   Then the command should succeed
+
+  When I run `tp server info <server>`
+  Then the command should succeed
+  And a sub-command should print "initialized"
 
   When I run `tp server start <server>`
   Then the command should succeed
   And TP should print "Starting nginx server"
   And nginx PID file `server/<server>/var/nginx.pid` should exist
+
+  When I run `tp server info <server>`
+  Then the command should succeed
+  And a sub-command should print "running"
+  And a sub-command should print "tls-playground.localhost"
 
   When I run `tp server reload <server>`
   Then the command should succeed
