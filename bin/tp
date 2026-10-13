@@ -1356,7 +1356,7 @@ function tp_server {
       then
         tp_err "Failed to ${command} demo server! No demo server name specified!"
         tp_msg "Try one of the following:"
-        tp_server_list
+        tp_server_util_list
         return 1
       fi
       local server_dir="${tp_base_dir}/server/${server_name}"
@@ -1364,7 +1364,7 @@ function tp_server {
       then
         tp_err "Failed to ${command} demo server '${server_name}'! Could not find expected demo server directory '${server_dir}'!"
         tp_msg "Try one of the following instead:"
-        tp_server_list
+        tp_server_util_list
         return 1
       fi
       "tp_server_nginx_${command}" "${server_dir}" "$@"
@@ -1382,7 +1382,7 @@ function tp_server_init {
   if [[ -z "${server_name}" ]]
   then
     tp_msg "No demo server name specified. Proceeding to initialize all demo servers..."
-    for server_name in $( tp_server_list )
+    for server_name in $( tp_server_util_list )
     do
       tp_print
       tp_server_init "${server_name}" "$@"
@@ -1395,7 +1395,7 @@ function tp_server_init {
   then
     tp_err "Failed to initialize demo server '${server_name}'! Could not find expected demo server directory '${server_dir}'!"
     tp_msg "Try one of the following instead:"
-    tp_server_list
+    tp_server_util_list
     return 1
   fi
 
@@ -1418,7 +1418,7 @@ function tp_server_clean {
   if [[ -z "${server_name}" ]]
   then
     tp_msg "No demo server name specified. Proceeding to clean all demo servers..."
-    for server_name in $( tp_server_list )
+    for server_name in $( tp_server_util_list )
     do
       tp_server_clean "${server_name}"
     done
@@ -1430,7 +1430,7 @@ function tp_server_clean {
   then
     tp_err "Failed to clean up demo server '${server_name}'! Could not find expected demo server directory '${server_dir}'!"
     tp_msg "Omit the the demo server name to clean up all ot them. Or, try one of the following instead:"
-    tp_server_list
+    tp_server_util_list
     return 1
   fi
 
@@ -1528,79 +1528,83 @@ function tp_server_nginx_clean {
   rm -rf "${server_dir}/var"
 }
 
-function tp_server_list {
+function tp_server_util_list {
   find "${tp_base_dir}/server" -mindepth 1 -maxdepth 1 -type d  -exec basename '{}' ';' | sort
 }
 
-function tp_server_info {
+function tp_server_util_info {
   local varname="$1"
   local name="$2"
 
   # fail, if varname is missing
   [[ -n "${varname}" ]]
 
+  # fail, if server dir is missing
+  local dir="${tp_base_dir}/server/${name}"
+  [[ -d "${dir}" ]]
+
   declare -A -g "${varname}"
   local -n varref="${varname}"
   varref=()
-
-  local dir="${tp_base_dir}/server/${name}"
   varref[name]="${name}"
   varref[dir]="${dir}"
 
   # determine server status
-  local status=''
-  if [[ -d "${dir}" ]]
+  local status='available'
+  if [[ -f "${dir}/nginx.conf" ]]
   then
-    status='available'
-    [[ -f "${dir}/nginx.conf" ]] && status='initialized'
-    local pid_file="${dir}/var/nginx.pid"
-    if [[ -f "${pid_file}" ]]
+    status='initialized'
+  fi
+  local pid_file="${dir}/var/nginx.pid"
+  if [[ -f "${pid_file}" ]]
+  then
+    local pid comm
+    pid="$( < "${pid_file}" )"
+    if comm=$( ps --format 'comm=' --pid "${pid}" 2>/dev/null ) && [[ "${comm}" == 'nginx' ]]
     then
-      local pid comm
-      pid="$( < "${pid_file}" )"
-      if comm=$( ps --format 'comm=' --pid "${pid}" 2>/dev/null ) && [[ "${comm}" == 'nginx' ]]
-      then
-        status='running'
-      fi
+      status='running'
     fi
   fi
   varref[status]="${status}"
 
-  # enumerate virtual hosts from the generated nginx configs (present once initialized)
-  local count=0
-  if [[ "${status}" == 'initialized' || "${status}" == 'running' ]]
+  # skip further processing, if server has not been initialized
+  if [[ "${status}" == 'available' ]]
   then
-    local conf_file
-    while IFS= read -r conf_file
-    do
-      local names='' cert='' line
-      while IFS= read -r line
-      do
-        if [[ "${line}" =~ ^[[:space:]]*server_name[[:space:]]+(.*) ]]
-        then
-          local token
-          for token in ${BASH_REMATCH[1]}
-          do
-            token="${token%;}"
-            [[ -n "${token}" ]] || continue
-            names="${names:+${names}:}${token}"
-          done
-        elif [[ "${line}" =~ ^[[:space:]]*ssl_certificate[[:space:]]+([^[:space:];]+) ]]
-        then
-          local fullchain_rel="${BASH_REMATCH[1]}"
-          cert="${dir}/${fullchain_rel/fullchain/cert}"
-        fi
-      done < "${conf_file}"
-
-      if [[ -n "${names}" ]]
-      then
-        varref[virtual_host_${count}_names]="${names}"
-        varref[virtual_host_${count}_cert]="${cert}"
-        (( count++ )) || true
-      fi
-    done < <( find "${dir}" -name 'nginx.conf' | sort )
+    varref[virtual_host_count]=0
+    return 0
   fi
-  varref[virtual_host_count]="${count}"
+
+  # enumerate virtual hosts from all the server's nginx config files
+  local vhost_count=0 config_file
+  while IFS= read -r config_file
+  do
+    local config_line vhost_names='' vhost_cert=''
+    while IFS= read -r config_line
+    do
+      if [[ "${config_line}" =~ ^[[:space:]]*server_name[[:space:]]+(.*) ]]
+      then
+        local server_name_value
+        for server_name_value in ${BASH_REMATCH[1]}
+        do
+          server_name_value="${server_name_value%;}"
+          [[ -n "${server_name_value}" ]] || continue
+          vhost_names="${vhost_names}:${server_name_value}"
+        done
+      elif [[ "${config_line}" =~ ^[[:space:]]*ssl_certificate[[:space:]]+([^[:space:];]+) ]]
+      then
+        local fullchain_rel="${BASH_REMATCH[1]}"
+        vhost_cert="${dir}/${fullchain_rel/fullchain/cert}"
+      fi
+    done < "${config_file}"
+
+    if [[ -n "${vhost_names}" ]]
+    then
+      varref[virtual_host_${vhost_count}_names]="${vhost_names}"
+      varref[virtual_host_${vhost_count}_cert]="${vhost_cert}"
+      (( vhost_count++ )) || true
+    fi
+  done < <( find "${dir}" -name 'nginx.conf' | sort )
+  varref[virtual_host_count]="${vhost_count}"
 }
 
 
@@ -1634,13 +1638,12 @@ function tp_client_curl {
   local host="${authority%:*}"
 
   # find the running TP demo server and the vhost whose server_name matches the URL host
-  local server_name='' cert_file=''
-  local name
-  while IFS= read -r name
+  local candidate_server_name server_name='' cert_file=''
+  while IFS= read -r candidate_server_name
   do
-    tp_server_info 'server_info' "${name}"
+    tp_server_util_info 'server_info' "${candidate_server_name}"
     [[ "${server_info[status]}" == 'running' ]] || continue
-    server_name="${name}"
+    server_name="${candidate_server_name}"
     local i count="${server_info[virtual_host_count]:-0}"
     for (( i=0; i<count; i++ ))
     do
@@ -1657,7 +1660,7 @@ function tp_client_curl {
       done
     done
     break
-  done < <( tp_server_list )
+  done < <( tp_server_util_list )
 
   if [[ -n "${cert_file}" ]]
   then
