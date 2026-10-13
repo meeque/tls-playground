@@ -1594,7 +1594,9 @@ function tp_server_util_info {
 
     if [[ -n "${vhost_names}" ]]
     then
-      local vhost_cert="$( find "$( dirname "${config_file}" )" -name '*.cert.pem' )"
+      local vhost_cert="$(
+        find "$( dirname "${config_file}" )/tls/" -name 'server.cert.pem' -or -name 'host.cert.pem'
+      )"
 
       varref[virtual_host_${vhost_count}_names]="${vhost_names}"
       varref[virtual_host_${vhost_count}_cert]="${vhost_cert}"
