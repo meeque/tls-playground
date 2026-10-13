@@ -1578,27 +1578,24 @@ function tp_server_util_info {
   local vhost_count=0 config_file
   while IFS= read -r config_file
   do
-    local config_line vhost_names='' vhost_cert=''
+    local config_line vhost_names=''
     while IFS= read -r config_line
     do
       if [[ "${config_line}" =~ ^[[:space:]]*server_name[[:space:]]+(.*) ]]
       then
-        local server_name_value
-        for server_name_value in ${BASH_REMATCH[1]}
-        do
-          server_name_value="${server_name_value%;}"
-          [[ -n "${server_name_value}" ]] || continue
+        local server_name_value="${BASH_REMATCH[1]}"
+        server_name_value="${server_name_value%;}"
+        if [[ -n "${server_name_value}" ]]
+        then
           vhost_names="${vhost_names}:${server_name_value}"
-        done
-      elif [[ "${config_line}" =~ ^[[:space:]]*ssl_certificate[[:space:]]+([^[:space:];]+) ]]
-      then
-        local fullchain_rel="${BASH_REMATCH[1]}"
-        vhost_cert="${dir}/${fullchain_rel/fullchain/cert}"
+        fi
       fi
     done < "${config_file}"
 
     if [[ -n "${vhost_names}" ]]
     then
+      local vhost_cert="$( find "$( dirname "${config_file}" )" -name '*.cert.pem' )"
+
       varref[virtual_host_${vhost_count}_names]="${vhost_names}"
       varref[virtual_host_${vhost_count}_cert]="${vhost_cert}"
       (( vhost_count++ )) || true
