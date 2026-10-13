@@ -1532,6 +1532,77 @@ function tp_server_list {
   find "${tp_base_dir}/server" -mindepth 1 -maxdepth 1 -type d  -exec basename '{}' ';' | sort
 }
 
+function tp_server_info {
+  local varname="$1"
+  local name="$2"
+
+  # fail, if varname is missing
+  [[ -n "${varname}" ]]
+
+  declare -A -g "${varname}"
+  local -n varref="${varname}"
+  varref=()
+
+  local dir="${tp_base_dir}/server/${name}"
+  varref[name]="${name}"
+  varref[dir]="${dir}"
+
+  # determine server status
+  local status=''
+  if [[ -d "${dir}" ]]
+  then
+    status='available'
+    [[ -f "${dir}/nginx.conf" ]] && status='initialized'
+    local pid_file="${dir}/var/nginx.pid"
+    if [[ -f "${pid_file}" ]]
+    then
+      local pid comm
+      pid="$( < "${pid_file}" )"
+      if comm=$( ps --format 'comm=' --pid "${pid}" 2>/dev/null ) && [[ "${comm}" == 'nginx' ]]
+      then
+        status='running'
+      fi
+    fi
+  fi
+  varref[status]="${status}"
+
+  # enumerate virtual hosts from the generated nginx configs (present once initialized)
+  local count=0
+  if [[ "${status}" == 'initialized' || "${status}" == 'running' ]]
+  then
+    local conf_file
+    while IFS= read -r conf_file
+    do
+      local names='' cert='' line
+      while IFS= read -r line
+      do
+        if [[ "${line}" =~ ^[[:space:]]*server_name[[:space:]]+(.*) ]]
+        then
+          local token
+          for token in ${BASH_REMATCH[1]}
+          do
+            token="${token%;}"
+            [[ -n "${token}" ]] || continue
+            names="${names:+${names}:}${token}"
+          done
+        elif [[ "${line}" =~ ^[[:space:]]*ssl_certificate[[:space:]]+([^[:space:];]+) ]]
+        then
+          local fullchain_rel="${BASH_REMATCH[1]}"
+          cert="${dir}/${fullchain_rel/fullchain/cert}"
+        fi
+      done < "${conf_file}"
+
+      if [[ -n "${names}" ]]
+      then
+        varref[virtual_host_${count}_names]="${names}"
+        varref[virtual_host_${count}_cert]="${cert}"
+        (( count++ )) || true
+      fi
+    done < <( find "${dir}" -name 'nginx.conf' | sort )
+  fi
+  varref[virtual_host_count]="${count}"
+}
+
 
 
 # TP client sub-commands
@@ -1562,70 +1633,36 @@ function tp_client_curl {
   authority="${authority%%/*}"
   local host="${authority%:*}"
 
-  # find the running TP demo server, if any
-  local server_dir=''
-  local server_name=''
-  local pid_file
-  for pid_file in "${tp_base_dir}"/server/*/var/nginx.pid
+  # find the running TP demo server and the vhost whose server_name matches the URL host
+  local server_name='' cert_file=''
+  local name
+  while IFS= read -r name
   do
-    [[ -f "${pid_file}" ]] || continue
-    local pid
-    pid="$( < "${pid_file}" )"
-    local comm
-    if comm=$( ps --format 'comm=' --pid "${pid}" 2>/dev/null ) && [[ "${comm}" == 'nginx' ]]
-    then
-      server_dir="$( dirname "$( dirname "${pid_file}" )" )"
-      server_name="$( basename "${server_dir}" )"
-      break
-    fi
-  done
-
-  # match the URL host against a vhost by scanning server_name directives
-  local vhost_conf=''
-  if [[ -d "${server_dir}" ]]
-  then
-    local conf_file
-    while IFS= read -r conf_file
+    tp_server_info 'server_info' "${name}"
+    [[ "${server_info[status]}" == 'running' ]] || continue
+    server_name="${name}"
+    local i count="${server_info[virtual_host_count]:-0}"
+    for (( i=0; i<count; i++ ))
     do
-      local line
-      while IFS= read -r line
+      local -a vhost_names
+      IFS=':' read -r -a vhost_names <<< "${server_info[virtual_host_${i}_names]}"
+      local vhost_name
+      for vhost_name in "${vhost_names[@]}"
       do
-        if [[ "${line}" =~ ^[[:space:]]*server_name[[:space:]]+(.*) ]]
+        if [[ "${vhost_name}" == "${host}" ]]
         then
-          local tail="${BASH_REMATCH[1]}"
-          local token
-          for token in ${tail}
-          do
-            token="${token%;}"
-            if [[ "${token}" == "${host}" ]]
-            then
-              vhost_conf="${conf_file}"
-              break 3
-            fi
-          done
+          cert_file="${server_info[virtual_host_${i}_cert]}"
+          break 2
         fi
-      done < "${conf_file}"
-    done < <( find "${server_dir}" -name 'nginx.conf' | sort )
-  fi
+      done
+    done
+    break
+  done < <( tp_server_list )
 
-  # resolve the vhost's cert and chain files from its ssl_certificate directive
-  local cert_file=''
-  local chain_file=''
-  if [[ -n "${vhost_conf}" ]]
+  if [[ -n "${cert_file}" ]]
   then
-    tp_msg "URL points to TP demo server '${server_name}' (vhost configured in '${vhost_conf}'), adjusting 'curl' args accordingly..."
-    local line
-    while IFS= read -r line
-    do
-      if [[ "${line}" =~ ^[[:space:]]*ssl_certificate[[:space:]]+([^[:space:];]+) ]]
-      then
-        local fullchain_rel="${BASH_REMATCH[1]}"
-        cert_file="${server_dir}/${fullchain_rel/fullchain/cert}"
-        chain_file="${server_dir}/${fullchain_rel/fullchain/chain}"
-        break
-      fi
-    done < "${vhost_conf}"
-  elif [[ -n "${server_dir}" ]]
+    tp_msg "URL points to TP demo server '${server_name}', adjusting 'curl' args accordingly..."
+  elif [[ -n "${server_name}" ]]
   then
     tp_warn "URL does not match any vhost of running TP demo server '${server_name}'! NOT adjusting any 'curl' args."
   else
@@ -1634,8 +1671,9 @@ function tp_client_curl {
 
   # identify a trust root for curl's --cacert
   local cacert=''
-  if [[ -n "${chain_file}" ]]
+  if [[ -n "${cert_file}" ]]
   then
+    local chain_file="${cert_file/.cert.pem/.chain.pem}"
     if [[ -f "${chain_file}" && ! -s "${chain_file}" ]]
     then
       cacert="${cert_file}"
