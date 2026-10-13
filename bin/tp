@@ -1345,7 +1345,7 @@ function tp_server {
 
   case "${command}" in
 
-    'init' | 'clean' )
+    'init' | 'info' | 'clean' )
       "tp_server_${command}" "$@"
       ;;
 
@@ -1370,7 +1370,7 @@ function tp_server {
       "tp_server_nginx_${command}" "${server_dir}" "$@"
       ;;
     * )
-      tp_help_with_commands 'tp server' 'TP Demo Server' "${command}" 'init run start reload stop clean'
+      tp_help_with_commands 'tp server' 'TP Demo Server' "${command}" 'init info run start reload stop clean'
       ;;
   esac
 }
@@ -1410,6 +1410,52 @@ function tp_server_init {
   done
 
   tp_util_run_hook "${server_dir}/tp-init-hook.sh" "init hook for server '${server_name}'" "$@"
+}
+
+function tp_server_info {
+  local name="$1"
+
+  # with no server name given, show info for all demo servers
+  if [[ -z "${name}" ]]
+  then
+    local server_name
+    for server_name in $( tp_server_util_list )
+    do
+      tp_print
+      tp_server_info "${server_name}"
+    done
+    return 0
+  fi
+
+  local dir="${tp_base_dir}/server/${name}"
+  if [[ ! -d "${dir}" ]]
+  then
+    tp_err "Could not find expected demo server directory '${dir}'!"
+    tp_msg "Try one of the following instead:"
+    tp_server_util_list
+    return 1
+  fi
+
+  tp_server_util_info 'server_info' "${name}"
+
+  tp_msg "Demo server '${server_info[name]}':"
+  tp_print "  Status:        ${server_info[status]}"
+  tp_print "  Directory:     ${server_info[dir]}"
+  tp_print "  Virtual hosts: ${server_info[virtual_host_count]}"
+
+  local index
+  for (( index=0; index < server_info[virtual_host_count]; index++ ))
+  do
+    tp_print
+    tp_print "  Virtual host ${index}:"
+    tp_print "    Server names:"
+    local name_token
+    while IFS= read -r name_token
+    do
+      [[ -n "${name_token}" ]] && tp_print "      ${name_token}"
+    done < <( tr ':' '\n' <<< "${server_info[virtual_host_${index}_names]}" )
+    tp_print "    Certificate:   ${server_info[virtual_host_${index}_cert]}"
+  done
 }
 
 function tp_server_clean {

@@ -161,6 +161,13 @@ Available Commands:
             self-signed, but see --ca and --acme options for alternatives.
             When <server> is omitted, initialize all TP demo servers.
 
+  info      Show information about the given TP demo <server>:
+            Print its status (available, initialized, or running), its base
+            directory, and the server names and certificate file of each of
+            its virtual hosts.
+            When <server> is omitted, show information about all TP demo
+            servers.
+
   run       Run the given TP demo <server> in the foreground.
             The <server> argument is mandatory here. You'll need to initialize
             the <server> beforehand, using the init command.
