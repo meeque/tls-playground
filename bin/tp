@@ -1481,11 +1481,13 @@ function tp_server_info {
     tp_print
     tp_print "  Virtual host #${index}:"
     tp_print "    Server names:"
+    local -a name_tokens
+    IFS=':' read -r -a name_tokens <<< "${server_info[virtual_host_${index}_names]}"
     local name_token
-    while IFS= read -r name_token
+    for name_token in "${name_tokens[@]}"
     do
       [[ -n "${name_token}" ]] && tp_print "      ${name_token}"
-    done < <( tr ':' '\n' <<< "${server_info[virtual_host_${index}_names]}" )
+    done
     tp_print "    Certificate:   ${server_info[virtual_host_${index}_cert]}"
   done
 }
@@ -1654,11 +1656,16 @@ function tp_server_util_info {
   fi
 
   # enumerate virtual hosts from all the server's nginx config files
-  local vhost_count=0 config_file
-  while IFS= read -r config_file
+  local vhost_count=0
+  local -a config_files
+  mapfile -t config_files < <( find "${dir}" -name 'nginx.conf' | sort )
+  local config_file
+  for config_file in "${config_files[@]}"
   do
+    local -a config_lines
+    mapfile -t config_lines < "${config_file}"
     local config_line vhost_names=''
-    while IFS= read -r config_line
+    for config_line in "${config_lines[@]}"
     do
       if [[ "${config_line}" =~ ^[[:space:]]*server_name[[:space:]]+(.*) ]]
       then
@@ -1669,7 +1676,7 @@ function tp_server_util_info {
           vhost_names="${vhost_names}:${server_name_value}"
         fi
       fi
-    done < "${config_file}"
+    done
 
     if [[ -n "${vhost_names}" ]]
     then
@@ -1681,7 +1688,7 @@ function tp_server_util_info {
       varref[virtual_host_${vhost_count}_cert]="${vhost_cert}"
       (( vhost_count++ )) || true
     fi
-  done < <( find "${dir}" -name 'nginx.conf' | sort )
+  done
   varref[virtual_host_count]="${vhost_count}"
 }
 
@@ -1692,8 +1699,10 @@ function tp_server_util_get_cert {
   local host="${url_components[host]}"
 
   # find the running TP demo server and the vhost whose server_name matches the URL host
+  local -a candidate_server_names
+  mapfile -t candidate_server_names < <( tp_server_util_list )
   local candidate_server_name
-  while IFS= read -r candidate_server_name
+  for candidate_server_name in "${candidate_server_names[@]}"
   do
     tp_server_util_info 'server_info' "${candidate_server_name}"
     [[ "${server_info[status]}" == 'running' ]] || continue
@@ -1716,7 +1725,7 @@ function tp_server_util_get_cert {
 
     # only one TP demo server runs at a time
     return 0
-  done < <( tp_server_util_list )
+  done
 }
 
 
@@ -2138,8 +2147,10 @@ function tp_help_extract_markdown_code_block {
     local blocks=()
     unset current_block
 
-    IFS=''
-    while read -r line
+    local -a lines
+    mapfile -t lines < "${markdown_file}"
+    local line
+    for line in "${lines[@]}"
     do
       if [[ "${line}" =~ ^\`\`\`\s*$ ]]
       then
@@ -2154,7 +2165,7 @@ function tp_help_extract_markdown_code_block {
       then
         local current_block+="${line}"$'\n'
       fi
-    done < "${markdown_file}"
+    done
 
     echo -n "${blocks["${index}"]}"
   )
