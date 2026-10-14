@@ -47,7 +47,7 @@ Scenario Outline: Initialize demo server `<server>` with self-signed certificate
   When I run `tp server init <server>`
   Then the command should succeed
   And TP should print "Initializing demo server '<server>'"
-  And TP should print "Creating server certificates for demo server '<server>' using certificate provider 'selfsign'"
+  And TP should print "Creating server certificates for demo server '<server>' using certificate provider 'selfsign'..."
   And nginx config file `server/<server>/nginx.conf` should exist
   And nginx logs directory `server/<server>/var/logs` should exist
 
@@ -73,7 +73,7 @@ Scenario Outline: Initialize demo server `<server>` with certificates from CA `<
 
   When I run `tp server init <ca_option> <server>`
   Then the command should succeed
-  And TP should print "Creating server certificates for demo server '<server>' using certificate provider 'ca'"
+  And TP should print "Creating server certificates for demo server '<server>' using certificate provider 'ca'..."
   And nginx config file `server/<server>/nginx.conf` should exist
 
   Examples:
