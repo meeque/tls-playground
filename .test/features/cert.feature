@@ -64,6 +64,10 @@ Scenario Outline: Generate self-signed certificate `<path>/<name>.cert.pem` and 
   And files `<path>/<name>.fullchain.pem` and `<path>/<name>.cert.pem` should have identical contents
   And CNs in CSR `<path>/<name>.csr.pem` and config `<path>/<name>.cert.conf` should match
   And CNs in certificate `<path>/<name>.cert.pem` and CSR `<path>/<name>.csr.pem` should match
+  And TP should print "Calculating fingerprint of certificate in '<path>/<name>.cert.pem'..."
+  And TP should run command `openssl x509 -in '<path>/<name>.cert.pem' -noout -fingerprint -sha1`
+  And a sub-command should print "sha1 Fingerprint="
+  And a sub-command should print "sha256 Fingerprint="
 
   When I run `tp cert verify key <path>/<name>.cert.pem`
   Then the command should succeed
@@ -264,3 +268,27 @@ Scenario Outline: Generate self-signed certificates all configs in `<dir>` and c
   Examples:
     | dir        | count |
     | cert/good/ | 2     |
+
+
+
+Scenario: Calculate certificate fingerprints with custom and invalid `--digests` options
+
+  When I run `tp cert init "cert/good/ecdsa-256.cert.conf.tmpl"`
+  Then the command should succeed
+
+  When I run `tp cert selfsign cert/good/ecdsa-256.cert.conf`
+  Then the command should succeed
+  And self-signed X.509 certificate file `cert/good/ecdsa-256.cert.pem` should exist
+
+  When I run `tp cert fingerprint --digests=sha256,sha512 cert/good/ecdsa-256.cert.pem`
+  Then the command should succeed
+  And TP should print "Calculating fingerprint of certificate in 'cert/good/ecdsa-256.cert.pem'..."
+  And TP should run command `openssl x509 -in 'cert/good/ecdsa-256.cert.pem' -noout -fingerprint -sha256`
+  And TP should run command `openssl x509 -in 'cert/good/ecdsa-256.cert.pem' -noout -fingerprint -sha512`
+  And a sub-command should print "sha256 Fingerprint="
+  And a sub-command should print "sha512 Fingerprint="
+
+  When I run `tp cert fingerprint --digests=not-a-digest cert/good/ecdsa-256.cert.pem`
+  Then the command should fail
+  And TP should run command `openssl x509 -in 'cert/good/ecdsa-256.cert.pem' -noout -fingerprint -not-a-digest`
+  And a sub-command should print error "Unknown option or message digest: not-a-digest"
