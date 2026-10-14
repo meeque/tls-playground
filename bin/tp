@@ -1738,23 +1738,24 @@ function tp_client_curl {
 
   local cert_file="$( tp_server_util_get_cert "${url}" )"
 
-  if [[ -n "${cert_file}" ]]
+  if [[ -z "${cert_file}" ]]
   then
-    tp_msg "URL points to a running TP demo server, adjusting 'curl' args accordingly..."
-  else
     tp_warn "URL does NOT point to a running TP demo server! NOT adjusting any 'curl' args."
-  fi
-
-  local trust_root_cert="$( tp_cert_util_get_trust_root "${cert_file}" )"
-
-  if [[ -z "${trust_root_cert}" ]]
-  then
-    tp_msg "Server does NOT seem to be using a certificate managed by TP. NOT adjusting the trust root through curl's '--cacert' option."
-    tp_util_run curl "${url}"
   else
-    tp_msg "Server uses a certificate managed by TP and its trust root is '${trust_root_cert}'. Adjusting curl's '--cacert' option accordingly."
-    tp_util_run curl --cacert "${trust_root_cert}" "${url}"
+    tp_msg "URL points to a running TP demo server, adjusting 'curl' args accordingly..."
+
+    local trust_root_cert="$( tp_cert_util_get_trust_root "${cert_file}" )"
+    if [[ -z "${trust_root_cert}" ]]
+    then
+      tp_warn "Server does NOT seem to be using a certificate managed by TP. NOT adjusting the trust root through curl's '--cacert' option."
+    else
+      tp_msg "Server uses a certificate managed by TP and its trust root is '${trust_root_cert}'. Adjusting curl's '--cacert' option accordingly."
+      tp_util_run curl --cacert "${trust_root_cert}" "${url}"
+      return
+    fi
   fi
+
+  tp_util_run curl "${url}"
 }
 
 
