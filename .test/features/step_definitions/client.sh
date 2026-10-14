@@ -15,7 +15,7 @@
     || fail "Precondition commmand \`tp server start ${server}\` has failed." \
     || return 1
 
-  defer "tp server stop ${server}"
+  defer run "tp server stop ${server}"
 
 
 
@@ -46,4 +46,4 @@
     || fail "Precondition commmand \`tp server start ${server}\` has failed." \
     || return 1
 
-  defer "tp server stop ${server}"
+  defer run "tp server stop ${server}"
