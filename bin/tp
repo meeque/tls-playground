@@ -1554,25 +1554,25 @@ function tp_server_nginx_init {
 function tp_server_nginx_run {
   local server_dir="$1"
   tp_msg "Running nginx server at '${server_dir}' in the foreground..."
-  nginx -p "${server_dir}" -c 'nginx.conf' -g 'daemon off;'
+  nginx -p "${server_dir}" -c 'nginx.conf' -e 'var/logs/error.log' -g 'daemon off;'
 }
 
 function tp_server_nginx_start {
   local server_dir="$1"
   tp_msg "Starting nginx server at '${server_dir}' in the background..."
-  nginx -p "${server_dir}" -c 'nginx.conf' -g 'daemon on;'
+  nginx -p "${server_dir}" -c 'nginx.conf' -e 'var/logs/error.log' -g 'daemon on;'
 }
 
 function tp_server_nginx_reload {
   local server_dir="$1"
   tp_msg "Reloading configuration of nginx server at '${server_dir}'..."
-  nginx -p "${server_dir}" -c 'nginx.conf' -s 'reload'
+  nginx -p "${server_dir}" -c 'nginx.conf' -e 'var/logs/error.log' -s 'reload'
 }
 
 function tp_server_nginx_stop {
   local server_dir="$1"
   tp_msg "Stopping nginx server at '${server_dir}'..."
-  nginx -p "${server_dir}" -c 'nginx.conf' -s 'stop'
+  nginx -p "${server_dir}" -c 'nginx.conf' -e 'var/logs/error.log' -s 'stop'
 }
 
 function tp_server_nginx_clean {
