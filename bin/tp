@@ -767,6 +767,31 @@ function tp_cert_util_link {
   tp_msg "Linked new certificate full-chain into '${target_files[fullchain_pem_path]}'."
 }
 
+function tp_cert_util_get_trust_root {
+  local cert_file="$1"
+
+  [[ -n "${cert_file}" ]] || return 0
+
+  local chain_file="${cert_file/.cert.pem/.chain.pem}"
+  if [[ -f "${chain_file}" && ! -s "${chain_file}" ]]
+  then
+    # empty chain means a self-signed certificate, which is its own trust root
+    tp_print "${cert_file}"
+  elif [[ -f "${chain_file}" ]]
+  then
+    # non-empty chain means a CA-signed certificate, find the issuing TP demo CA
+    local ca_root
+    for ca_root in "${tp_base_dir}"/ca/*/ca-root.cert.pem
+    do
+      if [[ -f "${ca_root}" ]] && cmp -s "${chain_file}" "${ca_root}"
+      then
+        tp_print "${ca_root}"
+        return 0
+      fi
+    done
+  fi
+}
+
 
 
 # TP CA sub-commands
@@ -1717,49 +1742,20 @@ function tp_client_curl {
   then
     tp_msg "URL points to a running TP demo server, adjusting 'curl' args accordingly..."
   else
-    tp_warn "URL does not point to a running TP demo server! NOT adjusting any 'curl' args."
+    tp_warn "URL does NOT point to a running TP demo server! NOT adjusting any 'curl' args."
   fi
 
-  # identify a trust root for curl's --cacert
-  local cacert=''
-  if [[ -n "${cert_file}" ]]
-  then
-    local chain_file="${cert_file/.cert.pem/.chain.pem}"
-    if [[ -f "${chain_file}" && ! -s "${chain_file}" ]]
-    then
-      cacert="${cert_file}"
-      tp_msg "Server uses a self-signed certificate. Using it as trust root through curl's '--cacert' option."
-    elif [[ -f "${chain_file}" ]]
-    then
-      local ca_root
-      for ca_root in "${tp_base_dir}"/ca/*/ca-root.cert.pem
-      do
-        if [[ -f "${ca_root}" ]] && cmp -s "${chain_file}" "${ca_root}"
-        then
-          cacert="${ca_root}"
-          local ca_name
-          ca_name="$( basename "$( dirname "${ca_root}" )" )"
-          tp_msg "Server uses a certificate from TP demo CA '${ca_name}'. Using the CA's root certificate as trust root through curl's '--cacert' option."
-          break
-        fi
-      done
-      if [[ -z "${cacert}" ]]
-      then
-        tp_msg "Server does not seem to use a certificate managed by TP. NOT adjusting the trust root through curl's '--cacert' option."
-      fi
-    else
-      tp_warn "Could not figure out what certificate the server uses. NOT adjusting the trust root through curl's '--cacert' option."
-    fi
-  fi
+  local trust_root_cert="$( tp_cert_util_get_trust_root "${cert_file}" )"
 
-  if [[ -z "${cacert}" ]]
+  if [[ -z "${trust_root_cert}" ]]
   then
+    tp_msg "Server does NOT seem to be using a certificate managed by TP. NOT adjusting the trust root through curl's '--cacert' option."
     tp_util_run curl "${url}"
   else
-    tp_util_run curl --cacert "${cacert}" "${url}"
+    tp_msg "Server uses a certificate managed by TP and its trust root is '${trust_root_cert}'. Adjusting curl's '--cacert' option accordingly."
+    tp_util_run curl --cacert "${trust_root_cert}" "${url}"
   fi
 }
-
 
 
 
