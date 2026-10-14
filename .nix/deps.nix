@@ -8,6 +8,7 @@ with pkgs;
   certbot
   nginx
   curl
+  trurl
   sslscan
   testssl
 

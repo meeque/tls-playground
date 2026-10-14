@@ -1678,9 +1678,8 @@ function tp_client_curl {
   tp_msg "Using client 'curl' to request URL '${url}'..."
 
   # extract the URL host
-  local authority="${url#https://}"
-  authority="${authority%%/*}"
-  local host="${authority%:*}"
+  tp_util_url_decompose 'url_components' "${url}"
+  local host="${url_components[host]}"
 
   # find the running TP demo server and the vhost whose server_name matches the URL host
   local candidate_server_name server_name='' cert_file=''
@@ -2027,12 +2026,6 @@ function tp_util_template_clean {
   fi
 }
 
-function tp_util_generate_hex_token {
-  local input="$1"
-  local size="${2:-16}"
-  tp_print "${input}" | openssl dgst -sha256 -r | { dd bs="${size}" count=1 2> /dev/null; } |  tr a-z A-Z
-}
-
 function tp_util_run_hook {
   local hook_script="$1"
   local hook_name="${2:-"hook script '${hook_script}'"}"
@@ -2051,6 +2044,39 @@ function tp_util_run_hook {
   )
   tp_print
   tp_succ "Done running ${hook_name}."
+}
+
+function tp_util_generate_hex_token {
+  local input="$1"
+  local size="${2:-16}"
+  tp_print "${input}" | openssl dgst -sha256 -r | { dd bs="${size}" count=1 2> /dev/null; } |  tr a-z A-Z
+}
+
+function tp_util_url_decompose {
+  local varname="$1"
+  local url="$2"
+
+  # fail, if varname is missing
+  [[ -n "${varname}" ]]
+
+  declare -A -g "${varname}"
+  local -n varref="${varname}"
+  varref=()
+  varref[url]="${url}"
+
+  local -a components
+  mapfile -t components < <(
+    trurl --url "${url}" --get $'{scheme}\n{user}\n{password}\n{host}\n{port}\n{path}\n{query}\n{fragment}'
+  )
+
+  varref[scheme]="${components[0]}"
+  varref[user]="${components[1]}"
+  varref[password]="${components[2]}"
+  varref[host]="${components[3]}"
+  varref[port]="${components[4]}"
+  varref[path]="${components[5]}"
+  varref[query]="${components[6]}"
+  varref[fragment]="${components[7]}"
 }
 
 
