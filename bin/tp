@@ -1467,14 +1467,19 @@ function tp_server_info {
 
   tp_msg "Demo server '${server_info[name]}':"
   tp_print "  Status:        ${server_info[status]}"
+  if [[ -n "${server_info[pid]}" ]]
+  then
+    tp_print "  PID:           ${server_info[pid]}"
+  fi
   tp_print "  Directory:     ${server_info[dir]}"
+  tp_print
   tp_print "  Virtual hosts: ${server_info[virtual_host_count]}"
 
   local index
   for (( index=0; index < server_info[virtual_host_count]; index++ ))
   do
     tp_print
-    tp_print "  Virtual host ${index}:"
+    tp_print "  Virtual host #${index}:"
     tp_print "    Server names:"
     local name_token
     while IFS= read -r name_token
@@ -1636,6 +1641,7 @@ function tp_server_util_info {
     if comm=$( ps --format 'comm=' --pid "${pid}" 2>/dev/null ) && [[ "${comm}" == 'nginx' ]]
     then
       status='running'
+      varref[pid]="${pid}"
     fi
   fi
   varref[status]="${status}"
