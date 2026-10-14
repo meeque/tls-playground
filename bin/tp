@@ -772,7 +772,9 @@ function tp_cert_util_get_trust_root {
 
   [[ -n "${cert_file}" ]] || return 0
 
-  local chain_file="${cert_file/.cert.pem/.chain.pem}"
+  tp_util_files 'files' "${cert_file}"
+  local chain_file="${files[chain_pem_path]}"
+
   if [[ -f "${chain_file}" && ! -s "${chain_file}" ]]
   then
     # empty chain means a self-signed certificate, which is its own trust root
