@@ -752,7 +752,7 @@ function tp_cert_check_env {
     || { tp_err "Variable TP_SERVER_DOMAIN with value '${TP_SERVER_DOMAIN}' does not look like a DNS domain name!"; return 1; }
 }
 
-function tp_cert_link {
+function tp_cert_util_link {
   local source="$1"
   local target="$2"
 
@@ -883,7 +883,7 @@ function tp_ca_sign {
   tp_succ "New certificate full-chain in '${archive_files[fullchain_pem_path]}'."
 
   tp_print
-  tp_cert_link "${archive_files[file_path]}" "${target_files[file_path]}"
+  tp_cert_util_link "${archive_files[file_path]}" "${target_files[file_path]}"
 
   tp_print
   tp_cert_show "${target_files[cert_pem_path]}"
@@ -1124,7 +1124,7 @@ function tp_acme_sign_csr {
   tp_succ "New certificate full-chain in '${archive_files[fullchain_pem_path]}'."
 
   tp_print
-  tp_cert_link "${archive_files[file_path]}" "${target_files[file_path]}"
+  tp_cert_util_link "${archive_files[file_path]}" "${target_files[file_path]}"
 
   tp_print
   tp_cert_show "${target_files[cert_pem_path]}"
