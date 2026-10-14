@@ -1652,6 +1652,40 @@ function tp_server_util_info {
   varref[virtual_host_count]="${vhost_count}"
 }
 
+function tp_server_util_get_cert {
+  local url="$1"
+
+  tp_util_url_decompose 'url_components' "${url}"
+  local host="${url_components[host]}"
+
+  # find the running TP demo server and the vhost whose server_name matches the URL host
+  local candidate_server_name
+  while IFS= read -r candidate_server_name
+  do
+    tp_server_util_info 'server_info' "${candidate_server_name}"
+    [[ "${server_info[status]}" == 'running' ]] || continue
+
+    local i count="${server_info[virtual_host_count]:-0}"
+    for (( i=0; i<count; i++ ))
+    do
+      local -a vhost_names
+      IFS=':' read -r -a vhost_names <<< "${server_info[virtual_host_${i}_names]}"
+      local vhost_name
+      for vhost_name in "${vhost_names[@]}"
+      do
+        if [[ "${vhost_name}" == "${host}" ]]
+        then
+          tp_print "${server_info[virtual_host_${i}_cert]}"
+          return 0
+        fi
+      done
+    done
+
+    # only one TP demo server runs at a time
+    return 0
+  done < <( tp_server_util_list )
+}
+
 
 
 # TP client sub-commands
@@ -1677,43 +1711,13 @@ function tp_client_curl {
 
   tp_msg "Using client 'curl' to request URL '${url}'..."
 
-  # extract the URL host
-  tp_util_url_decompose 'url_components' "${url}"
-  local host="${url_components[host]}"
-
-  # find the running TP demo server and the vhost whose server_name matches the URL host
-  local candidate_server_name server_name='' cert_file=''
-  while IFS= read -r candidate_server_name
-  do
-    tp_server_util_info 'server_info' "${candidate_server_name}"
-    [[ "${server_info[status]}" == 'running' ]] || continue
-    server_name="${candidate_server_name}"
-    local i count="${server_info[virtual_host_count]:-0}"
-    for (( i=0; i<count; i++ ))
-    do
-      local -a vhost_names
-      IFS=':' read -r -a vhost_names <<< "${server_info[virtual_host_${i}_names]}"
-      local vhost_name
-      for vhost_name in "${vhost_names[@]}"
-      do
-        if [[ "${vhost_name}" == "${host}" ]]
-        then
-          cert_file="${server_info[virtual_host_${i}_cert]}"
-          break 2
-        fi
-      done
-    done
-    break
-  done < <( tp_server_util_list )
+  local cert_file="$( tp_server_util_get_cert "${url}" )"
 
   if [[ -n "${cert_file}" ]]
   then
-    tp_msg "URL points to TP demo server '${server_name}', adjusting 'curl' args accordingly..."
-  elif [[ -n "${server_name}" ]]
-  then
-    tp_warn "URL does not match any vhost of running TP demo server '${server_name}'! NOT adjusting any 'curl' args."
+    tp_msg "URL points to a running TP demo server, adjusting 'curl' args accordingly..."
   else
-    tp_warn "No TP demo server appears to be running! NOT adjusting any 'curl' args."
+    tp_warn "URL does not point to a running TP demo server! NOT adjusting any 'curl' args."
   fi
 
   # identify a trust root for curl's --cacert
